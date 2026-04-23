@@ -2,6 +2,8 @@
 
 Theater-Timecode-basiertes Cue-System für Bühnenproduktionen. Ein Node.js-Server empfängt Timecode (LTC, MTC, RTP-MIDI, OSC oder Simulator), feuert Cues automatisch zum richtigen TC-Zeitpunkt und sendet diese per WebSocket an verbundene iOS-Clients.
 
+![App Screenshot](Bildschirmfoto%202026-04-23%20um%2014.01.18.png)
+
 ## Komponenten
 
 ```

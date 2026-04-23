@@ -1,0 +1,238 @@
+[
+  {
+    "id": "df42f2ad-f797-459c-81ef-a9fc954af61a",
+    "showId": "a38e6ed2-d881-44a9-8659-1aebcfaf8357",
+    "name": "Hauptliste Premiere",
+    "isActive": false,
+    "updatedAt": "2026-04-19T12:10:01.035Z",
+    "cues": [
+      {
+        "id": "cue-001",
+        "tc": "00:00:10:00",
+        "title": "Einlass beendet",
+        "message": "Türen schließen! Einlass ist beendet.",
+        "targetRoles": [
+          "buehne",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 5,
+        "color": "#3b82f6",
+        "audioType": "chime",
+        "audioVolume": 0.7
+      },
+      {
+        "id": "cue-002",
+        "tc": "00:00:20:00",
+        "title": "Licht Blackout",
+        "message": "Licht auf Blackout! Beginn Akt 1.",
+        "targetRoles": [
+          "licht",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 8,
+        "color": "#ef4444",
+        "audioType": "buzz",
+        "audioVolume": 0.9
+      },
+      {
+        "id": "cue-003",
+        "tc": "00:00:35:00",
+        "title": "Szene 1.1 – Wache",
+        "message": "Umbau Wache bereit? → Bühne frei!",
+        "targetRoles": [
+          "buehne"
+        ],
+        "alertType": "warning",
+        "warnOffsetSec": 10,
+        "color": "#f59e0b",
+        "audioType": "double-beep",
+        "audioVolume": 0.8
+      },
+      {
+        "id": "cue-004",
+        "tc": "00:01:00:00",
+        "title": "Pausenansage",
+        "message": "Pausenansage in 60 Sekunden vorbereiten.",
+        "targetRoles": [
+          "ton",
+          "regie"
+        ],
+        "alertType": "info",
+        "warnOffsetSec": 15,
+        "color": "#10b981",
+        "audioType": "beep",
+        "audioVolume": 0.6
+      },
+      {
+        "id": "cue-005",
+        "tc": "00:01:30:00",
+        "title": "Akt 2 Beginn",
+        "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
+        "targetRoles": [
+          "buehne",
+          "licht",
+          "ton",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 20,
+        "color": "#8b5cf6",
+        "audioType": "buzz",
+        "audioVolume": 1
+      }
+    ]
+  },
+  {
+    "id": "dbf00275-dc5a-47f6-aed5-8fd89dfdff4a",
+    "showId": "a38e6ed2-d881-44a9-8659-1aebcfaf8357",
+    "name": "Blinded by Delight",
+    "isActive": false,
+    "updatedAt": "2026-04-19T12:15:02.206Z",
+    "cues": [
+      {
+        "tc": "00:00:10:00",
+        "title": "Szene 3 beginnt",
+        "message": "Umbau links",
+        "alertType": "info",
+        "warnOffsetSec": 10,
+        "color": "#f59e0b",
+        "targetRoles": [],
+        "audioType": "beep",
+        "audioVolume": 0.8,
+        "id": "034c6d83-5eea-4722-82be-1deb9dac4191"
+      },
+      {
+        "tc": "00:00:15:00",
+        "title": "test 2",
+        "message": "test^^",
+        "alertType": "info",
+        "warnOffsetSec": 0,
+        "color": "#f59e0b",
+        "targetRoles": [],
+        "audioType": "buzz",
+        "audioVolume": 0.8,
+        "id": "891ffdb2-64a2-43cc-80b6-f31213348f0d"
+      }
+    ]
+  },
+  {
+    "id": "list-demo-001",
+    "showId": "show-demo-001",
+    "name": "Hauptliste Premiere",
+    "isActive": true,
+    "updatedAt": "2026-04-19T12:10:01.035Z",
+    "cues": [
+      {
+        "id": "cue-001",
+        "tc": "00:00:10:00",
+        "title": "Einlass beendet",
+        "message": "Türen schließen! Einlass ist beendet.",
+        "targetRoles": [
+          "buehne",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 5,
+        "color": "#3b82f6",
+        "audioType": "chime",
+        "audioVolume": 0.7
+      },
+      {
+        "id": "cue-002",
+        "tc": "00:00:20:00",
+        "title": "Licht Blackout",
+        "message": "Licht auf Blackout! Beginn Akt 1.",
+        "targetRoles": [
+          "licht",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 8,
+        "color": "#ef4444",
+        "audioType": "buzz",
+        "audioVolume": 0.9
+      },
+      {
+        "id": "cue-003",
+        "tc": "00:00:35:00",
+        "title": "Szene 1.1 – Wache",
+        "message": "Umbau Wache bereit? → Bühne frei!",
+        "targetRoles": [
+          "buehne"
+        ],
+        "alertType": "warning",
+        "warnOffsetSec": 10,
+        "color": "#f59e0b",
+        "audioType": "double-beep",
+        "audioVolume": 0.8
+      },
+      {
+        "id": "cue-004",
+        "tc": "00:01:00:00",
+        "title": "Pausenansage",
+        "message": "Pausenansage in 60 Sekunden vorbereiten.",
+        "targetRoles": [
+          "ton",
+          "regie"
+        ],
+        "alertType": "info",
+        "warnOffsetSec": 15,
+        "color": "#10b981",
+        "audioType": "beep",
+        "audioVolume": 0.6
+      },
+      {
+        "id": "cue-005",
+        "tc": "00:01:30:00",
+        "title": "Akt 2 Beginn",
+        "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
+        "targetRoles": [
+          "buehne",
+          "licht",
+          "ton",
+          "regie"
+        ],
+        "alertType": "urgent",
+        "warnOffsetSec": 20,
+        "color": "#8b5cf6",
+        "audioType": "buzz",
+        "audioVolume": 1
+      }
+    ]
+  },
+  {
+    "id": "453c88eb-6fdf-44e2-809e-7b07b84b65fa",
+    "showId": "show-demo-001",
+    "name": "Blinded by Delight",
+    "isActive": false,
+    "updatedAt": "2026-04-19T12:15:02.206Z",
+    "cues": [
+      {
+        "tc": "00:00:10:00",
+        "title": "Szene 3 beginnt",
+        "message": "Umbau links",
+        "alertType": "info",
+        "warnOffsetSec": 10,
+        "color": "#f59e0b",
+        "targetRoles": [],
+        "audioType": "beep",
+        "audioVolume": 0.8,
+        "id": "034c6d83-5eea-4722-82be-1deb9dac4191"
+      },
+      {
+        "tc": "00:00:15:00",
+        "title": "test 2",
+        "message": "test^^",
+        "alertType": "info",
+        "warnOffsetSec": 0,
+        "color": "#f59e0b",
+        "targetRoles": [],
+        "audioType": "buzz",
+        "audioVolume": 0.8,
+        "id": "891ffdb2-64a2-43cc-80b6-f31213348f0d"
+      }
+    ]
+  }
+]

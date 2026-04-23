@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TC Cue System</title>
+  <style>
+    :root {
+      --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+      --border: #2a2a2a; --text: #e5e5e5; --muted: #666;
+      --accent: #f59e0b; --green: #10b981; --red: #ef4444; --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; min-height: 100vh; }
+
+    /* ── STATUS BAR ─────────────────────────────────────────────────── */
+    #status-bar { display: flex; align-items: center; gap: 12px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+    #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+    #ws-dot.connected { background: var(--green); }
+    #tc-display { font-size: 17px; font-weight: bold; letter-spacing: 2px; color: var(--accent); margin-left: auto; }
+    #role-selector-bar { display: flex; align-items: center; gap: 6px; }
+    #role-selector-bar label { color: var(--muted); }
+    #role-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 2px 8px; border-radius: 4px; font-family: inherit; font-size: 12px; }
+
+    /* ── NAV ────────────────────────────────────────────────────────── */
+    nav { display: flex; border-bottom: 1px solid var(--border); }
+    nav button { background: none; border: none; color: var(--muted); padding: 11px 22px; cursor: pointer; font-family: inherit; font-size: 13px; border-bottom: 2px solid transparent; transition: all .15s; }
+    nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    nav button:hover:not(.active) { color: var(--text); }
+
+    /* ── VIEWS ──────────────────────────────────────────────────────── */
+    .view { display: none; padding: 20px 24px; }
+    .view.active { display: block; }
+
+    /* ── LIVE VIEW ──────────────────────────────────────────────────── */
+    #live-tc { font-size: clamp(36px, 7vw, 72px); font-weight: bold; letter-spacing: 4px; color: var(--accent); text-align: center; margin: 20px 0 4px; }
+    #live-show-name { text-align: center; font-size: 11px; color: var(--muted); margin-bottom: 16px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* Active alert panel */
+    #active-alert { border-radius: 10px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--border); transition: border-color .3s; }
+    #active-alert.has-cue { border-width: 2px; }
+    .alert-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .alert-panel-body { padding: 16px 20px 18px; }
+    .alert-type-badge { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 3px; }
+    .alert-type-badge.info    { background: rgba(59,130,246,.2);  color: #93c5fd; }
+    .alert-type-badge.warning { background: rgba(245,158,11,.2);  color: #fcd34d; }
+    .alert-type-badge.urgent  { background: rgba(239,68,68,.2);   color: #fca5a5; }
+    .alert-elapsed { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .alert-title { font-size: clamp(20px, 4vw, 36px); font-weight: bold; line-height: 1.15; margin-bottom: 6px; }
+    .alert-message { font-size: 15px; color: #bbb; margin-bottom: 10px; }
+    .alert-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .alert-tc-badge { font-size: 11px; letter-spacing: 1px; color: var(--muted); background: var(--surface2); padding: 3px 8px; border-radius: 3px; }
+    .role-tag { background: var(--border); border-radius: 3px; padding: 2px 8px; font-size: 11px; }
+
+    /* Urgent pulse */
+    @keyframes urgent-pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+    #active-alert.urgent { animation: urgent-pulse 1.2s ease-in-out infinite; }
+
+    /* Next cue strip */
+    #next-cue-strip { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-radius: 7px; border: 1px dashed var(--border); font-size: 13px; margin-bottom: 12px; }
+    #next-cue-strip.hidden { display: none; }
+    .next-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); flex-shrink: 0; }
+    .next-title { flex: 1; font-weight: bold; }
+    .next-tc { font-size: 11px; color: var(--muted); flex-shrink: 0; letter-spacing: 1px; }
+    .next-countdown { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: var(--surface2); color: var(--accent); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+    #warn-banner { display: none; background: rgba(245,158,11,.13); border: 1px solid var(--accent); border-radius: 6px; padding: 9px 16px; margin-bottom: 10px; text-align: center; font-size: 13px; }
+    #warn-banner.show { display: block; }
+    #no-cue { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; }
+
+    /* ── FLASH ──────────────────────────────────────────────────────── */
+    #flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; z-index: 200; display: flex; align-items: center; justify-content: center; }
+    #flash.show { opacity: 1; }
+    #flash-inner { background: rgba(0,0,0,.9); border-radius: 12px; padding: 30px 44px; text-align: center; border: 2px solid var(--accent); max-width: 580px; }
+    #flash-title { font-size: 30px; font-weight: bold; }
+    #flash-msg { margin-top: 8px; font-size: 17px; color: #ccc; }
+    #flash-roles { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── MODAL ──────────────────────────────────────────────────────── */
+    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
+    #modal-overlay.show { display: flex; }
+    #modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+    #modal h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 18px; }
+    .form-row { margin-bottom: 13px; }
+    .form-row label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 10px; border-radius: 5px; font-family: inherit; font-size: 13px;
+    }
+    .form-row textarea { resize: vertical; min-height: 60px; }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--accent); }
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ── ADMIN ──────────────────────────────────────────────────────── */
+    .section { margin-bottom: 28px; }
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .section-header h2 { font-size: 13px; font-weight: normal; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0; flex-shrink: 0; }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    select.admin-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 5px; font-family: inherit; font-size: 12px; min-width: 160px; }
+
+    /* Simulator */
+    .sim-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sim-controls input[type=text] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 5px; font-family: inherit; width: 120px; font-size: 13px; }
+    #sim-state { font-size: 11px; color: var(--muted); }
+
+    /* Cue table */
+    .cue-table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: middle; }
+    th { background: var(--surface2); color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    td.actions { white-space: nowrap; }
+    .color-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 4px; }
+    .badge { border-radius: 3px; padding: 2px 6px; font-size: 10px; }
+    .badge-info { background: rgba(59,130,246,.2); color: #93c5fd; }
+    .badge-warning { background: rgba(245,158,11,.2); color: #fcd34d; }
+    .badge-urgent { background: rgba(239,68,68,.2); color: #fca5a5; }
+
+    /* ── BUTTONS ────────────────────────────────────────────────────── */
+    .btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px; transition: background .12s; white-space: nowrap; }
+    .btn:hover { background: var(--border); }
+    .btn-primary { border-color: var(--green); color: var(--green); }
+    .btn-danger { border-color: var(--red); color: var(--red); }
+    .btn-accent { border-color: var(--accent); color: var(--accent); }
+    .btn-small { padding: 3px 9px; font-size: 11px; }
+    .btn-icon { padding: 3px 7px; font-size: 13px; }
+
+    /* ── MONITOR ────────────────────────────────────────────────────── */
+
+    /* ── MISC ───────────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .empty-hint { color: var(--muted); font-size: 12px; padding: 20px 0; }
+    .csv-hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+    /* ── SETTINGS PANEL ─────────────────────────────────────────────── */
+    #settings-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:400; }
+    #settings-backdrop.show { display:block; }
+    #settings-panel {
+      position:fixed; top:0; right:-420px; width:400px; max-width:95vw; height:100vh;
+      background:var(--surface); border-left:1px solid var(--border);
+      z-index:401; overflow-y:auto; transition:right .25s ease; padding:0;
+    }
+    #settings-panel.show { right:0; }
+    .sp-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
+    .sp-header h2 { font-size:14px; font-weight:normal; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0; }
+    .sp-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px 8px; }
+    .sp-close:hover { color:var(--text); }
+    .sp-section { padding:16px 20px; border-bottom:1px solid var(--border); }
+    .sp-section h3 { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 14px; }
+    .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
+    .sp-row:last-child { margin-bottom:0; }
+    .sp-label { font-size:12px; color:var(--text); flex:1; }
+    .sp-hint { font-size:10px; color:var(--muted); display:block; margin-top:2px; }
+    .sp-row input[type=range] { width:110px; accent-color:var(--accent); }
+    .sp-row select { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
+    .sp-row input[type=text], .sp-row textarea { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
+    .sp-row textarea { width:100%; resize:vertical; min-height:48px; }
+    /* Toggle switch */
+    .toggle { position:relative; width:36px; height:20px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:10px; cursor:pointer; transition:.2s; }
+    .toggle-slider:before { content:''; position:absolute; height:14px; width:14px; left:3px; top:3px; background:var(--muted); border-radius:50%; transition:.2s; }
+    .toggle input:checked + .toggle-slider { background:var(--accent); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(16px); background:#fff; }
+    /* Network URL box */
+    .url-box { background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:8px 10px; font-size:12px; letter-spacing:.5px; word-break:break-all; }
+    .url-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .url-item:last-child { margin-bottom:0; }
+    .url-item code { flex:1; color:var(--accent); font-size:12px; }
+    /* Gear button in nav */
+    #btn-settings { margin-left:auto; }
+  </style>
+</head>
+<body>
+
+<!-- ── STATUS BAR ──────────────────────────────────────────────────────── -->
+<div id="status-bar">
+  <span id="ws-dot"></span>
+  <span id="ws-status">Verbinde...</span>
+  <div id="role-selector-bar">
+    <label for="role-select">Rolle:</label>
+    <select id="role-select" onchange="changeRole(this.value)">
+      <option value="all">Alle</option>
+    </select>
+  </div>
+  <span id="tc-display">--:--:--:--</span>
+</div>
+
+<!-- ── NAV ─────────────────────────────────────────────────────────────── -->
+<nav>
+  <button class="active" data-view="live" onclick="showView('live',this)">Live</button>
+  <button data-view="admin" onclick="showView('admin',this)">Admin</button>
+  <button id="btn-settings" onclick="openSettings()" title="Einstellungen">⚙</button>
+</nav>
+
+<!-- ── SETTINGS BACKDROP ───────────────────────────────────────────────── -->
+<div id="settings-backdrop" onclick="closeSettings()"></div>
+
+<!-- ── SETTINGS PANEL ─────────────────────────────────────────────────── -->
+<div id="settings-panel">
+  <div class="sp-header">
+    <h2>Einstellungen</h2>
+    <button class="sp-close" onclick="closeSettings()">✕</button>
+  </div>
+
+  <!-- Anzeige -->
+  <div class="sp-section">
+    <h3>Live-Ansicht</h3>
+    <div class="sp-row">
+      <div class="sp-label">Flash-Dauer
+        <span class="sp-hint">Wie lange der Cue-Overlay sichtbar bleibt</span>
+      </div>
+      <span id="flash-dur-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
+      <input type="range" min="1000" max="8000" step="500" id="s-flash-dur" oninput="onSettingChange()" />
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Nächsten Cue anzeigen
+        <span class="sp-hint">Teaser für den folgenden Cue in der Live-Ansicht</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-show-next" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Frames anzeigen
+        <span class="sp-hint">TC-Format: HH:MM:SS:FF statt HH:MM:SS</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-show-frames" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Schriftgröße Live-TC</div>
+      <select id="s-live-font" onchange="onSettingChange()">
+        <option value="small">Klein</option>
+        <option value="normal">Normal</option>
+        <option value="large">Groß</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <div class="sp-section">
+    <h3>Audio</h3>
+    <div class="sp-row">
+      <div class="sp-label">Master-Lautstärke</div>
+      <span id="master-vol-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
+      <input type="range" min="0" max="1" step="0.05" id="s-master-vol" oninput="onSettingChange()" />
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Vorwarnung-Sound
+        <span class="sp-hint">Leiser Beep vor jedem Cue</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-warn-sound" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Sounds testen</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-small" onclick="playSynth('beep', masterVolume())">Beep</button>
+        <button class="btn btn-small" onclick="playSynth('double-beep', masterVolume())">2×</button>
+        <button class="btn btn-small" onclick="playSynth('chime', masterVolume())">Chime</button>
+        <button class="btn btn-small" onclick="playSynth('buzz', masterVolume())">Buzz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engine -->
+  <div class="sp-section">
+    <h3>Engine</h3>
+    <div class="sp-row">
+      <div class="sp-label">Framerate
+        <span class="sp-hint">Frames pro Sekunde des TC-Signals</span>
+      </div>
+      <select id="s-fps" onchange="onFpsChange(this.value)">
+        <option value="24">24 fps</option>
+        <option value="25" selected>25 fps</option>
+        <option value="29.97">29.97 fps</option>
+        <option value="30">30 fps</option>
+      </select>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Auto-Reset bei Stop
+        <span class="sp-hint">Cues zurücksetzen wenn Simulator gestoppt wird</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-auto-reset" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- Show-Einstellungen -->
+  <div class="sp-section">
+    <h3>Show-Einstellungen</h3>
+    <div class="sp-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div class="sp-label">Rollen
+        <span class="sp-hint">Eine Rolle pro Zeile oder kommagetrennt</span>
+      </div>
+      <textarea id="s-roles" rows="3" placeholder="buehne&#10;licht&#10;ton&#10;regie" onblur="saveShowSettings()"></textarea>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Fallback-Modus
+        <span class="sp-hint">Was passiert wenn das TC-Signal aussetzt</span>
+      </div>
+      <select id="s-fallback" onchange="saveShowSettings()">
+        <option value="stop">Stop</option>
+        <option value="continue">Weiterlaufen</option>
+        <option value="loop">Loop</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TC Input -->
+  <div class="sp-section">
+    <h3>TC Input <span id="tc-source-status" style="color:var(--green);font-size:10px;margin-left:6px;"></span></h3>
+    <div class="sp-row">
+      <div class="sp-label">Quelle</div>
+      <select id="tc-source-select" onchange="onTcSourceChange(this.value)">
+        <option value="simulator">Simulator</option>
+        <option value="browser-ltc">Browser LTC (Audio)</option>
+        <option value="browser-mtc">Browser MTC (Web MIDI / USB)</option>
+        <option value="rtpmidi">AppleMIDI / rtpMIDI (Netzwerk)</option>
+        <option value="osc">OSC Timecode (UDP)</option>
+        <option value="server-ltc">Server LTC (Raspberry Pi)</option>
+      </select>
+    </div>
+    <div id="audio-device-group" style="display:none;">
+      <div class="sp-row" style="margin-top:8px;">
+        <div class="sp-label">Audiointerface</div>
+        <select id="audio-device-select" onchange="onAudioDeviceChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:180px;">
+          <option value="">– Zugriff erlauben –</option>
+        </select>
+      </div>
+      <div class="sp-row">
+        <div class="sp-label">Kanal</div>
+        <select id="audio-channel-select" onchange="onAudioChannelChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;">
+          <option value="left">Links (L)</option>
+          <option value="right">Rechts (R)</option>
+          <option value="mix">Mix (L+R)</option>
+        </select>
+      </div>
+      <div id="audio-start-group" class="sp-row">
+        <div class="sp-label"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" onclick="startBrowserLTC()">▶ LTC starten</button>
+          <button class="btn btn-danger btn-small" onclick="stopBrowserLTC()">■ Stoppen</button>
+        </div>
+      </div>
+    </div>
+    <div id="ltc-monitor" style="display:none;margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--muted);">Pegel</span>
+        <canvas id="level-meter" width="160" height="10" style="border-radius:2px;background:#111;"></canvas>
+        <span id="ltc-decode-status" style="font-size:11px;padding:2px 8px;border-radius:3px;background:#111;color:var(--muted);">Kein Signal</span>
+        <span id="ltc-decoded-tc" style="font-size:12px;font-weight:bold;letter-spacing:2px;color:var(--accent);"></span>
+      </div>
+    </div>
+
+    <!-- Browser MTC (Web MIDI) -->
+    <div id="midi-device-group" style="display:none;margin-top:8px;">
+      <div class="sp-row">
+        <div class="sp-label">MIDI-Gerät</div>
+        <select id="midi-device-select" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+          <option value="">– Zugriff erlauben –</option>
+        </select>
+      </div>
+      <div class="sp-row" style="margin-top:6px;">
+        <div class="sp-label"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" onclick="startBrowserMTC()">▶ MTC starten</button>
+          <button class="btn btn-danger btn-small" onclick="stopBrowserMTC()">■ Stoppen</button>
+        </div>
+      </div>
+    </div>
+    <div id="mtc-monitor" style="display:none;margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span id="mtc-decode-status" style="font-size:11px;padding:2px 8px;border-radius:3px;background:#111;color:var(--muted);">Kein Signal</span>
+        <span id="mtc-decoded-tc" style="font-size:12px;font-weight:bold;letter-spacing:2px;color:var(--accent);"></span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;">
+        Empfängt MTC Quarter-Frame Nachrichten. Funktioniert auch mit AppleMIDI-Geräten via macOS IAC-Treiber.
+      </div>
+    </div>
+
+    <!-- rtpMIDI / AppleMIDI -->
+    <div id="rtpmidi-group" style="display:none;margin-top:8px;">
+      <div class="sp-row">
+        <div class="sp-label">Port</div>
+        <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535"
+          style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+      </div>
+      <div class="sp-row">
+        <div class="sp-label">Session-Name</div>
+        <input type="text" id="rtpmidi-name" value="TC Cue System"
+          style="width:160px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+      </div>
+      <div class="sp-row" style="margin-top:6px;">
+        <div class="sp-label"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" onclick="startRtpMidi()">▶ Starten</button>
+          <button class="btn btn-danger btn-small" onclick="stopRtpMidi()">■ Stoppen</button>
+        </div>
+      </div>
+      <div id="rtpmidi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
+        Status: –
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Verbinde dein DAW (Logic, Ableton, QLab…) per Netzwerk-MIDI. macOS: System &gt; MIDI-Studio &gt; Netzwerk &gt; Gerät hinzufügen.
+      </div>
+    </div>
+
+    <!-- OSC Timecode -->
+    <div id="osc-group" style="display:none;margin-top:8px;">
+      <div class="sp-row">
+        <div class="sp-label">UDP-Port</div>
+        <input type="number" id="osc-port" value="9000" min="1024" max="65535"
+          style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+      </div>
+      <div class="sp-row" style="margin-top:6px;">
+        <div class="sp-label"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" onclick="startOsc()">▶ Starten</button>
+          <button class="btn btn-danger btn-small" onclick="stopOsc()">■ Stoppen</button>
+        </div>
+      </div>
+      <div id="osc-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
+        Status: –
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Akzeptiert: <code style="color:var(--accent)">/tc "HH:MM:SS:FF"</code><br>
+        Adressen: /tc · /timecode · /clock/tc · /mtc · /smpte<br>
+        Format: String oder 4 Int-Args (H M S F)
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio-Dateien -->
+  <div class="sp-section">
+    <h3>Audio-Dateien</h3>
+    <div class="sp-row" style="flex-wrap:wrap;gap:8px;">
+      <input type="file" id="audio-upload-file" accept=".mp3,.wav,.ogg,.m4a,.aac" style="font-size:11px;color:var(--muted);flex:1;min-width:0;" />
+      <button class="btn btn-small btn-accent" onclick="uploadAudioFile()">Hochladen</button>
+    </div>
+    <pre id="audio-upload-feedback" style="font-size:11px;color:var(--green);margin-top:4px;min-height:14px;"></pre>
+    <div id="audio-file-list" style="font-size:12px;color:var(--muted);margin-top:4px;">Lade…</div>
+  </div>
+
+  <!-- Netzwerk -->
+  <div class="sp-section">
+    <h3>Netzwerk</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Server-URLs für Geräte im gleichen WLAN:</p>
+    <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
+    <div style="margin-top:10px;">
+      <p style="font-size:11px;color:var(--muted);">Live-View mit Rollenfilter direkt aufrufen:</p>
+      <div id="network-role-urls" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div style="padding:16px 20px;">
+    <button class="btn btn-small" onclick="resetAllSettings()" style="color:var(--red);border-color:var(--red);">Einstellungen zurücksetzen</button>
+  </div>
+</div>
+
+<!-- ── FLASH ───────────────────────────────────────────────────────────── -->
+<div id="flash">
+  <div id="flash-inner">
+    <div id="flash-title"></div>
+    <div id="flash-msg"></div>
+    <div id="flash-roles"></div>
+  </div>
+</div>
+
+<!-- ── MODAL: Cue bearbeiten ───────────────────────────────────────────── -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal">
+    <h3 id="modal-title">Cue</h3>
+    <input type="hidden" id="f-cue-id" />
+    <div class="form-2col">
+      <div class="form-row">
+        <label>TC (HH:MM:SS:FF)</label>
+        <input id="f-tc" type="text" placeholder="00:01:23:12" />
+      </div>
+      <div class="form-row">
+        <label>Farbe</label>
+        <input id="f-color" type="color" value="#f59e0b" style="height:36px;padding:2px;" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Titel</label>
+      <input id="f-title" type="text" placeholder="Szene 3 beginnt" />
+    </div>
+    <div class="form-row">
+      <label>Nachricht</label>
+      <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
+    </div>
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Alert-Typ</label>
+        <select id="f-alert">
+          <option value="info">Info</option>
+          <option value="warning">Warning</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Vorwarnung (Sekunden)</label>
+        <input id="f-warn" type="number" min="0" max="120" value="10" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Zielrollen (kommagetrennt)</label>
+      <input id="f-roles" type="text" placeholder="buehne, licht, ton" />
+    </div>
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Audio</label>
+        <select id="f-audio-type" onchange="onAudioTypeChange(this.value)">
+          <option value="none">Kein Sound</option>
+          <option value="beep">Beep</option>
+          <option value="double-beep">Double-Beep</option>
+          <option value="chime">Chime</option>
+          <option value="buzz">Buzz (Urgent)</option>
+          <option value="file">Datei…</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Lautstärke</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="f-audio-vol" type="range" min="0" max="1" step="0.05" value="0.8" style="flex:1;" />
+          <span id="f-audio-vol-val" style="font-size:11px;color:var(--muted);width:28px;">80%</span>
+        </div>
+      </div>
+    </div>
+    <div id="f-audio-file-row" class="form-row" style="display:none;">
+      <label>Audio-Datei</label>
+      <select id="f-audio-file" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;">
+        <option value="">– Laden… –</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-small" onclick="previewAudio()" title="Sound testen">▶ Test</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveCue()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
+<div id="view-live" class="view active">
+  <div id="live-tc">--:--:--:--</div>
+  <div id="live-show-name">–</div>
+  <div id="warn-banner"></div>
+
+  <!-- Persistent active alert -->
+  <div id="active-alert">
+    <div id="no-cue">Warte auf Timecode…</div>
+  </div>
+
+  <!-- Next cue strip -->
+  <div id="next-cue-strip" class="hidden">
+    <span class="next-label">Nächster</span>
+    <span class="next-title" id="next-title">–</span>
+    <span class="next-tc" id="next-tc-val"></span>
+    <span class="next-countdown" id="next-countdown"></span>
+  </div>
+</div>
+
+<!-- ── ADMIN VIEW ──────────────────────────────────────────────────────── -->
+<div id="view-admin" class="view">
+
+  <!-- Shows -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Show</h2>
+      <select class="admin-select" id="show-select" onchange="selectShow(this.value)"></select>
+      <div class="toolbar">
+        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
+        <button class="btn" onclick="exportCurrentShow()" title="Show als JSON exportieren">Exportieren ↓</button>
+        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
+          Importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+        </label>
+      </div>
+    </div>
+    <div id="import-feedback" style="font-size:11px;margin-top:6px;"></div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Simulator -->
+  <div class="section" id="simulator-section">
+    <div class="section-header"><h2>Simulator</h2><span id="sim-state"></span></div>
+    <div class="sim-controls">
+      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
+      <button class="btn" onclick="simPause()">⏸ Pause</button>
+      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
+      <input type="text" id="seek-input" placeholder="00:00:00:00" />
+      <button class="btn" onclick="simSeek()">Seek →</button>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Cuelisten -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Cuelist</h2>
+      <select class="admin-select" id="cuelist-select" onchange="selectCuelist(this.value)"></select>
+      <div class="toolbar">
+        <button class="btn btn-primary" id="btn-activate" onclick="activateCuelist()">Aktivieren</button>
+        <button class="btn btn-accent" onclick="openNewCuelistDialog()">+ Neue Liste</button>
+      </div>
+    </div>
+
+    <!-- CSV Import -->
+    <details style="margin-bottom:14px;">
+      <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none; padding:4px 0;">CSV Import</summary>
+      <div style="margin-top:10px;">
+        <div class="toolbar" style="margin-bottom:6px;">
+          <input type="file" id="csv-file" accept=".csv,.txt" style="font-size:12px;color:var(--muted);" />
+          <button class="btn btn-accent" onclick="importCSV()">Importieren</button>
+          <button class="btn" onclick="downloadCSVTemplate()">Vorlage ↓</button>
+        </div>
+        <p class="csv-hint">
+          Format: <code>tc,title,message,targetRoles,alertType,warnOffsetSec,color</code><br>
+          Rollen mit Semikolon trennen: <code>buehne;licht</code> · Farbe optional (Standard: #f59e0b)
+        </p>
+        <pre id="csv-feedback" style="font-size:11px;color:var(--green);margin-top:6px;"></pre>
+      </div>
+    </details>
+
+    <!-- Cue-Tabelle -->
+    <div style="margin-bottom:10px;">
+      <button class="btn btn-primary btn-small" onclick="openCueModal(null)">+ Cue hinzufügen</button>
+    </div>
+    <div class="cue-table-wrap" id="cue-table-wrap">
+      <p class="empty-hint">Keine Cuelist ausgewählt.</p>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════════════
+let ws, reconnectTimer;
+let currentRole = new URLSearchParams(location.search).get('role') || 'all';
+let currentShowId = null;
+let currentCuelistId = null;
+let allShows = [];
+let allCuelists = [];
+
+// ════════════════════════════════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════════════════════════════════
+const SETTINGS_KEY = 'tc-cue-settings';
+const SETTING_DEFAULTS = {
+  flashDuration:   3500,
+  showNextCue:     true,
+  showFrames:      true,
+  liveFontSize:    'normal',
+  masterVol:       1.0,
+  warnSoundEnabled: true,
+  autoResetOnStop: true,
+};
+
+function loadSettings() {
+  try { return { ...SETTING_DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch { return { ...SETTING_DEFAULTS }; }
+}
+
+function saveSettings() {
+  const s = getCurrentSettingsFromUI();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  applySettings(s);
+}
+
+function getCurrentSettingsFromUI() {
+  return {
+    flashDuration:    parseInt(document.getElementById('s-flash-dur').value),
+    showNextCue:      document.getElementById('s-show-next').checked,
+    showFrames:       document.getElementById('s-show-frames').checked,
+    liveFontSize:     document.getElementById('s-live-font').value,
+    masterVol:        parseFloat(document.getElementById('s-master-vol').value),
+    warnSoundEnabled: document.getElementById('s-warn-sound').checked,
+    autoResetOnStop:  document.getElementById('s-auto-reset').checked,
+  };
+}
+
+function applySettings(s) {
+  // Flash duration is read at fire-time from flashTimer
+  // Next cue visibility
+  const strip = document.getElementById('next-cue-strip');
+  if (strip && !s.showNextCue) strip.className = 'hidden';
+  // Live TC font size
+  const liveTc = document.getElementById('live-tc');
+  liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(24px,4vw,40px)' : s.liveFontSize === 'large' ? 'clamp(56px,12vw,120px)' : '';
+  // TC format label update for current display
+  updateTcDisplayFormat(s.showFrames);
+}
+
+function updateTcDisplayFormat(showFrames) {
+  // Applied on next TC_UPDATE — flag is read in handleEvent
+  window._showFrames = showFrames;
+}
+
+function masterVolume() {
+  return parseFloat(document.getElementById('s-master-vol')?.value ?? '1');
+}
+
+function openSettings() {
+  const s = loadSettings();
+  // Populate UI
+  document.getElementById('s-flash-dur').value  = s.flashDuration;
+  document.getElementById('flash-dur-val').textContent = (s.flashDuration / 1000).toFixed(1) + 's';
+  document.getElementById('s-show-next').checked   = s.showNextCue;
+  document.getElementById('s-show-frames').checked = s.showFrames;
+  document.getElementById('s-live-font').value     = s.liveFontSize;
+  document.getElementById('s-master-vol').value    = s.masterVol;
+  document.getElementById('master-vol-val').textContent = Math.round(s.masterVol * 100) + '%';
+  document.getElementById('s-warn-sound').checked  = s.warnSoundEnabled;
+  document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
+
+  // Show settings
+  const show = allShows.find(s => s.id === currentShowId);
+  if (show) {
+    document.getElementById('s-roles').value    = (show.roles || []).join('\n');
+    document.getElementById('s-fallback').value = show.fallbackMode || 'stop';
+    document.getElementById('s-fps').value      = String(show.fps || 25);
+  }
+
+  // TC source + audio files
+  restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
+  refreshAudioFileList();
+  loadNetworkInfo();
+
+  document.getElementById('settings-panel').classList.add('show');
+  document.getElementById('settings-backdrop').classList.add('show');
+}
+
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('show');
+  document.getElementById('settings-backdrop').classList.remove('show');
+}
+
+function onSettingChange() {
+  // Update live labels
+  const dur = parseInt(document.getElementById('s-flash-dur').value);
+  document.getElementById('flash-dur-val').textContent = (dur / 1000).toFixed(1) + 's';
+  const vol = parseFloat(document.getElementById('s-master-vol').value);
+  document.getElementById('master-vol-val').textContent = Math.round(vol * 100) + '%';
+  saveSettings();
+}
+
+async function onFpsChange(val) {
+  const fps = parseFloat(val);
+  await api('POST', '/api/engine/fps', { fps }).catch(() => {});
+  // Also save to show
+  const show = allShows.find(s => s.id === currentShowId);
+  if (show) await api('PUT', `/api/shows/${currentShowId}`, { ...show, fps }).catch(() => {});
+}
+
+async function saveShowSettings() {
+  const show = allShows.find(s => s.id === currentShowId);
+  if (!show) return;
+  const rolesRaw = document.getElementById('s-roles').value;
+  const roles = rolesRaw.split(/[\n,]+/).map(r => r.trim()).filter(Boolean);
+  const fallbackMode = document.getElementById('s-fallback').value;
+  const updated = { ...show, roles, fallbackMode };
+  await api('PUT', `/api/shows/${currentShowId}`, updated).catch(() => {});
+  const idx = allShows.findIndex(s => s.id === currentShowId);
+  if (idx !== -1) allShows[idx] = updated;
+}
+
+async function loadNetworkInfo() {
+  const data = await api('GET', '/api/network').catch(() => ({ urls: [], ips: [] }));
+  const show = allShows.find(s => s.id === currentShowId);
+  const roles = show?.roles || [];
+
+  const urlsEl = document.getElementById('network-urls');
+  if (!data.urls.length) {
+    urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Keine externen IPs gefunden</span>';
+  } else {
+    urlsEl.innerHTML = data.urls.map(url => `
+      <div class="url-item">
+        <code>${url}</code>
+        <button class="btn btn-small" onclick="copyToClipboard('${url}')">Kopieren</button>
+      </div>`).join('');
+  }
+
+  const rolesEl = document.getElementById('network-role-urls');
+  if (data.urls.length && roles.length) {
+    rolesEl.innerHTML = roles.flatMap(role =>
+      data.urls.map(url => `
+        <div class="url-item" style="margin-bottom:4px;">
+          <code style="font-size:10px;">${url}?role=${role}</code>
+          <button class="btn btn-small" onclick="copyToClipboard('${url}?role=${role}')">↗</button>
+        </div>`)
+    ).join('');
+  } else {
+    rolesEl.innerHTML = '<span style="color:var(--muted);font-size:11px;">Rollen in Show-Einstellungen definieren</span>';
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const old = event.target.textContent;
+    event.target.textContent = '✓';
+    setTimeout(() => event.target.textContent = old, 1500);
+  });
+}
+
+function resetAllSettings() {
+  if (!confirm('Alle Einstellungen zurücksetzen?')) return;
+  localStorage.removeItem(SETTINGS_KEY);
+  openSettings();
+  applySettings(SETTING_DEFAULTS);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ════════════════════════════════════════════════════════════════════════════
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'admin') loadAdmin();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// WEBSOCKET
+// ════════════════════════════════════════════════════════════════════════════
+function connect() {
+  ws = new WebSocket(`ws://${location.host}?role=${currentRole}`);
+  ws.onopen  = () => { setWsStatus(true);  clearTimeout(reconnectTimer); };
+  ws.onclose = () => { setWsStatus(false); reconnectTimer = setTimeout(connect, 2000); };
+  ws.onerror = () => ws.close();
+  ws.onmessage = e => handleEvent(JSON.parse(e.data));
+}
+
+function setWsStatus(ok) {
+  document.getElementById('ws-dot').className = ok ? 'connected' : '';
+  document.getElementById('ws-status').textContent = ok ? `Verbunden (${currentRole})` : 'Getrennt – verbinde…';
+}
+
+function changeRole(role) {
+  currentRole = role;
+  if (ws) ws.close();
+  // url param update (no reload)
+  const u = new URL(location);
+  if (role === 'all') u.searchParams.delete('role');
+  else u.searchParams.set('role', role);
+  history.replaceState(null, '', u);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EVENT HANDLING
+// ════════════════════════════════════════════════════════════════════════════
+let flashTimer;
+
+function handleEvent(evt) {
+  const tc = evt.tc;
+  const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
+  if (evt.type === 'TC_UPDATE') {
+    document.getElementById('tc-display').textContent = displayTc;
+    document.getElementById('live-tc').textContent = displayTc;
+    renderLiveCues(evt.currentCue, evt.nextCue, tc);
+    if (document.getElementById('show-tc-log').checked) logAppend('tc', tc, null);
+  }
+  if (evt.type === 'CUE_FIRE') {
+    playCueAudio(evt.cue);
+    showActiveAlert(evt.cue);
+    showFlash(evt.cue);
+    hideWarning();
+    logAppend('fire', tc, evt.cue);
+  }
+  if (evt.type === 'CUE_WARNING') {
+    const s = loadSettings();
+    if (s.warnSoundEnabled) playCueWarningAudio(evt.cue);
+    showWarning(evt.cue, evt.secondsUntil);
+    logAppend('warn', tc, evt.cue, evt.secondsUntil);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// LIVE VIEW
+// ════════════════════════════════════════════════════════════════════════════
+let _alertFiredAt = null;
+let _elapsedInterval = null;
+let _lastCurrentCue = null;
+let _lastNextCue = null;
+let _lastTcFrames = 0;   // updated on TC_UPDATE for next-cue countdown
+
+function renderLiveCues(cur, next, tcString) {
+  _lastCurrentCue = cur;
+  _lastNextCue = next;
+
+  const panel = document.getElementById('active-alert');
+
+  if (!cur) {
+    panel.className = '';
+    panel.innerHTML = '<div id="no-cue">Warte auf Timecode…</div>';
+    document.getElementById('next-cue-strip').className = 'hidden';
+    return;
+  }
+
+  panel.className = 'has-cue' + (cur.alertType === 'urgent' ? ' urgent' : '');
+  panel.style.borderColor = cur.color;
+  panel.style.background  = cur.color + '10';
+
+  const roles = (cur.targetRoles || []).map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
+  panel.innerHTML = `
+    <div class="alert-panel-header" style="background:${cur.color}18;">
+      <span style="color:${cur.color};font-weight:bold;letter-spacing:1px;">● AKTUELLER CUE</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="alert-type-badge ${cur.alertType}">${cur.alertType.toUpperCase()}</span>
+        <span class="alert-elapsed" id="alert-elapsed"></span>
+      </div>
+    </div>
+    <div class="alert-panel-body">
+      <div class="alert-title" style="color:${cur.color}">${esc(cur.title)}</div>
+      <div class="alert-message">${esc(cur.message)}</div>
+      <div class="alert-meta">
+        <span class="alert-tc-badge">@ ${cur.tc}</span>
+        ${roles}
+      </div>
+    </div>`;
+
+  // Start elapsed counter if this is a new cue
+  if (!_alertFiredAt || _lastCurrentCue?.id !== cur.id) {
+    // firedAt set by showActiveAlert; here we just keep it running
+  }
+  updateElapsed();
+
+  // Next cue strip
+  renderNextStrip(next, tcString);
+}
+
+function renderNextStrip(next, tcString) {
+  const strip = document.getElementById('next-cue-strip');
+  if (!next) { strip.className = 'hidden'; return; }
+  strip.className = '';
+  strip.style.borderColor = next.color + '80';
+  document.getElementById('next-title').textContent = next.title;
+  document.getElementById('next-tc-val').textContent = '@ ' + next.tc;
+  // Countdown calculated from current TC
+  if (tcString) {
+    const nowSec  = tcStringToSeconds(tcString);
+    const cueSec  = tcStringToSeconds(next.tc);
+    const diff    = Math.max(0, Math.round(cueSec - nowSec));
+    document.getElementById('next-countdown').textContent = diff > 0 ? `in ${diff}s` : 'jetzt';
+  }
+}
+
+function tcStringToSeconds(tc) {
+  const p = tc.split(':').map(Number);
+  return p[0]*3600 + p[1]*60 + p[2] + p[3]/25;
+}
+
+function showActiveAlert(cue) {
+  _alertFiredAt = Date.now();
+  clearInterval(_elapsedInterval);
+  _elapsedInterval = setInterval(updateElapsed, 1000);
+}
+
+function updateElapsed() {
+  const el = document.getElementById('alert-elapsed');
+  if (!el || !_alertFiredAt) return;
+  const sec = Math.floor((Date.now() - _alertFiredAt) / 1000);
+  el.textContent = sec < 60 ? `vor ${sec}s` : `vor ${Math.floor(sec/60)}m ${sec%60}s`;
+}
+
+function showFlash(cue) {
+  document.getElementById('flash-title').textContent = cue.title;
+  document.getElementById('flash-title').style.color = cue.color;
+  document.getElementById('flash-msg').textContent   = cue.message;
+  document.getElementById('flash-roles').innerHTML   = cue.targetRoles.map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
+  document.getElementById('flash').style.setProperty('--flash-color', cue.color);
+  document.getElementById('flash-inner').style.borderColor = cue.color;
+  document.getElementById('flash').classList.add('show');
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => document.getElementById('flash').classList.remove('show'), loadSettings().flashDuration);
+}
+
+function showWarning(cue, sec) {
+  const b = document.getElementById('warn-banner');
+  b.textContent = `⚠  In ${sec}s: ${cue.title}`;
+  b.style.borderColor = cue.color;
+  b.classList.add('show');
+}
+function hideWarning() { document.getElementById('warn-banner').classList.remove('show'); }
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// SIMULATOR
+// ════════════════════════════════════════════════════════════════════════════
+async function simStart() {
+  const d = await api('POST', '/api/simulator/start', {});
+  document.getElementById('sim-state').textContent = 'State: ' + d.state + '  |  ' + d.tc;
+}
+async function simPause() {
+  const d = await api('POST', '/api/simulator/pause');
+  document.getElementById('sim-state').textContent = 'State: ' + d.state + '  |  ' + d.tc;
+}
+async function simStop() {
+  const d = await api('POST', '/api/simulator/stop');
+  document.getElementById('sim-state').textContent = 'State: ' + d.state;
+  if (loadSettings().autoResetOnStop) await api('POST', '/api/engine/reset').catch(() => {});
+}
+async function simSeek() {
+  const tc = document.getElementById('seek-input').value.trim() || '00:00:00:00';
+  const d  = await api('POST', '/api/simulator/seek', { tc });
+  document.getElementById('sim-state').textContent = 'Seek → ' + d.tc;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ADMIN – SHOWS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadAdmin() {
+  allShows = await api('GET', '/api/shows');
+  const sel = document.getElementById('show-select');
+  sel.innerHTML = allShows.length
+    ? allShows.map(s => `<option value="${s.id}" ${s.id===currentShowId?'selected':''}>${esc(s.name)} (${s.date})</option>`).join('')
+    : '<option value="">– Keine Shows –</option>';
+  if (!currentShowId && allShows.length) currentShowId = allShows[0].id;
+
+  // Update role selector
+  const roles = [...new Set(allShows.flatMap(s => s.roles))];
+  const roleSel = document.getElementById('role-select');
+  roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r => `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
+  // Also update live-show-name
+  const activeShow = allShows.find(s => s.id === currentShowId);
+  document.getElementById('live-show-name').textContent = activeShow ? activeShow.name : '–';
+
+  if (currentShowId) await loadCuelists(currentShowId);
+  restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
+}
+
+function selectShow(id) {
+  currentShowId = id;
+  const s = allShows.find(x => x.id === id);
+  document.getElementById('live-show-name').textContent = s ? s.name : '–';
+  loadCuelists(id);
+}
+
+function openNewShowDialog() {
+  const name = prompt('Show-Name:');
+  if (!name) return;
+  const date = prompt('Datum (JJJJ-MM-TT):', new Date().toISOString().slice(0,10));
+  if (!date) return;
+  const rolesRaw = prompt('Rollen (kommagetrennt):', 'buehne,licht,ton,regie');
+  const roles = (rolesRaw || '').split(',').map(r => r.trim()).filter(Boolean);
+  api('POST', '/api/shows', { name, date, roles, tcSource: 'simulator', fallbackMode: 'stop', activeCuelistId: null })
+    .then(() => loadAdmin());
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ADMIN – CUELISTS
+// ════════════════════════════════════════════════════════════════════════════
+async function loadCuelists(showId) {
+  allCuelists = await api('GET', `/api/shows/${showId}/cuelists`);
+  const sel = document.getElementById('cuelist-select');
+  sel.innerHTML = allCuelists.length
+    ? allCuelists.map(l => `<option value="${l.id}" ${l.id===currentCuelistId?'selected':''}>${esc(l.name)}${l.isActive?' ✓':''}</option>`).join('')
+    : '<option value="">– Keine Listen –</option>';
+  if (!currentCuelistId && allCuelists.length) currentCuelistId = allCuelists[0].id;
+  else if (!allCuelists.find(l => l.id === currentCuelistId) && allCuelists.length) currentCuelistId = allCuelists[0].id;
+  if (currentCuelistId) {
+    const l = allCuelists.find(x => x.id === currentCuelistId);
+    if (l) renderCueTable(l);
+  } else {
+    document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Cuelist vorhanden.</p>';
+  }
+}
+
+function selectCuelist(id) {
+  currentCuelistId = id;
+  const l = allCuelists.find(x => x.id === id);
+  if (l) renderCueTable(l);
+}
+
+function openNewCuelistDialog() {
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
+  const name = prompt('Name der Cuelist:');
+  if (!name) return;
+  api('POST', '/api/cuelists', { showId: currentShowId, name })
+    .then(l => { currentCuelistId = l.id; loadCuelists(currentShowId); });
+}
+
+async function activateCuelist() {
+  if (!currentCuelistId) return;
+  await api('POST', `/api/cuelists/${currentCuelistId}/activate`);
+  await loadCuelists(currentShowId);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CUE TABLE
+// ════════════════════════════════════════════════════════════════════════════
+function renderCueTable(list) {
+  const wrap = document.getElementById('cue-table-wrap');
+  if (!list.cues || list.cues.length === 0) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Cues. Klicke "+ Cue hinzufügen".</p>';
+    return;
+  }
+  const rows = list.cues.map((c, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td style="font-weight:bold;letter-spacing:1px">${c.tc}</td>
+      <td><span class="color-swatch" style="background:${c.color}"></span>${esc(c.title)}</td>
+      <td style="color:#aaa;max-width:200px">${esc(c.message)}</td>
+      <td>${c.targetRoles.map(r=>`<span class="role-tag">${esc(r)}</span>`).join(' ')}</td>
+      <td><span class="badge badge-${c.alertType}">${c.alertType}</span></td>
+      <td>${c.warnOffsetSec}s</td>
+      <td class="actions">
+        <button class="btn btn-small btn-icon" title="Bearbeiten" onclick="openCueModal('${c.id}')">✎</button>
+        <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deleteCue('${c.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Rollen</th><th>Alert</th><th>Warn</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CUE MODAL
+// ════════════════════════════════════════════════════════════════════════════
+async function openCueModal(cueId) {
+  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  const overlay = document.getElementById('modal-overlay');
+  if (cueId) {
+    const list = allCuelists.find(l => l.id === currentCuelistId);
+    const cue  = list?.cues.find(c => c.id === cueId);
+    if (!cue) return;
+    document.getElementById('modal-title').textContent = 'Cue bearbeiten';
+    document.getElementById('f-cue-id').value    = cue.id;
+    document.getElementById('f-tc').value        = cue.tc;
+    document.getElementById('f-title').value     = cue.title;
+    document.getElementById('f-message').value   = cue.message;
+    document.getElementById('f-alert').value     = cue.alertType;
+    document.getElementById('f-warn').value      = cue.warnOffsetSec;
+    document.getElementById('f-color').value     = cue.color;
+    document.getElementById('f-roles').value     = cue.targetRoles.join(', ');
+    const at = cue.audioType || 'none';
+    document.getElementById('f-audio-type').value = at;
+    document.getElementById('f-audio-vol').value  = cue.audioVolume ?? 0.8;
+    document.getElementById('f-audio-vol-val').textContent = Math.round((cue.audioVolume ?? 0.8) * 100) + '%';
+    onAudioTypeChange(at);
+    if (at === 'file') {
+      await loadAudioFilesIntoSelect();
+      if (cue.audioFile) document.getElementById('f-audio-file').value = cue.audioFile;
+    }
+  } else {
+    document.getElementById('modal-title').textContent = 'Neuer Cue';
+    document.getElementById('f-cue-id').value    = '';
+    document.getElementById('f-tc').value        = '';
+    document.getElementById('f-title').value     = '';
+    document.getElementById('f-message').value   = '';
+    document.getElementById('f-alert').value     = 'info';
+    document.getElementById('f-warn').value      = '10';
+    document.getElementById('f-color').value     = '#f59e0b';
+    document.getElementById('f-roles').value     = '';
+    document.getElementById('f-audio-type').value = 'none';
+    document.getElementById('f-audio-vol').value  = '0.8';
+    document.getElementById('f-audio-vol-val').textContent = '80%';
+    onAudioTypeChange('none');
+  }
+  overlay.classList.add('show');
+  document.getElementById('f-tc').focus();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+async function saveCue() {
+  const id    = document.getElementById('f-cue-id').value;
+  const roles = document.getElementById('f-roles').value.split(',').map(r => r.trim()).filter(Boolean);
+  const audioType = document.getElementById('f-audio-type').value;
+  const body  = {
+    tc:           document.getElementById('f-tc').value.trim(),
+    title:        document.getElementById('f-title').value.trim(),
+    message:      document.getElementById('f-message').value.trim(),
+    alertType:    document.getElementById('f-alert').value,
+    warnOffsetSec: parseInt(document.getElementById('f-warn').value) || 0,
+    color:        document.getElementById('f-color').value,
+    targetRoles:  roles,
+    audioType,
+    audioFile:    audioType === 'file' ? document.getElementById('f-audio-file').value : undefined,
+    audioVolume:  parseFloat(document.getElementById('f-audio-vol').value),
+  };
+  if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
+
+  if (id) {
+    await api('PUT', `/api/cuelists/${currentCuelistId}/cues/${id}`, body);
+  } else {
+    await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body);
+  }
+  closeModal();
+  await reloadCurrentCuelist();
+}
+
+async function deleteCue(cueId) {
+  if (!confirm('Cue wirklich löschen?')) return;
+  await api('DELETE', `/api/cuelists/${currentCuelistId}/cues/${cueId}`);
+  await reloadCurrentCuelist();
+}
+
+async function reloadCurrentCuelist() {
+  const updated = await api('GET', `/api/cuelists/${currentCuelistId}`);
+  const idx = allCuelists.findIndex(l => l.id === currentCuelistId);
+  if (idx !== -1) allCuelists[idx] = updated;
+  renderCueTable(updated);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CSV IMPORT
+// ════════════════════════════════════════════════════════════════════════════
+function downloadCSVTemplate() {
+  const header = 'tc,title,message,targetRoles,alertType,warnOffsetSec,color';
+  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,buehne;licht,warning,10,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,ton;regie,info,15,#3b82f6';
+  const blob = new Blob([header + '\n' + example], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cue-vorlage.csv';
+  a.click();
+}
+
+async function importCSV() {
+  const file = document.getElementById('csv-file').files[0];
+  if (!file) { alert('Keine Datei ausgewählt.'); return; }
+  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  const fb = document.getElementById('csv-feedback');
+
+  const text  = await file.text();
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const header = lines[0].toLowerCase();
+  if (!header.startsWith('tc,')) { fb.style.color='var(--red)'; fb.textContent='Fehler: erste Zeile muss tc,title,... sein'; return; }
+
+  const dataLines = lines.slice(1);
+  let ok = 0, fail = 0;
+  for (const line of dataLines) {
+    const cols = parseCSVLine(line);
+    const [tc, title, message, rolesRaw, alertType, warnRaw, color] = cols;
+    if (!tc || !title) { fail++; continue; }
+    const body = {
+      tc: tc.trim(),
+      title: title.trim(),
+      message: (message || '').trim(),
+      targetRoles: (rolesRaw || '').split(';').map(r => r.trim()).filter(Boolean),
+      alertType: ['info','warning','urgent'].includes(alertType) ? alertType : 'info',
+      warnOffsetSec: parseInt(warnRaw) || 0,
+      color: (color || '#f59e0b').trim(),
+    };
+    try { await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body); ok++; }
+    catch { fail++; }
+  }
+  fb.style.color = fail ? 'var(--accent)' : 'var(--green)';
+  fb.textContent = `Import abgeschlossen: ${ok} Cues importiert${fail ? `, ${fail} Fehler` : ''}.`;
+  await reloadCurrentCuelist();
+}
+
+// Simple CSV line parser (handles quoted fields)
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+let _audioCtx = null;
+
+async function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') await _audioCtx.resume();
+  return _audioCtx;
+}
+
+async function playSynth(type, volume = 0.8) {
+  try {
+    const ctx = await getAudioCtx();
+
+    const play = (freq, startOffset, duration, shape = 'sine') => {
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      const osc = ctx.createOscillator();
+      osc.type = shape;
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      const t0 = ctx.currentTime + startOffset;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(volume, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.05);
+    };
+
+    switch (type) {
+      case 'beep':
+        play(880, 0, 0.18);
+        break;
+      case 'double-beep':
+        play(880, 0,    0.12);
+        play(880, 0.18, 0.12);
+        break;
+      case 'chime':
+        [[523, 0], [659, 0.15], [784, 0.30]].forEach(([f, t]) => play(f, t, 0.5));
+        break;
+      case 'buzz':
+        play(120, 0,    0.15, 'sawtooth');
+        play(120, 0.20, 0.15, 'sawtooth');
+        play(120, 0.40, 0.15, 'sawtooth');
+        break;
+    }
+  } catch (e) {
+    console.warn('[Audio] Synth failed:', e);
+  }
+}
+
+async function playAudioFile(url, volume = 0.8) {
+  try {
+    const audio = new Audio(url);
+    audio.volume = Math.max(0, Math.min(1, volume));
+    await audio.play();
+  } catch (e) {
+    console.warn('[Audio] File playback failed:', e);
+  }
+}
+
+async function playCueAudio(cue) {
+  if (!cue.audioType || cue.audioType === 'none') return;
+  const vol = (cue.audioVolume ?? 0.8) * masterVolume();
+  if (cue.audioType === 'file') {
+    if (cue.audioFile) await playAudioFile(`/audio/${cue.audioFile}`, vol);
+  } else {
+    await playSynth(cue.audioType, vol);
+  }
+}
+
+async function playCueWarningAudio(cue) {
+  if (!cue.audioType || cue.audioType === 'none') return;
+  await playSynth('beep', (cue.audioVolume ?? 0.8) * masterVolume() * 0.5);
+}
+
+// ── Modal: audio type toggle ────────────────────────────────────────────────
+function onAudioTypeChange(val) {
+  document.getElementById('f-audio-file-row').style.display = val === 'file' ? '' : 'none';
+  if (val === 'file') loadAudioFilesIntoSelect();
+}
+
+async function loadAudioFilesIntoSelect() {
+  const files = await api('GET', '/api/audio').catch(() => []);
+  const sel = document.getElementById('f-audio-file');
+  sel.innerHTML = files.length
+    ? files.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${(f.size/1024).toFixed(1)} KB)</option>`).join('')
+    : '<option value="">– Keine Dateien vorhanden –</option>';
+}
+
+function previewAudio() {
+  const type = document.getElementById('f-audio-type').value;
+  const vol  = parseFloat(document.getElementById('f-audio-vol').value);
+  if (type === 'none') return;
+  if (type === 'file') {
+    const file = document.getElementById('f-audio-file').value;
+    if (file) playAudioFile(`/audio/${file}`, vol);
+  } else {
+    playSynth(type, vol);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const volInput = document.getElementById('f-audio-vol');
+  const volLabel = document.getElementById('f-audio-vol-val');
+  if (volInput) volInput.addEventListener('input', () => {
+    volLabel.textContent = Math.round(parseFloat(volInput.value) * 100) + '%';
+  });
+});
+
+// ── Audio file upload ────────────────────────────────────────────────────────
+async function uploadAudioFile() {
+  const fileInput = document.getElementById('audio-upload-file');
+  const fb = document.getElementById('audio-upload-feedback');
+  const file = fileInput.files[0];
+  if (!file) { alert('Keine Datei ausgewählt.'); return; }
+  fb.textContent = 'Lade hoch…';
+  fb.style.color = 'var(--muted)';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    try {
+      const result = await api('POST', '/api/audio', { filename: file.name, data: base64 });
+      fb.style.color = 'var(--green)';
+      fb.textContent = `Hochgeladen: ${result.name}`;
+      fileInput.value = '';
+      refreshAudioFileList();
+    } catch (err) {
+      fb.style.color = 'var(--red)';
+      fb.textContent = 'Fehler beim Hochladen.';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function refreshAudioFileList() {
+  const files = await api('GET', '/api/audio').catch(() => []);
+  const el = document.getElementById('audio-file-list');
+  if (!files.length) { el.textContent = 'Keine Audio-Dateien vorhanden.'; return; }
+  el.innerHTML = files.map(f => `
+    <span style="display:inline-flex;gap:6px;align-items:center;margin-right:12px;margin-bottom:4px;">
+      <button onclick="playAudioFile('/audio/${esc(f.name)}',0.8)" class="btn btn-small btn-icon" title="Abspielen">▶</button>
+      <span>${esc(f.name)} <span style="color:#444">(${(f.size/1024).toFixed(1)} KB)</span></span>
+      <button onclick="deleteAudioFile('${esc(f.name)}')" class="btn btn-small btn-icon btn-danger" title="Löschen">✕</button>
+    </span>`).join('');
+}
+
+async function deleteAudioFile(name) {
+  if (!confirm(`"${name}" löschen?`)) return;
+  await api('DELETE', `/api/audio/${encodeURIComponent(name)}`);
+  refreshAudioFileList();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ════════════════════════════════════════════════════════════════════════════
+async function exportCurrentShow() {
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
+  const res = await fetch(`/api/io/show/${currentShowId}`);
+  if (!res.ok) { alert('Export fehlgeschlagen.'); return; }
+  const blob = await res.blob();
+  const show = allShows.find(s => s.id === currentShowId);
+  const name = (show?.name || 'show').replace(/[^a-z0-9]/gi, '_');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}.json`;
+  a.click();
+}
+
+async function importShow(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fb = document.getElementById('import-feedback');
+  fb.style.color = 'var(--muted)';
+  fb.textContent = 'Importiere…';
+  try {
+    const text = await file.text();
+    const bundle = JSON.parse(text);
+    if (!bundle.show) throw new Error('Ungültiges Format – "show" fehlt.');
+    const result = await api('POST', '/api/io/show', bundle);
+    fb.style.color = 'var(--green)';
+    fb.textContent = `Importiert: "${result.show.name}" mit ${result.cuelists.length} Cuelist(en).`;
+    input.value = '';
+    await loadAdmin();
+  } catch (e) {
+    fb.style.color = 'var(--red)';
+    fb.textContent = 'Fehler: ' + e.message;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TC INPUT / AUDIO INTERFACE
+// ════════════════════════════════════════════════════════════════════════════
+let ltcStream = null;
+let ltcAudioCtx = null;
+let ltcProcessor = null;
+let ltcDecoder = null;
+let levelAnimFrame = null;
+let ltcTickInterval = null;
+let lastDecodedTc = null;
+let lastTcTime = 0;
+
+function onTcSourceChange(val) {
+  document.getElementById('audio-device-group').style.display  = val === 'browser-ltc' ? '' : 'none';
+  document.getElementById('ltc-monitor').style.display         = val === 'browser-ltc' ? '' : 'none';
+  document.getElementById('midi-device-group').style.display   = val === 'browser-mtc' ? '' : 'none';
+  document.getElementById('mtc-monitor').style.display         = val === 'browser-mtc' ? '' : 'none';
+  document.getElementById('rtpmidi-group').style.display       = val === 'rtpmidi'     ? '' : 'none';
+  document.getElementById('osc-group').style.display           = val === 'osc'         ? '' : 'none';
+  document.getElementById('simulator-section').style.display   = val === 'simulator'   ? '' : 'none';
+  if (val !== 'browser-ltc') stopBrowserLTC();
+  if (val === 'browser-ltc') requestAudioDevices();
+  if (val !== 'browser-mtc') stopBrowserMTC();
+  if (val === 'browser-mtc') requestMidiDevices();
+  if (val === 'rtpmidi') loadRtpMidiStatus();
+  if (val === 'osc') loadOscStatus();
+  saveShowTcSettings(val);
+}
+
+async function requestAudioDevices() {
+  try {
+    // Must request permission first, then enumerate with labels
+    const tmp = await navigator.mediaDevices.getUserMedia({ audio: true });
+    tmp.getTracks().forEach(t => t.stop());
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputs = devices.filter(d => d.kind === 'audioinput');
+    const sel = document.getElementById('audio-device-select');
+    sel.innerHTML = inputs.map(d =>
+      `<option value="${esc(d.deviceId)}">${esc(d.label || d.deviceId.slice(0, 20))}</option>`
+    ).join('');
+    // Restore saved device
+    const show = allShows.find(s => s.id === currentShowId);
+    if (show?.audioDevice) sel.value = show.audioDevice;
+  } catch (e) {
+    document.getElementById('tc-source-status').textContent = 'Kein Microfonzugriff';
+  }
+}
+
+function onAudioDeviceChange() { saveShowTcSettings('browser-ltc'); }
+function onAudioChannelChange() { saveShowTcSettings('browser-ltc'); }
+
+async function saveShowTcSettings(source) {
+  if (!currentShowId) return;
+  const show = allShows.find(s => s.id === currentShowId);
+  if (!show) return;
+  const deviceId = document.getElementById('audio-device-select')?.value || undefined;
+  const channel  = document.getElementById('audio-channel-select')?.value || 'left';
+  // Map UI source names to TCSource type
+  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator', 'server-ltc': 'ltc' };
+  await api('PUT', `/api/shows/${currentShowId}`, {
+    ...show, tcSource: tcSourceMap[source] || source,
+    audioDevice: deviceId, audioChannel: channel,
+  }).catch(() => {});
+}
+
+async function startBrowserLTC() {
+  stopBrowserLTC();
+  const deviceId = document.getElementById('audio-device-select').value;
+  const channel  = document.getElementById('audio-channel-select').value;
+  const status   = document.getElementById('ltc-decode-status');
+  status.textContent = 'Verbinde…';
+  status.style.color = 'var(--muted)';
+
+  try {
+    ltcStream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: deviceId ? { exact: deviceId } : undefined, sampleRate: 48000, channelCount: 2, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    ltcAudioCtx = new AudioContext({ sampleRate: 48000 });
+    const source = ltcAudioCtx.createMediaStreamSource(ltcStream);
+
+    // Channel splitter
+    const splitter = ltcAudioCtx.createChannelSplitter(2);
+    source.connect(splitter);
+
+    // Analyser for level meter
+    const analyser = ltcAudioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    if (channel === 'mix') {
+      source.connect(analyser);
+    } else {
+      splitter.connect(analyser, channel === 'right' ? 1 : 0);
+    }
+    drawLevelMeter(analyser);
+
+    // ScriptProcessor for LTC decoding
+    ltcProcessor = ltcAudioCtx.createScriptProcessor(2048, 2, 1);
+    splitter.connect(ltcProcessor, 0, 0);
+    splitter.connect(ltcProcessor, 1, 1);
+
+    ltcDecoder = new LTCDecoder(ltcAudioCtx.sampleRate, 25);
+    ltcDecoder.onTimecode = (tc) => {
+      lastDecodedTc = tc;
+      lastTcTime = Date.now();
+      document.getElementById('ltc-decoded-tc').textContent = tc;
+    };
+
+    const ch = channel;
+    ltcProcessor.onaudioprocess = (e) => {
+      let buf;
+      if (ch === 'mix') {
+        const l = e.inputBuffer.getChannelData(0);
+        const r = e.inputBuffer.getChannelData(1);
+        buf = new Float32Array(l.length);
+        for (let i = 0; i < l.length; i++) buf[i] = (l[i] + r[i]) * 0.5;
+      } else {
+        buf = e.inputBuffer.getChannelData(ch === 'right' ? 1 : 0);
+      }
+      ltcDecoder.process(buf);
+    };
+    ltcProcessor.connect(ltcAudioCtx.destination);
+
+    // Send decoded TC to server at ~25Hz
+    ltcTickInterval = setInterval(() => {
+      if (!lastDecodedTc) return;
+      const age = Date.now() - lastTcTime;
+      const stat = document.getElementById('ltc-decode-status');
+      if (age < 500) {
+        stat.textContent = 'LTC erkannt ✓';
+        stat.style.color = 'var(--green)';
+        fetch('/api/tc/browser-tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: lastDecodedTc }) }).catch(() => {});
+      } else {
+        stat.textContent = 'Kein Signal';
+        stat.style.color = 'var(--muted)';
+      }
+    }, 40);
+
+    document.getElementById('tc-source-status').textContent = 'Läuft';
+  } catch (e) {
+    document.getElementById('tc-source-status').textContent = 'Fehler: ' + e.message;
+    console.error('[LTC]', e);
+  }
+}
+
+function stopBrowserLTC() {
+  if (ltcTickInterval) { clearInterval(ltcTickInterval); ltcTickInterval = null; }
+  if (levelAnimFrame) { cancelAnimationFrame(levelAnimFrame); levelAnimFrame = null; }
+  if (ltcProcessor) { ltcProcessor.disconnect(); ltcProcessor = null; }
+  if (ltcStream) { ltcStream.getTracks().forEach(t => t.stop()); ltcStream = null; }
+  if (ltcAudioCtx) { ltcAudioCtx.close(); ltcAudioCtx = null; }
+  ltcDecoder = null;
+  lastDecodedTc = null;
+  document.getElementById('ltc-decode-status').textContent = 'Gestoppt';
+  document.getElementById('ltc-decode-status').style.color = 'var(--muted)';
+  document.getElementById('ltc-decoded-tc').textContent = '';
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+function drawLevelMeter(analyser) {
+  const canvas = document.getElementById('level-meter');
+  const ctx = canvas.getContext('2d');
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  function draw() {
+    levelAnimFrame = requestAnimationFrame(draw);
+    analyser.getByteTimeDomainData(buf);
+    let max = 0;
+    for (let i = 0; i < buf.length; i++) max = Math.max(max, Math.abs(buf[i] - 128));
+    const level = max / 128;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width * level;
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    grad.addColorStop(0,   '#10b981');
+    grad.addColorStop(0.7, '#f59e0b');
+    grad.addColorStop(1,   '#ef4444');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, canvas.height);
+  }
+  draw();
+}
+
+// Restore TC source settings when a show is loaded
+function restoreTcSourceUI(show) {
+  if (!show) return;
+  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator' };
+  const src = tcSourceMap[show.tcSource] || 'simulator';
+  document.getElementById('tc-source-select').value = src;
+  onTcSourceChange(src);
+  if (show.audioChannel) document.getElementById('audio-channel-select').value = show.audioChannel;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BROWSER MTC (Web MIDI API)
+// ════════════════════════════════════════════════════════════════════════════
+let midiAccess = null;
+let midiActiveInput = null;
+let mtcDecoder = null;
+let mtcTickInterval = null;
+let lastMtcTc = null;
+let lastMtcTime = 0;
+
+async function requestMidiDevices() {
+  if (!navigator.requestMIDIAccess) {
+    document.getElementById('mtc-decode-status').textContent = 'Web MIDI nicht unterstützt';
+    return;
+  }
+  try {
+    midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+    populateMidiDevices();
+    midiAccess.onstatechange = () => populateMidiDevices();
+  } catch (e) {
+    document.getElementById('mtc-decode-status').textContent = 'Kein MIDI-Zugriff: ' + e.message;
+  }
+}
+
+function populateMidiDevices() {
+  const sel = document.getElementById('midi-device-select');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  if (!midiAccess) return;
+  for (const [id, input] of midiAccess.inputs) {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = input.name;
+    sel.appendChild(opt);
+  }
+  if (prev && [...midiAccess.inputs.keys()].includes(prev)) sel.value = prev;
+}
+
+function startBrowserMTC() {
+  stopBrowserMTC();
+  if (!midiAccess) { requestMidiDevices(); return; }
+
+  const sel = document.getElementById('midi-device-select');
+  const inputId = sel.value;
+  if (!inputId) { document.getElementById('mtc-decode-status').textContent = 'Kein Gerät gewählt'; return; }
+
+  midiActiveInput = midiAccess.inputs.get(inputId);
+  if (!midiActiveInput) return;
+
+  mtcDecoder = new BrowserMTCDecoder();
+  mtcDecoder.onTimecode = (tc) => {
+    lastMtcTc = tc;
+    lastMtcTime = Date.now();
+    document.getElementById('mtc-decoded-tc').textContent = tc;
+  };
+
+  midiActiveInput.onmidimessage = (event) => {
+    mtcDecoder.processMidiMessage(Array.from(event.data));
+  };
+
+  // Post to server at ~25Hz (only when fresh TC)
+  mtcTickInterval = setInterval(() => {
+    if (!lastMtcTc) return;
+    const age = Date.now() - lastMtcTime;
+    const stat = document.getElementById('mtc-decode-status');
+    if (age < 500) {
+      stat.textContent = 'MTC erkannt ✓';
+      stat.style.color = 'var(--green)';
+      fetch('/api/tc/midi-tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: lastMtcTc }) }).catch(() => {});
+    } else {
+      stat.textContent = 'Kein Signal';
+      stat.style.color = 'var(--muted)';
+    }
+  }, 40);
+
+  document.getElementById('tc-source-status').textContent = 'Läuft';
+}
+
+function stopBrowserMTC() {
+  if (mtcTickInterval) { clearInterval(mtcTickInterval); mtcTickInterval = null; }
+  if (midiActiveInput) { midiActiveInput.onmidimessage = null; midiActiveInput = null; }
+  mtcDecoder = null;
+  lastMtcTc = null;
+  const stat = document.getElementById('mtc-decode-status');
+  if (stat) { stat.textContent = 'Gestoppt'; stat.style.color = 'var(--muted)'; }
+  const tcEl = document.getElementById('mtc-decoded-tc');
+  if (tcEl) tcEl.textContent = '';
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MTC DECODER (Browser-side Quarter-Frame state machine)
+// ════════════════════════════════════════════════════════════════════════════
+class BrowserMTCDecoder {
+  constructor() {
+    this.pieces = new Array(8).fill(0);
+    this.receivedMask = 0;
+    this.onTimecode = null;
+  }
+
+  processMidiMessage(bytes) {
+    if (!bytes || bytes.length === 0) return;
+    // MTC Quarter Frame
+    if (bytes[0] === 0xF1 && bytes.length >= 2) {
+      this._handleQF(bytes[1]);
+      return;
+    }
+    // Full Frame SysEx: F0 7F <dev> 01 01 <hr> <mn> <sc> <fr> F7
+    if (bytes[0] === 0xF0 && bytes[1] === 0x7F && bytes[3] === 0x01 && bytes[4] === 0x01 && bytes.length >= 10) {
+      const h = bytes[5] & 0x1F, m = bytes[6] & 0x3F, s = bytes[7] & 0x3F, f = bytes[8] & 0x1F;
+      const tc = [h, m, s, f].map(v => String(v).padStart(2, '0')).join(':');
+      this.onTimecode && this.onTimecode(tc);
+    }
+  }
+
+  _handleQF(data) {
+    const type = (data >> 4) & 0x07;
+    const nibble = data & 0x0F;
+    this.pieces[type] = nibble;
+    this.receivedMask |= (1 << type);
+    if (type === 7 && this.receivedMask === 0xFF) {
+      const f = this.pieces[0] | ((this.pieces[1] & 0x01) << 4);
+      const s = this.pieces[2] | ((this.pieces[3] & 0x03) << 4);
+      const m = this.pieces[4] | ((this.pieces[5] & 0x03) << 4);
+      const h = this.pieces[6] | ((this.pieces[7] & 0x01) << 4);
+      const tc = [h, m, s, f].map(v => String(v).padStart(2, '0')).join(':');
+      this.onTimecode && this.onTimecode(tc);
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// rtpMIDI SERVER-SIDE CONTROL
+// ════════════════════════════════════════════════════════════════════════════
+let rtpMidiPollInterval = null;
+
+async function loadRtpMidiStatus() {
+  const data = await api('GET', '/api/midi/status').catch(() => null);
+  if (!data) return;
+  const el = document.getElementById('rtpmidi-status');
+  const r = data.rtpMidi;
+  if (r.running) {
+    const peers = r.peers.length ? r.peers.map(p => p.name || p.address).join(', ') : 'Keine';
+    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · Port ${r.port} · Session: ${esc(r.name)}<br>Verbundene Peers: ${esc(peers)}`;
+  } else {
+    el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
+  }
+}
+
+async function startRtpMidi() {
+  const port = parseInt(document.getElementById('rtpmidi-port').value) || 5004;
+  const name = document.getElementById('rtpmidi-name').value || 'TC Cue System';
+  await api('POST', '/api/midi/rtpmidi/start', { port, name }).catch(() => {});
+  loadRtpMidiStatus();
+  document.getElementById('tc-source-status').textContent = 'Läuft';
+  if (!rtpMidiPollInterval) rtpMidiPollInterval = setInterval(loadRtpMidiStatus, 3000);
+}
+
+async function stopRtpMidi() {
+  if (rtpMidiPollInterval) { clearInterval(rtpMidiPollInterval); rtpMidiPollInterval = null; }
+  await api('POST', '/api/midi/rtpmidi/stop').catch(() => {});
+  loadRtpMidiStatus();
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// OSC TIMECODE SERVER-SIDE CONTROL
+// ════════════════════════════════════════════════════════════════════════════
+async function loadOscStatus() {
+  const data = await api('GET', '/api/midi/status').catch(() => null);
+  if (!data) return;
+  const el = document.getElementById('osc-status');
+  const o = data.osc;
+  if (o.running) {
+    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · UDP Port ${o.port}`;
+  } else {
+    el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
+  }
+}
+
+async function startOsc() {
+  const port = parseInt(document.getElementById('osc-port').value) || 9000;
+  await api('POST', '/api/midi/osc/start', { port }).catch(() => {});
+  loadOscStatus();
+  document.getElementById('tc-source-status').textContent = 'Läuft';
+}
+
+async function stopOsc() {
+  await api('POST', '/api/midi/osc/stop').catch(() => {});
+  loadOscStatus();
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// LTC DECODER (Bi-Phase Mark Code, 25fps)
+// ════════════════════════════════════════════════════════════════════════════
+class LTCDecoder {
+  constructor(sampleRate, fps = 25) {
+    this.halfPeriod = sampleRate / (fps * 80 * 2);
+    this.bits = [];
+    this.lastCrossing = -1;
+    this.lastPolarity = 0;
+    this.pendingHalf = false;
+    this.sampleOffset = 0;
+  }
+
+  process(samples) {
+    for (let i = 0; i < samples.length; i++) {
+      const polarity = samples[i] >= 0 ? 1 : -1;
+      if (polarity !== this.lastPolarity && this.lastPolarity !== 0) {
+        this._onCrossing(this.sampleOffset + i);
+      }
+      this.lastPolarity = polarity;
+    }
+    this.sampleOffset += samples.length;
+  }
+
+  _onCrossing(pos) {
+    if (this.lastCrossing < 0) { this.lastCrossing = pos; return; }
+    const dt = pos - this.lastCrossing;
+    this.lastCrossing = pos;
+    const half = this.halfPeriod;
+
+    if (dt > half * 0.5 && dt < half * 1.6) {
+      // Half-period crossing
+      if (this.pendingHalf) { this._pushBit(1); this.pendingHalf = false; }
+      else { this.pendingHalf = true; }
+    } else if (dt > half * 1.6 && dt < half * 2.8) {
+      // Full-period crossing = bit 0
+      if (this.pendingHalf) this.pendingHalf = false;
+      this._pushBit(0);
+    } else {
+      // Out of range → reset
+      this.pendingHalf = false;
+    }
+  }
+
+  _pushBit(bit) {
+    this.bits.push(bit);
+    if (this.bits.length > 80) this.bits.shift();
+    if (this.bits.length === 80) this._tryDecode();
+  }
+
+  _tryDecode() {
+    // LTC sync word at bits 64-79: 0011111111111101
+    const sync = [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1];
+    for (let i = 0; i < 16; i++) {
+      if (this.bits[64 + i] !== sync[i]) return;
+    }
+    const b = this.bits;
+    const bcd = (start, len) => { let v = 0; for (let i = 0; i < len; i++) v |= b[start+i] << i; return v; };
+    const fr = bcd(8,2)*10 + bcd(0,4);
+    const sc = bcd(24,3)*10 + bcd(16,4);
+    const mn = bcd(40,3)*10 + bcd(32,4);
+    const hr = bcd(56,2)*10 + bcd(48,4);
+    if (fr > 29 || sc > 59 || mn > 59 || hr > 23) return;
+    const tc = [hr,mn,sc,fr].map(v => String(v).padStart(2,'0')).join(':');
+    this.onTimecode(tc);
+  }
+
+  onTimecode(_tc) { /* override */ }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════════════════════
+async function api(method, url, body) {
+  const opts = { method, headers: {} };
+  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`${method} ${url} → ${r.status}`);
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════════════
+// Apply saved settings on startup
+applySettings(loadSettings());
+connect();
+
+// Pre-fill role selector on load
+(async () => {
+  const shows = await api('GET', '/api/shows').catch(() => []);
+  if (shows.length) {
+    currentShowId = shows[0].id;
+    const s = shows[0];
+    document.getElementById('live-show-name').textContent = s.name;
+    const roles = s.roles || [];
+    const roleSel = document.getElementById('role-select');
+    roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r =>
+      `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
+  }
+})();
+</script>
+</body>
+</html>

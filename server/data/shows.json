@@ -1,0 +1,17 @@
+[
+  {
+    "id": "show-demo-001",
+    "name": "Hamlet – Premiere",
+    "date": "2026-05-01",
+    "activeCuelistId": "list-demo-001",
+    "roles": [
+      "buehne",
+      "licht",
+      "ton",
+      "regie"
+    ],
+    "tcSource": "simulator",
+    "fallbackMode": "stop",
+    "audioChannel": "left"
+  }
+]

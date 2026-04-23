@@ -1,0 +1,65 @@
+name: TCCue
+
+options:
+  bundleIdPrefix: com.tccue
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    ENABLE_BITCODE: NO
+
+targets:
+
+  # ── iOS App ──────────────────────────────────────────────────────────────
+  TCCue:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Shared
+        name: Shared
+      - path: TCCue
+        name: TCCue
+      - path: TCCueActivityAttributes.swift
+        type: file
+        name: TCCueActivityAttributes.swift
+    resources:
+      - path: TCCue/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tccue.ios
+        INFOPLIST_FILE: TCCue/Info.plist
+        PRODUCT_NAME: TCCue
+    dependencies:
+      - target: TCCueWatch
+        embed: true
+        buildPhase: embed
+
+  # ── watchOS App ──────────────────────────────────────────────────────────
+  TCCueWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Shared
+        name: Shared
+      - path: TCCueWatch
+        name: TCCueWatch
+    resources:
+      - path: TCCueWatch/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tccue.ios.watch
+        INFOPLIST_FILE: TCCueWatch/Info.plist
+        PRODUCT_NAME: TCCueWatch
+        WK_COMPANION_APP_BUNDLE_IDENTIFIER: com.tccue.ios

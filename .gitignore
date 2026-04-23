@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode
+ios/build/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcworkspace/xcuserdata/
+ios/DerivedData/
+ios/**/*.ipa
+ios/**/*.xcarchive
+*.moved-aside
+
+# Node
+server/node_modules/
+server/dist/
+
+# Audio uploads (runtime data)
+server/audio/
+
+# Env / secrets
+.env
+*.pem
+
+# xcworkspace user state
+tccueapp.xcworkspace/xcuserdata/

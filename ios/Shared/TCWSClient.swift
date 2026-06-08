@@ -18,6 +18,7 @@ final class TCWSClient: ObservableObject {
     @Published var currentTc: String = "--:--:--:--"
     @Published var warningCue: CueModel?
     @Published var warningSecondsUntil: Int = 0
+    @Published var lastError: String?
     private var warningReceivedAt: Date?
     private var warningInitialSeconds: Int = 0
 
@@ -30,7 +31,6 @@ final class TCWSClient: ObservableObject {
     private var reconnectTask: Task<Void, Never>?
     private var reconnectDelay: TimeInterval = 2
     private(set) var serverURL: String = ""
-    private(set) var role: String = "all"
     private var wsDelegate: WSOpenDelegate?
 
     // Thread-safe snapshot written by background receive task,
@@ -39,11 +39,24 @@ final class TCWSClient: ObservableObject {
 
     // MARK: - Public API
 
-    func connect(serverURL: String, role: String) {
-        if self.serverURL == serverURL, self.role == role,
-           connectionState != .disconnected { return }
-        self.serverURL = serverURL
-        self.role = role
+    static var defaultServerURL: String {
+        let stored = UserDefaults.standard.string(forKey: "serverURL")?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !stored.isEmpty { return stored }
+#if targetEnvironment(simulator)
+        return "127.0.0.1:3000"
+#else
+        return ""
+#endif
+    }
+
+    func connect(serverURL: String) {
+        let normalizedURL = serverURL
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if self.serverURL == normalizedURL, connectionState != .disconnected { return }
+        self.serverURL = normalizedURL
+        lastError = nil
         reconnectDelay = 2
         reconnectTask?.cancel()
         openSocket()
@@ -74,7 +87,10 @@ final class TCWSClient: ObservableObject {
             .replacingOccurrences(of: "ws://",    with: "")
             .replacingOccurrences(of: "wss://",   with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !host.isEmpty, let url = URL(string: "ws://\(host)/?role=\(role)") else { return }
+        guard !host.isEmpty, let url = URL(string: "ws://\(host)/") else {
+            lastError = "Ungültige Server-Adresse"
+            return
+        }
 
         receiveTask?.cancel()
         displayTask?.cancel()
@@ -85,6 +101,7 @@ final class TCWSClient: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, self.connectionState == .connecting else { return }
                 self.connectionState = .connected
+                self.lastError = nil
                 self.reconnectDelay = 2
                 self.startDisplayTimer()
             }
@@ -148,11 +165,12 @@ final class TCWSClient: ObservableObject {
         onCueWarning?(ev.cue, ev.secondsUntil)
     }
 
-    func handleDisconnect() {
+    func handleDisconnect(error: String? = nil) {
         displayTask?.cancel()
         task = nil
         wsDelegate = nil
         connectionState = .disconnected
+        lastError = error
         currentTc = "--:--:--:--"
         let delay = reconnectDelay
         reconnectDelay = min(reconnectDelay * 1.5, 30)
@@ -201,7 +219,7 @@ final class TCWSClient: ObservableObject {
             }
         } catch {
             guard !Task.isCancelled else { return }
-            await MainActor.run { client?.handleDisconnect() }
+            await MainActor.run { client?.handleDisconnect(error: error.localizedDescription) }
         }
     }
 }

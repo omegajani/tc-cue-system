@@ -3,15 +3,50 @@
     "id": "show-demo-001",
     "name": "Hamlet – Premiere",
     "date": "2026-05-01",
-    "activeCuelistId": "list-demo-001",
-    "roles": [
-      "buehne",
-      "licht",
-      "ton",
-      "regie"
-    ],
     "tcSource": "simulator",
     "fallbackMode": "stop",
-    "audioChannel": "left"
+    "audioChannel": "left",
+    "cues": [
+      {
+        "id": "cue-001",
+        "tc": "00:00:10:00",
+        "title": "Einlass beendet",
+        "message": "Türen schließen! Einlass ist beendet.",
+        "warnOffsetSec": 5,
+        "color": "#3b82f6"
+      },
+      {
+        "id": "cue-002",
+        "tc": "00:00:20:00",
+        "title": "Licht Blackout",
+        "message": "Licht auf Blackout! Beginn Akt 1.",
+        "warnOffsetSec": 8,
+        "color": "#ef4444"
+      },
+      {
+        "id": "cue-003",
+        "tc": "00:00:35:00",
+        "title": "Szene 1.1 – Wache",
+        "message": "Umbau Wache bereit? → Bühne frei!",
+        "warnOffsetSec": 10,
+        "color": "#f59e0b"
+      },
+      {
+        "id": "cue-004",
+        "tc": "00:01:00:00",
+        "title": "Pausenansage",
+        "message": "Pausenansage in 60 Sekunden vorbereiten.",
+        "warnOffsetSec": 15,
+        "color": "#10b981"
+      },
+      {
+        "id": "cue-005",
+        "tc": "00:01:30:00",
+        "title": "Akt 2 Beginn",
+        "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
+        "warnOffsetSec": 20,
+        "color": "#8b5cf6"
+      }
+    ]
   }
 ]

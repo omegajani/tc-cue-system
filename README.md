@@ -9,7 +9,7 @@ Theater-Timecode-basiertes Cue-System für Bühnenproduktionen. Ein Node.js-Serv
 ```
 tc-cue-system/
 ├── server/        Node.js + TypeScript — TC-Ingestion, Cue-Engine, WebSocket-Broker
-├── web-ui/        Browser-Oberfläche — Showverwaltung, Cuelist-Editor, Simulator
+├── web-ui/        Browser-Oberfläche — Show- und Cue-Verwaltung, Simulator
 ├── ios/           Xcode-Projekt
 │   ├── TCCue          iOS-App (Verbindung, Live-Ansicht, Einstellungen)
 │   ├── TCCueWatch     watchOS-Begleit-App
@@ -83,9 +83,5 @@ Server läuft auf **Port 3000**. Web-UI erreichbar unter `http://localhost:3000`
 - **Bonjour-Discovery** — Server im lokalen Netzwerk automatisch finden
 - **Live-Ansicht** — aktueller Cue, nächster Cue, laufender TC
 - **Live Activity / Dynamic Island** — Cue-Info auf dem Sperrbildschirm
-- **Haptisches Feedback** — differenziert nach Alert-Typ (`info` / `warning` / `urgent`)
+- **Haptisches Feedback** bei neuen Cues
 - **watchOS-App** — Cue-Info und Haptik am Handgelenk
-
-## Rollen
-
-Clients verbinden sich mit einer Rolle (`all`, `buehne`, `licht`, `ton`, `regie`). Cues können auf bestimmte Rollen gezielt werden — nur die betroffenen Clients erhalten den `CUE_FIRE`-Event.

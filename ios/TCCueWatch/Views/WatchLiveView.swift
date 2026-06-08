@@ -13,12 +13,12 @@ struct WatchLiveView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                // Alert type indicator
+                // Cue indicator
                 HStack(spacing: 5) {
                     Circle()
                         .fill(currentColor)
                         .frame(width: 8, height: 8)
-                    Text(alertLabel)
+                    Text(state.currentCue != nil ? "CUE" : "BEREIT")
                         .font(.system(size: 10, weight: .semibold))
                         .tracking(1)
                         .foregroundStyle(currentColor)
@@ -85,14 +85,6 @@ struct WatchLiveView: View {
     private var currentColor: Color {
         guard let cue = state.currentCue else { return .gray }
         return cue.swiftUIColor
-    }
-
-    private var alertLabel: String {
-        switch state.currentCue?.alertType {
-        case "urgent":  return "DRINGEND"
-        case "warning": return "WARNUNG"
-        default:        return state.currentCue != nil ? "CUE" : "BEREIT"
-        }
     }
 }
 

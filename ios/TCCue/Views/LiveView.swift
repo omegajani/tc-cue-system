@@ -5,7 +5,6 @@ struct LiveView: View {
     @State private var elapsedSec: Int = 0
     @State private var firedAt: Date?
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    @State private var pulse = false
     @State private var flashOpacity: Double = 0
     @State private var flashColor: Color = .white
     @State private var panelScale: CGFloat = 1.0
@@ -72,30 +71,20 @@ struct LiveView: View {
         elapsedSec = 0
 
         let cue = client.currentCue
-        let isUrgent = cue?.alertType == "urgent"
-
         // Flash: kurz in Cue-Farbe aufleuchten
         flashColor = cue.map { Color(hex: $0.color) ?? .white } ?? .white
-        flashOpacity = isUrgent ? 0.45 : 0.25
-        withAnimation(.easeOut(duration: isUrgent ? 0.9 : 0.55)) {
+        flashOpacity = 0.3
+        withAnimation(.easeOut(duration: 0.65)) {
             flashOpacity = 0
         }
 
         // Scale-Punch auf das Panel
         withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
-            panelScale = isUrgent ? 1.04 : 1.02
+            panelScale = 1.02
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 panelScale = 1.0
-            }
-        }
-
-        // Pulse für urgente Cues
-        if isUrgent {
-            withAnimation(.easeInOut(duration: 0.15)) { pulse = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.easeInOut(duration: 0.15)) { pulse = false }
             }
         }
     }
@@ -105,16 +94,12 @@ struct LiveView: View {
     @ViewBuilder
     private func activeCuePanel(_ cue: CueModel) -> some View {
         let cueColor = cue.swiftUIColor
-        let isUrgent = cue.alertType == "urgent"
-
         VStack(alignment: .leading, spacing: 12) {
             // Header row
             HStack(spacing: 8) {
                 Circle()
                     .fill(cueColor)
                     .frame(width: 10, height: 10)
-                    .scaleEffect(isUrgent && pulse ? 1.4 : 1)
-                    .animation(isUrgent ? .easeInOut(duration: 0.6).repeatForever() : .default, value: pulse)
 
                 Text("AKTUELLER CUE")
                     .font(.system(size: 10, weight: .semibold))
@@ -122,8 +107,6 @@ struct LiveView: View {
                     .foregroundStyle(.secondary)
 
                 Spacer()
-
-                alertBadge(cue.alertType)
 
                 Text("+\(elapsedSec)s")
                     .font(.system(size: 11, design: .monospaced))
@@ -154,22 +137,6 @@ struct LiveView: View {
                     .foregroundStyle(.white.opacity(0.85))
                     .padding(.top, 2)
             }
-
-            // Roles
-            if !cue.targetRoles.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(cue.targetRoles, id: \.self) { role in
-                        Text(role.uppercased())
-                            .font(.system(size: 10, weight: .medium))
-                            .tracking(1)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(cueColor.opacity(0.2))
-                            .foregroundStyle(cueColor)
-                            .clipShape(Capsule())
-                    }
-                }
-            }
         }
         .padding(20)
         .background(
@@ -177,7 +144,7 @@ struct LiveView: View {
                 .fill(Color.white.opacity(0.04))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(cueColor, lineWidth: isUrgent ? 2 : 1)
+                        .stroke(cueColor, lineWidth: 1)
                 )
         )
         .padding(.horizontal, 16)
@@ -306,22 +273,5 @@ struct LiveView: View {
         case .connecting: return "Verbinde…"
         case .disconnected: return "Getrennt"
         }
-    }
-
-    @ViewBuilder
-    private func alertBadge(_ type: String) -> some View {
-        let (label, color): (String, Color) = switch type {
-            case "urgent":  ("DRINGEND", .red)
-            case "warning": ("WARNUNG",  .orange)
-            default:        ("INFO",     .blue)
-        }
-        Text(label)
-            .font(.system(size: 9, weight: .bold))
-            .tracking(1)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.2))
-            .foregroundStyle(color)
-            .clipShape(Capsule())
     }
 }

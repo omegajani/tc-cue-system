@@ -1,9 +1,9 @@
 import { EventEmitter } from "events";
-import { Cue, Cuelist, CueFireEvent, CueWarningEvent } from "../types.js";
+import { Cue, CueFireEvent, CueWarningEvent, Show } from "../types.js";
 import { parseTc, getFPS } from "../tc/tcUtils.js";
 
 export class CueEngine extends EventEmitter {
-  private cuelist: Cuelist | null = null;
+  private show: Show | null = null;
   private sortedCues: Cue[] = [];
   private firedCueIds = new Set<string>();
   private warnedCueIds = new Set<string>();
@@ -11,20 +11,20 @@ export class CueEngine extends EventEmitter {
   private currentCue: Cue | null = null;
   private nextCue: Cue | null = null;
 
-  loadCuelist(cuelist: Cuelist) {
-    this.cuelist = cuelist;
-    this.sortedCues = [...cuelist.cues].sort(
+  loadShow(show: Show) {
+    this.show = show;
+    this.sortedCues = [...show.cues].sort(
       (a, b) => parseTc(a.tc).totalFrames - parseTc(b.tc).totalFrames
     );
     this.firedCueIds.clear();
     this.warnedCueIds.clear();
     this.currentCue = null;
     this.nextCue = this.sortedCues[0] ?? null;
-    console.log(`[CueEngine] Loaded cuelist "${cuelist.name}" with ${this.sortedCues.length} cues`);
+    console.log(`[CueEngine] Loaded show "${show.name}" with ${this.sortedCues.length} cues`);
   }
 
   unload() {
-    this.cuelist = null;
+    this.show = null;
     this.sortedCues = [];
     this.firedCueIds.clear();
     this.warnedCueIds.clear();
@@ -41,7 +41,7 @@ export class CueEngine extends EventEmitter {
   }
 
   processTc(tc: string) {
-    if (!this.cuelist || this.sortedCues.length === 0) return;
+    if (!this.show || this.sortedCues.length === 0) return;
 
     const nowFrames = parseTc(tc).totalFrames;
 

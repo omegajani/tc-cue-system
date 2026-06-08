@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Show, Cuelist } from "../types.js";
+import { Show } from "../types.js";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -37,25 +37,4 @@ export function upsertShow(show: Show): void {
 
 export function deleteShow(id: string): void {
   saveShows(getShows().filter((s) => s.id !== id));
-}
-
-// Cuelists
-export function getCuelists(): Cuelist[] { return readJson<Cuelist>("cuelists"); }
-export function saveCuelists(lists: Cuelist[]): void { writeJson("cuelists", lists); }
-
-export function getCuelist(id: string): Cuelist | undefined {
-  return getCuelists().find((c) => c.id === id);
-}
-
-export function getCuelistsForShow(showId: string): Cuelist[] {
-  return getCuelists().filter((c) => c.showId === showId);
-}
-
-export function upsertCuelist(list: Cuelist): void {
-  const all = getCuelists().filter((c) => c.id !== list.id);
-  saveCuelists([...all, list]);
-}
-
-export function deleteCuelist(id: string): void {
-  saveCuelists(getCuelists().filter((c) => c.id !== id));
 }

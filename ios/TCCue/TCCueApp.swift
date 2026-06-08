@@ -19,7 +19,7 @@ struct TCCueApp: App {
                 .onChange(of: client.connectionState) { _, state in
                     switch state {
                     case .connected:
-                        LiveActivityManager.shared.start(role: client.role)
+                        LiveActivityManager.shared.start()
                     case .disconnected:
                         LiveActivityManager.shared.end()
                     case .connecting:
@@ -41,18 +41,18 @@ struct TCCueApp: App {
     }
 
     private func autoConnect() {
-        let url  = UserDefaults.standard.string(forKey: "serverURL") ?? ""
-        let role = UserDefaults.standard.string(forKey: "role") ?? "all"
+        let url = TCWSClient.defaultServerURL
         guard !url.isEmpty else { return }
+        UserDefaults.standard.set(url, forKey: "serverURL")
         Task { @MainActor in
             setupCallbacks()
-            client.connect(serverURL: url, role: role)
+            client.connect(serverURL: url)
         }
     }
 
     private func setupCallbacks() {
         client.onCueFire = { [weak client] cue, next in
-            HapticManager.fireCue(alertType: cue.alertType)
+            HapticManager.alarm()
             WatchBridge.shared.send(cue: cue, nextCue: next, event: "fire")
             LiveActivityManager.shared.update(
                 cue: cue, nextCue: next,
@@ -61,7 +61,7 @@ struct TCCueApp: App {
             )
         }
         client.onCueWarning = { [weak client] cue, sec in
-            HapticManager.warnCue()
+            HapticManager.alarm()
             WatchBridge.shared.send(cue: cue, nextCue: nil, event: "warning", secondsUntil: sec)
             LiveActivityManager.shared.update(
                 cue: client?.currentCue, nextCue: cue,

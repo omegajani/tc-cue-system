@@ -18,9 +18,6 @@ struct TCCueWidgetLiveActivity: Widget {
                             .foregroundStyle(.white.opacity(0.7))
                     }
                 }
-                DynamicIslandExpandedRegion(.trailing) {
-                    alertLabel(context.state.alertType)
-                }
                 DynamicIslandExpandedRegion(.center) {
                     Text("● TC CUE ●")
                         .font(.system(size: 15, weight: .semibold))
@@ -84,7 +81,6 @@ private struct LockScreenView: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
-                alertLabel(state.alertType)
                 Text(state.currentCueTc)
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
@@ -144,26 +140,4 @@ private func hexColor(_ hex: String) -> Color {
         green: Double((val >>  8) & 0xFF) / 255,
         blue:  Double( val        & 0xFF) / 255
     )
-}
-
-@ViewBuilder
-private func alertLabel(_ type: String) -> some View {
-    switch type {
-    case "urgent":
-        Text("DRINGEND")
-            .font(.system(size: 8, weight: .bold)).tracking(1)
-            .padding(.horizontal, 5).padding(.vertical, 2)
-            .background(Color.red.opacity(0.2))
-            .foregroundStyle(.red)
-            .clipShape(Capsule())
-    case "warning":
-        Text("WARNUNG")
-            .font(.system(size: 8, weight: .bold)).tracking(1)
-            .padding(.horizontal, 5).padding(.vertical, 2)
-            .background(Color.orange.opacity(0.2))
-            .foregroundStyle(.orange)
-            .clipShape(Capsule())
-    default:
-        EmptyView()
-    }
 }

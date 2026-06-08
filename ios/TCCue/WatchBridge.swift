@@ -25,7 +25,6 @@ final class WatchBridge: NSObject, ObservableObject, WCSessionDelegate {
             "cueTitle": cue.title,
             "cueMessage": cue.message,
             "cueColor": cue.color,
-            "alertType": cue.alertType,
             "cueTc": cue.tc,
             "secondsUntil": secondsUntil,
         ]

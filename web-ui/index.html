@@ -18,9 +18,6 @@
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
     #tc-display { font-size: 17px; font-weight: bold; letter-spacing: 2px; color: var(--accent); margin-left: auto; }
-    #role-selector-bar { display: flex; align-items: center; gap: 6px; }
-    #role-selector-bar label { color: var(--muted); }
-    #role-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 2px 8px; border-radius: 4px; font-family: inherit; font-size: 12px; }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
     nav { display: flex; border-bottom: 1px solid var(--border); }
@@ -41,20 +38,14 @@
     #active-alert.has-cue { border-width: 2px; }
     .alert-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
     .alert-panel-body { padding: 16px 20px 18px; }
-    .alert-type-badge { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 3px; }
-    .alert-type-badge.info    { background: rgba(59,130,246,.2);  color: #93c5fd; }
-    .alert-type-badge.warning { background: rgba(245,158,11,.2);  color: #fcd34d; }
-    .alert-type-badge.urgent  { background: rgba(239,68,68,.2);   color: #fca5a5; }
     .alert-elapsed { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
     .alert-title { font-size: clamp(20px, 4vw, 36px); font-weight: bold; line-height: 1.15; margin-bottom: 6px; }
     .alert-message { font-size: 15px; color: #bbb; margin-bottom: 10px; }
     .alert-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .alert-tc-badge { font-size: 11px; letter-spacing: 1px; color: var(--muted); background: var(--surface2); padding: 3px 8px; border-radius: 3px; }
-    .role-tag { background: var(--border); border-radius: 3px; padding: 2px 8px; font-size: 11px; }
 
     /* Urgent pulse */
     @keyframes urgent-pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
-    #active-alert.urgent { animation: urgent-pulse 1.2s ease-in-out infinite; }
 
     /* Next cue strip */
     #next-cue-strip { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-radius: 7px; border: 1px dashed var(--border); font-size: 13px; margin-bottom: 12px; }
@@ -74,7 +65,6 @@
     #flash-inner { background: rgba(0,0,0,.9); border-radius: 12px; padding: 30px 44px; text-align: center; border: 2px solid var(--accent); max-width: 580px; }
     #flash-title { font-size: 30px; font-weight: bold; }
     #flash-msg { margin-top: 8px; font-size: 17px; color: #ccc; }
-    #flash-roles { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
 
     /* ── MODAL ──────────────────────────────────────────────────────── */
     #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
@@ -178,12 +168,6 @@
 <div id="status-bar">
   <span id="ws-dot"></span>
   <span id="ws-status">Verbinde...</span>
-  <div id="role-selector-bar">
-    <label for="role-select">Rolle:</label>
-    <select id="role-select" onchange="changeRole(this.value)">
-      <option value="all">Alle</option>
-    </select>
-  </div>
   <span id="tc-display">--:--:--:--</span>
 </div>
 
@@ -236,31 +220,6 @@
     </div>
   </div>
 
-  <!-- Audio -->
-  <div class="sp-section">
-    <h3>Audio</h3>
-    <div class="sp-row">
-      <div class="sp-label">Master-Lautstärke</div>
-      <span id="master-vol-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
-      <input type="range" min="0" max="1" step="0.05" id="s-master-vol" oninput="onSettingChange()" />
-    </div>
-    <div class="sp-row">
-      <div class="sp-label">Vorwarnung-Sound
-        <span class="sp-hint">Leiser Beep vor jedem Cue</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="s-warn-sound" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
-    </div>
-    <div class="sp-row">
-      <div class="sp-label">Sounds testen</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-small" onclick="playSynth('beep', masterVolume())">Beep</button>
-        <button class="btn btn-small" onclick="playSynth('double-beep', masterVolume())">2×</button>
-        <button class="btn btn-small" onclick="playSynth('chime', masterVolume())">Chime</button>
-        <button class="btn btn-small" onclick="playSynth('buzz', masterVolume())">Buzz</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Engine -->
   <div class="sp-section">
     <h3>Engine</h3>
@@ -286,12 +245,6 @@
   <!-- Show-Einstellungen -->
   <div class="sp-section">
     <h3>Show-Einstellungen</h3>
-    <div class="sp-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-      <div class="sp-label">Rollen
-        <span class="sp-hint">Eine Rolle pro Zeile oder kommagetrennt</span>
-      </div>
-      <textarea id="s-roles" rows="3" placeholder="buehne&#10;licht&#10;ton&#10;regie" onblur="saveShowSettings()"></textarea>
-    </div>
     <div class="sp-row">
       <div class="sp-label">Fallback-Modus
         <span class="sp-hint">Was passiert wenn das TC-Signal aussetzt</span>
@@ -428,26 +381,11 @@
     </div>
   </div>
 
-  <!-- Audio-Dateien -->
-  <div class="sp-section">
-    <h3>Audio-Dateien</h3>
-    <div class="sp-row" style="flex-wrap:wrap;gap:8px;">
-      <input type="file" id="audio-upload-file" accept=".mp3,.wav,.ogg,.m4a,.aac" style="font-size:11px;color:var(--muted);flex:1;min-width:0;" />
-      <button class="btn btn-small btn-accent" onclick="uploadAudioFile()">Hochladen</button>
-    </div>
-    <pre id="audio-upload-feedback" style="font-size:11px;color:var(--green);margin-top:4px;min-height:14px;"></pre>
-    <div id="audio-file-list" style="font-size:12px;color:var(--muted);margin-top:4px;">Lade…</div>
-  </div>
-
   <!-- Netzwerk -->
   <div class="sp-section">
     <h3>Netzwerk</h3>
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Server-URLs für Geräte im gleichen WLAN:</p>
     <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
-    <div style="margin-top:10px;">
-      <p style="font-size:11px;color:var(--muted);">Live-View mit Rollenfilter direkt aufrufen:</p>
-      <div id="network-role-urls" style="margin-top:6px;"></div>
-    </div>
   </div>
 
   <div style="padding:16px 20px;">
@@ -460,7 +398,6 @@
   <div id="flash-inner">
     <div id="flash-title"></div>
     <div id="flash-msg"></div>
-    <div id="flash-roles"></div>
   </div>
 </div>
 
@@ -487,52 +424,11 @@
       <label>Nachricht</label>
       <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
     </div>
-    <div class="form-2col">
-      <div class="form-row">
-        <label>Alert-Typ</label>
-        <select id="f-alert">
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="urgent">Urgent</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Vorwarnung (Sekunden)</label>
-        <input id="f-warn" type="number" min="0" max="120" value="10" />
-      </div>
-    </div>
     <div class="form-row">
-      <label>Zielrollen (kommagetrennt)</label>
-      <input id="f-roles" type="text" placeholder="buehne, licht, ton" />
-    </div>
-    <div class="form-2col">
-      <div class="form-row">
-        <label>Audio</label>
-        <select id="f-audio-type" onchange="onAudioTypeChange(this.value)">
-          <option value="none">Kein Sound</option>
-          <option value="beep">Beep</option>
-          <option value="double-beep">Double-Beep</option>
-          <option value="chime">Chime</option>
-          <option value="buzz">Buzz (Urgent)</option>
-          <option value="file">Datei…</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Lautstärke</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="f-audio-vol" type="range" min="0" max="1" step="0.05" value="0.8" style="flex:1;" />
-          <span id="f-audio-vol-val" style="font-size:11px;color:var(--muted);width:28px;">80%</span>
-        </div>
-      </div>
-    </div>
-    <div id="f-audio-file-row" class="form-row" style="display:none;">
-      <label>Audio-Datei</label>
-      <select id="f-audio-file" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;">
-        <option value="">– Laden… –</option>
-      </select>
+      <label>Vorwarnung (Sekunden)</label>
+      <input id="f-warn" type="number" min="0" max="120" value="10" />
     </div>
     <div class="modal-actions">
-      <button class="btn btn-small" onclick="previewAudio()" title="Sound testen">▶ Test</button>
       <div style="flex:1"></div>
       <button class="btn" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveCue()">Speichern</button>
@@ -595,14 +491,12 @@
 
   <hr class="divider" />
 
-  <!-- Cuelisten -->
+  <!-- Cues -->
   <div class="section">
     <div class="section-header">
-      <h2>Cuelist</h2>
-      <select class="admin-select" id="cuelist-select" onchange="selectCuelist(this.value)"></select>
+      <h2>Cues</h2>
       <div class="toolbar">
-        <button class="btn btn-primary" id="btn-activate" onclick="activateCuelist()">Aktivieren</button>
-        <button class="btn btn-accent" onclick="openNewCuelistDialog()">+ Neue Liste</button>
+        <button class="btn btn-primary btn-small" onclick="openCueModal(null)">+ Cue hinzufügen</button>
       </div>
     </div>
 
@@ -616,19 +510,16 @@
           <button class="btn" onclick="downloadCSVTemplate()">Vorlage ↓</button>
         </div>
         <p class="csv-hint">
-          Format: <code>tc,title,message,targetRoles,alertType,warnOffsetSec,color</code><br>
-          Rollen mit Semikolon trennen: <code>buehne;licht</code> · Farbe optional (Standard: #f59e0b)
+          Format: <code>tc,title,message,warnOffsetSec,color</code><br>
+          Farbe optional (Standard: #f59e0b)
         </p>
         <pre id="csv-feedback" style="font-size:11px;color:var(--green);margin-top:6px;"></pre>
       </div>
     </details>
 
     <!-- Cue-Tabelle -->
-    <div style="margin-bottom:10px;">
-      <button class="btn btn-primary btn-small" onclick="openCueModal(null)">+ Cue hinzufügen</button>
-    </div>
     <div class="cue-table-wrap" id="cue-table-wrap">
-      <p class="empty-hint">Keine Cuelist ausgewählt.</p>
+      <p class="empty-hint">Keine Show ausgewählt.</p>
     </div>
   </div>
 
@@ -640,11 +531,8 @@
 // STATE
 // ════════════════════════════════════════════════════════════════════════════
 let ws, reconnectTimer;
-let currentRole = new URLSearchParams(location.search).get('role') || 'all';
 let currentShowId = null;
-let currentCuelistId = null;
 let allShows = [];
-let allCuelists = [];
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
@@ -655,8 +543,6 @@ const SETTING_DEFAULTS = {
   showNextCue:     true,
   showFrames:      true,
   liveFontSize:    'normal',
-  masterVol:       1.0,
-  warnSoundEnabled: true,
   autoResetOnStop: true,
 };
 
@@ -677,8 +563,6 @@ function getCurrentSettingsFromUI() {
     showNextCue:      document.getElementById('s-show-next').checked,
     showFrames:       document.getElementById('s-show-frames').checked,
     liveFontSize:     document.getElementById('s-live-font').value,
-    masterVol:        parseFloat(document.getElementById('s-master-vol').value),
-    warnSoundEnabled: document.getElementById('s-warn-sound').checked,
     autoResetOnStop:  document.getElementById('s-auto-reset').checked,
   };
 }
@@ -700,10 +584,6 @@ function updateTcDisplayFormat(showFrames) {
   window._showFrames = showFrames;
 }
 
-function masterVolume() {
-  return parseFloat(document.getElementById('s-master-vol')?.value ?? '1');
-}
-
 function openSettings() {
   const s = loadSettings();
   // Populate UI
@@ -712,22 +592,17 @@ function openSettings() {
   document.getElementById('s-show-next').checked   = s.showNextCue;
   document.getElementById('s-show-frames').checked = s.showFrames;
   document.getElementById('s-live-font').value     = s.liveFontSize;
-  document.getElementById('s-master-vol').value    = s.masterVol;
-  document.getElementById('master-vol-val').textContent = Math.round(s.masterVol * 100) + '%';
-  document.getElementById('s-warn-sound').checked  = s.warnSoundEnabled;
   document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
 
   // Show settings
   const show = allShows.find(s => s.id === currentShowId);
   if (show) {
-    document.getElementById('s-roles').value    = (show.roles || []).join('\n');
     document.getElementById('s-fallback').value = show.fallbackMode || 'stop';
     document.getElementById('s-fps').value      = String(show.fps || 25);
   }
 
-  // TC source + audio files
+  // TC source
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
-  refreshAudioFileList();
   loadNetworkInfo();
 
   document.getElementById('settings-panel').classList.add('show');
@@ -743,8 +618,6 @@ function onSettingChange() {
   // Update live labels
   const dur = parseInt(document.getElementById('s-flash-dur').value);
   document.getElementById('flash-dur-val').textContent = (dur / 1000).toFixed(1) + 's';
-  const vol = parseFloat(document.getElementById('s-master-vol').value);
-  document.getElementById('master-vol-val').textContent = Math.round(vol * 100) + '%';
   saveSettings();
 }
 
@@ -759,10 +632,8 @@ async function onFpsChange(val) {
 async function saveShowSettings() {
   const show = allShows.find(s => s.id === currentShowId);
   if (!show) return;
-  const rolesRaw = document.getElementById('s-roles').value;
-  const roles = rolesRaw.split(/[\n,]+/).map(r => r.trim()).filter(Boolean);
   const fallbackMode = document.getElementById('s-fallback').value;
-  const updated = { ...show, roles, fallbackMode };
+  const updated = { ...show, fallbackMode };
   await api('PUT', `/api/shows/${currentShowId}`, updated).catch(() => {});
   const idx = allShows.findIndex(s => s.id === currentShowId);
   if (idx !== -1) allShows[idx] = updated;
@@ -770,9 +641,6 @@ async function saveShowSettings() {
 
 async function loadNetworkInfo() {
   const data = await api('GET', '/api/network').catch(() => ({ urls: [], ips: [] }));
-  const show = allShows.find(s => s.id === currentShowId);
-  const roles = show?.roles || [];
-
   const urlsEl = document.getElementById('network-urls');
   if (!data.urls.length) {
     urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Keine externen IPs gefunden</span>';
@@ -782,19 +650,6 @@ async function loadNetworkInfo() {
         <code>${url}</code>
         <button class="btn btn-small" onclick="copyToClipboard('${url}')">Kopieren</button>
       </div>`).join('');
-  }
-
-  const rolesEl = document.getElementById('network-role-urls');
-  if (data.urls.length && roles.length) {
-    rolesEl.innerHTML = roles.flatMap(role =>
-      data.urls.map(url => `
-        <div class="url-item" style="margin-bottom:4px;">
-          <code style="font-size:10px;">${url}?role=${role}</code>
-          <button class="btn btn-small" onclick="copyToClipboard('${url}?role=${role}')">↗</button>
-        </div>`)
-    ).join('');
-  } else {
-    rolesEl.innerHTML = '<span style="color:var(--muted);font-size:11px;">Rollen in Show-Einstellungen definieren</span>';
   }
 }
 
@@ -828,7 +683,7 @@ function showView(name, btn) {
 // WEBSOCKET
 // ════════════════════════════════════════════════════════════════════════════
 function connect() {
-  ws = new WebSocket(`ws://${location.host}?role=${currentRole}`);
+  ws = new WebSocket(`ws://${location.host}`);
   ws.onopen  = () => { setWsStatus(true);  clearTimeout(reconnectTimer); };
   ws.onclose = () => { setWsStatus(false); reconnectTimer = setTimeout(connect, 2000); };
   ws.onerror = () => ws.close();
@@ -837,17 +692,7 @@ function connect() {
 
 function setWsStatus(ok) {
   document.getElementById('ws-dot').className = ok ? 'connected' : '';
-  document.getElementById('ws-status').textContent = ok ? `Verbunden (${currentRole})` : 'Getrennt – verbinde…';
-}
-
-function changeRole(role) {
-  currentRole = role;
-  if (ws) ws.close();
-  // url param update (no reload)
-  const u = new URL(location);
-  if (role === 'all') u.searchParams.delete('role');
-  else u.searchParams.set('role', role);
-  history.replaceState(null, '', u);
+  document.getElementById('ws-status').textContent = ok ? 'Verbunden' : 'Getrennt – verbinde…';
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -865,15 +710,14 @@ function handleEvent(evt) {
     if (document.getElementById('show-tc-log').checked) logAppend('tc', tc, null);
   }
   if (evt.type === 'CUE_FIRE') {
-    playCueAudio(evt.cue);
+    playAlarm();
     showActiveAlert(evt.cue);
     showFlash(evt.cue);
     hideWarning();
     logAppend('fire', tc, evt.cue);
   }
   if (evt.type === 'CUE_WARNING') {
-    const s = loadSettings();
-    if (s.warnSoundEnabled) playCueWarningAudio(evt.cue);
+    playAlarm();
     showWarning(evt.cue, evt.secondsUntil);
     logAppend('warn', tc, evt.cue, evt.secondsUntil);
   }
@@ -901,25 +745,20 @@ function renderLiveCues(cur, next, tcString) {
     return;
   }
 
-  panel.className = 'has-cue' + (cur.alertType === 'urgent' ? ' urgent' : '');
+  panel.className = 'has-cue';
   panel.style.borderColor = cur.color;
   panel.style.background  = cur.color + '10';
 
-  const roles = (cur.targetRoles || []).map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
   panel.innerHTML = `
     <div class="alert-panel-header" style="background:${cur.color}18;">
       <span style="color:${cur.color};font-weight:bold;letter-spacing:1px;">● AKTUELLER CUE</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="alert-type-badge ${cur.alertType}">${cur.alertType.toUpperCase()}</span>
-        <span class="alert-elapsed" id="alert-elapsed"></span>
-      </div>
+      <span class="alert-elapsed" id="alert-elapsed"></span>
     </div>
     <div class="alert-panel-body">
       <div class="alert-title" style="color:${cur.color}">${esc(cur.title)}</div>
       <div class="alert-message">${esc(cur.message)}</div>
       <div class="alert-meta">
         <span class="alert-tc-badge">@ ${cur.tc}</span>
-        ${roles}
       </div>
     </div>`;
 
@@ -971,7 +810,6 @@ function showFlash(cue) {
   document.getElementById('flash-title').textContent = cue.title;
   document.getElementById('flash-title').style.color = cue.color;
   document.getElementById('flash-msg').textContent   = cue.message;
-  document.getElementById('flash-roles').innerHTML   = cue.targetRoles.map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
   document.getElementById('flash').style.setProperty('--flash-color', cue.color);
   document.getElementById('flash-inner').style.borderColor = cue.color;
   document.getElementById('flash').classList.add('show');
@@ -1021,23 +859,20 @@ async function loadAdmin() {
     : '<option value="">– Keine Shows –</option>';
   if (!currentShowId && allShows.length) currentShowId = allShows[0].id;
 
-  // Update role selector
-  const roles = [...new Set(allShows.flatMap(s => s.roles))];
-  const roleSel = document.getElementById('role-select');
-  roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r => `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
-  // Also update live-show-name
   const activeShow = allShows.find(s => s.id === currentShowId);
   document.getElementById('live-show-name').textContent = activeShow ? activeShow.name : '–';
 
-  if (currentShowId) await loadCuelists(currentShowId);
+  if (activeShow) renderCueTable(activeShow);
+  else document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
 }
 
-function selectShow(id) {
+async function selectShow(id) {
   currentShowId = id;
   const s = allShows.find(x => x.id === id);
   document.getElementById('live-show-name').textContent = s ? s.name : '–';
-  loadCuelists(id);
+  if (s) renderCueTable(s);
+  await api('POST', `/api/shows/${id}/activate`).catch(() => {});
 }
 
 function openNewShowDialog() {
@@ -1045,68 +880,25 @@ function openNewShowDialog() {
   if (!name) return;
   const date = prompt('Datum (JJJJ-MM-TT):', new Date().toISOString().slice(0,10));
   if (!date) return;
-  const rolesRaw = prompt('Rollen (kommagetrennt):', 'buehne,licht,ton,regie');
-  const roles = (rolesRaw || '').split(',').map(r => r.trim()).filter(Boolean);
-  api('POST', '/api/shows', { name, date, roles, tcSource: 'simulator', fallbackMode: 'stop', activeCuelistId: null })
+  api('POST', '/api/shows', { name, date, cues: [], tcSource: 'simulator', fallbackMode: 'stop' })
     .then(() => loadAdmin());
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// ADMIN – CUELISTS
-// ════════════════════════════════════════════════════════════════════════════
-async function loadCuelists(showId) {
-  allCuelists = await api('GET', `/api/shows/${showId}/cuelists`);
-  const sel = document.getElementById('cuelist-select');
-  sel.innerHTML = allCuelists.length
-    ? allCuelists.map(l => `<option value="${l.id}" ${l.id===currentCuelistId?'selected':''}>${esc(l.name)}${l.isActive?' ✓':''}</option>`).join('')
-    : '<option value="">– Keine Listen –</option>';
-  if (!currentCuelistId && allCuelists.length) currentCuelistId = allCuelists[0].id;
-  else if (!allCuelists.find(l => l.id === currentCuelistId) && allCuelists.length) currentCuelistId = allCuelists[0].id;
-  if (currentCuelistId) {
-    const l = allCuelists.find(x => x.id === currentCuelistId);
-    if (l) renderCueTable(l);
-  } else {
-    document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Cuelist vorhanden.</p>';
-  }
-}
-
-function selectCuelist(id) {
-  currentCuelistId = id;
-  const l = allCuelists.find(x => x.id === id);
-  if (l) renderCueTable(l);
-}
-
-function openNewCuelistDialog() {
-  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
-  const name = prompt('Name der Cuelist:');
-  if (!name) return;
-  api('POST', '/api/cuelists', { showId: currentShowId, name })
-    .then(l => { currentCuelistId = l.id; loadCuelists(currentShowId); });
-}
-
-async function activateCuelist() {
-  if (!currentCuelistId) return;
-  await api('POST', `/api/cuelists/${currentCuelistId}/activate`);
-  await loadCuelists(currentShowId);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // CUE TABLE
 // ════════════════════════════════════════════════════════════════════════════
-function renderCueTable(list) {
+function renderCueTable(show) {
   const wrap = document.getElementById('cue-table-wrap');
-  if (!list.cues || list.cues.length === 0) {
+  if (!show.cues || show.cues.length === 0) {
     wrap.innerHTML = '<p class="empty-hint">Noch keine Cues. Klicke "+ Cue hinzufügen".</p>';
     return;
   }
-  const rows = list.cues.map((c, i) => `
+  const rows = show.cues.map((c, i) => `
     <tr>
       <td>${i + 1}</td>
       <td style="font-weight:bold;letter-spacing:1px">${c.tc}</td>
       <td><span class="color-swatch" style="background:${c.color}"></span>${esc(c.title)}</td>
       <td style="color:#aaa;max-width:200px">${esc(c.message)}</td>
-      <td>${c.targetRoles.map(r=>`<span class="role-tag">${esc(r)}</span>`).join(' ')}</td>
-      <td><span class="badge badge-${c.alertType}">${c.alertType}</span></td>
       <td>${c.warnOffsetSec}s</td>
       <td class="actions">
         <button class="btn btn-small btn-icon" title="Bearbeiten" onclick="openCueModal('${c.id}')">✎</button>
@@ -1115,7 +907,7 @@ function renderCueTable(list) {
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Rollen</th><th>Alert</th><th>Warn</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Warn</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -1124,44 +916,27 @@ function renderCueTable(list) {
 // CUE MODAL
 // ════════════════════════════════════════════════════════════════════════════
 async function openCueModal(cueId) {
-  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
   const overlay = document.getElementById('modal-overlay');
   if (cueId) {
-    const list = allCuelists.find(l => l.id === currentCuelistId);
-    const cue  = list?.cues.find(c => c.id === cueId);
+    const show = allShows.find(show => show.id === currentShowId);
+    const cue  = show?.cues.find(c => c.id === cueId);
     if (!cue) return;
     document.getElementById('modal-title').textContent = 'Cue bearbeiten';
     document.getElementById('f-cue-id').value    = cue.id;
     document.getElementById('f-tc').value        = cue.tc;
     document.getElementById('f-title').value     = cue.title;
     document.getElementById('f-message').value   = cue.message;
-    document.getElementById('f-alert').value     = cue.alertType;
     document.getElementById('f-warn').value      = cue.warnOffsetSec;
     document.getElementById('f-color').value     = cue.color;
-    document.getElementById('f-roles').value     = cue.targetRoles.join(', ');
-    const at = cue.audioType || 'none';
-    document.getElementById('f-audio-type').value = at;
-    document.getElementById('f-audio-vol').value  = cue.audioVolume ?? 0.8;
-    document.getElementById('f-audio-vol-val').textContent = Math.round((cue.audioVolume ?? 0.8) * 100) + '%';
-    onAudioTypeChange(at);
-    if (at === 'file') {
-      await loadAudioFilesIntoSelect();
-      if (cue.audioFile) document.getElementById('f-audio-file').value = cue.audioFile;
-    }
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
     document.getElementById('f-cue-id').value    = '';
     document.getElementById('f-tc').value        = '';
     document.getElementById('f-title').value     = '';
     document.getElementById('f-message').value   = '';
-    document.getElementById('f-alert').value     = 'info';
     document.getElementById('f-warn').value      = '10';
     document.getElementById('f-color').value     = '#f59e0b';
-    document.getElementById('f-roles').value     = '';
-    document.getElementById('f-audio-type').value = 'none';
-    document.getElementById('f-audio-vol').value  = '0.8';
-    document.getElementById('f-audio-vol-val').textContent = '80%';
-    onAudioTypeChange('none');
   }
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
@@ -1173,41 +948,34 @@ function closeModal() {
 
 async function saveCue() {
   const id    = document.getElementById('f-cue-id').value;
-  const roles = document.getElementById('f-roles').value.split(',').map(r => r.trim()).filter(Boolean);
-  const audioType = document.getElementById('f-audio-type').value;
   const body  = {
     tc:           document.getElementById('f-tc').value.trim(),
     title:        document.getElementById('f-title').value.trim(),
     message:      document.getElementById('f-message').value.trim(),
-    alertType:    document.getElementById('f-alert').value,
     warnOffsetSec: parseInt(document.getElementById('f-warn').value) || 0,
     color:        document.getElementById('f-color').value,
-    targetRoles:  roles,
-    audioType,
-    audioFile:    audioType === 'file' ? document.getElementById('f-audio-file').value : undefined,
-    audioVolume:  parseFloat(document.getElementById('f-audio-vol').value),
   };
   if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
 
   if (id) {
-    await api('PUT', `/api/cuelists/${currentCuelistId}/cues/${id}`, body);
+    await api('PUT', `/api/shows/${currentShowId}/cues/${id}`, body);
   } else {
-    await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body);
+    await api('POST', `/api/shows/${currentShowId}/cues`, body);
   }
   closeModal();
-  await reloadCurrentCuelist();
+  await reloadCurrentShow();
 }
 
 async function deleteCue(cueId) {
   if (!confirm('Cue wirklich löschen?')) return;
-  await api('DELETE', `/api/cuelists/${currentCuelistId}/cues/${cueId}`);
-  await reloadCurrentCuelist();
+  await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
+  await reloadCurrentShow();
 }
 
-async function reloadCurrentCuelist() {
-  const updated = await api('GET', `/api/cuelists/${currentCuelistId}`);
-  const idx = allCuelists.findIndex(l => l.id === currentCuelistId);
-  if (idx !== -1) allCuelists[idx] = updated;
+async function reloadCurrentShow() {
+  const updated = await api('GET', `/api/shows/${currentShowId}`);
+  const idx = allShows.findIndex(show => show.id === currentShowId);
+  if (idx !== -1) allShows[idx] = updated;
   renderCueTable(updated);
 }
 
@@ -1215,8 +983,8 @@ async function reloadCurrentCuelist() {
 // CSV IMPORT
 // ════════════════════════════════════════════════════════════════════════════
 function downloadCSVTemplate() {
-  const header = 'tc,title,message,targetRoles,alertType,warnOffsetSec,color';
-  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,buehne;licht,warning,10,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,ton;regie,info,15,#3b82f6';
+  const header = 'tc,title,message,warnOffsetSec,color';
+  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,10,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,15,#3b82f6';
   const blob = new Blob([header + '\n' + example], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1227,7 +995,7 @@ function downloadCSVTemplate() {
 async function importCSV() {
   const file = document.getElementById('csv-file').files[0];
   if (!file) { alert('Keine Datei ausgewählt.'); return; }
-  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
   const fb = document.getElementById('csv-feedback');
 
   const text  = await file.text();
@@ -1239,23 +1007,21 @@ async function importCSV() {
   let ok = 0, fail = 0;
   for (const line of dataLines) {
     const cols = parseCSVLine(line);
-    const [tc, title, message, rolesRaw, alertType, warnRaw, color] = cols;
+    const [tc, title, message, warnRaw, color] = cols;
     if (!tc || !title) { fail++; continue; }
     const body = {
       tc: tc.trim(),
       title: title.trim(),
       message: (message || '').trim(),
-      targetRoles: (rolesRaw || '').split(';').map(r => r.trim()).filter(Boolean),
-      alertType: ['info','warning','urgent'].includes(alertType) ? alertType : 'info',
       warnOffsetSec: parseInt(warnRaw) || 0,
       color: (color || '#f59e0b').trim(),
     };
-    try { await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body); ok++; }
+    try { await api('POST', `/api/shows/${currentShowId}/cues`, body); ok++; }
     catch { fail++; }
   }
   fb.style.color = fail ? 'var(--accent)' : 'var(--green)';
   fb.textContent = `Import abgeschlossen: ${ok} Cues importiert${fail ? `, ${fail} Fehler` : ''}.`;
-  await reloadCurrentCuelist();
+  await reloadCurrentShow();
 }
 
 // Simple CSV line parser (handles quoted fields)
@@ -1273,157 +1039,28 @@ function parseCSVLine(line) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// AUDIO ENGINE
+// ALARM
 // ════════════════════════════════════════════════════════════════════════════
 let _audioCtx = null;
 
-async function getAudioCtx() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (_audioCtx.state === 'suspended') await _audioCtx.resume();
-  return _audioCtx;
-}
-
-async function playSynth(type, volume = 0.8) {
+async function playAlarm() {
   try {
-    const ctx = await getAudioCtx();
-
-    const play = (freq, startOffset, duration, shape = 'sine') => {
-      const gain = ctx.createGain();
-      gain.connect(ctx.destination);
-      const osc = ctx.createOscillator();
-      osc.type = shape;
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      const t0 = ctx.currentTime + startOffset;
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(volume, t0 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
-      osc.start(t0);
-      osc.stop(t0 + duration + 0.05);
-    };
-
-    switch (type) {
-      case 'beep':
-        play(880, 0, 0.18);
-        break;
-      case 'double-beep':
-        play(880, 0,    0.12);
-        play(880, 0.18, 0.12);
-        break;
-      case 'chime':
-        [[523, 0], [659, 0.15], [784, 0.30]].forEach(([f, t]) => play(f, t, 0.5));
-        break;
-      case 'buzz':
-        play(120, 0,    0.15, 'sawtooth');
-        play(120, 0.20, 0.15, 'sawtooth');
-        play(120, 0.40, 0.15, 'sawtooth');
-        break;
-    }
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') await _audioCtx.resume();
+    const gain = _audioCtx.createGain();
+    gain.connect(_audioCtx.destination);
+    const osc = _audioCtx.createOscillator();
+    osc.frequency.value = 880;
+    osc.connect(gain);
+    const now = _audioCtx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.8, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.start(now);
+    osc.stop(now + 0.23);
   } catch (e) {
-    console.warn('[Audio] Synth failed:', e);
+    console.warn('[Alarm] Playback failed:', e);
   }
-}
-
-async function playAudioFile(url, volume = 0.8) {
-  try {
-    const audio = new Audio(url);
-    audio.volume = Math.max(0, Math.min(1, volume));
-    await audio.play();
-  } catch (e) {
-    console.warn('[Audio] File playback failed:', e);
-  }
-}
-
-async function playCueAudio(cue) {
-  if (!cue.audioType || cue.audioType === 'none') return;
-  const vol = (cue.audioVolume ?? 0.8) * masterVolume();
-  if (cue.audioType === 'file') {
-    if (cue.audioFile) await playAudioFile(`/audio/${cue.audioFile}`, vol);
-  } else {
-    await playSynth(cue.audioType, vol);
-  }
-}
-
-async function playCueWarningAudio(cue) {
-  if (!cue.audioType || cue.audioType === 'none') return;
-  await playSynth('beep', (cue.audioVolume ?? 0.8) * masterVolume() * 0.5);
-}
-
-// ── Modal: audio type toggle ────────────────────────────────────────────────
-function onAudioTypeChange(val) {
-  document.getElementById('f-audio-file-row').style.display = val === 'file' ? '' : 'none';
-  if (val === 'file') loadAudioFilesIntoSelect();
-}
-
-async function loadAudioFilesIntoSelect() {
-  const files = await api('GET', '/api/audio').catch(() => []);
-  const sel = document.getElementById('f-audio-file');
-  sel.innerHTML = files.length
-    ? files.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${(f.size/1024).toFixed(1)} KB)</option>`).join('')
-    : '<option value="">– Keine Dateien vorhanden –</option>';
-}
-
-function previewAudio() {
-  const type = document.getElementById('f-audio-type').value;
-  const vol  = parseFloat(document.getElementById('f-audio-vol').value);
-  if (type === 'none') return;
-  if (type === 'file') {
-    const file = document.getElementById('f-audio-file').value;
-    if (file) playAudioFile(`/audio/${file}`, vol);
-  } else {
-    playSynth(type, vol);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const volInput = document.getElementById('f-audio-vol');
-  const volLabel = document.getElementById('f-audio-vol-val');
-  if (volInput) volInput.addEventListener('input', () => {
-    volLabel.textContent = Math.round(parseFloat(volInput.value) * 100) + '%';
-  });
-});
-
-// ── Audio file upload ────────────────────────────────────────────────────────
-async function uploadAudioFile() {
-  const fileInput = document.getElementById('audio-upload-file');
-  const fb = document.getElementById('audio-upload-feedback');
-  const file = fileInput.files[0];
-  if (!file) { alert('Keine Datei ausgewählt.'); return; }
-  fb.textContent = 'Lade hoch…';
-  fb.style.color = 'var(--muted)';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result.split(',')[1];
-    try {
-      const result = await api('POST', '/api/audio', { filename: file.name, data: base64 });
-      fb.style.color = 'var(--green)';
-      fb.textContent = `Hochgeladen: ${result.name}`;
-      fileInput.value = '';
-      refreshAudioFileList();
-    } catch (err) {
-      fb.style.color = 'var(--red)';
-      fb.textContent = 'Fehler beim Hochladen.';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function refreshAudioFileList() {
-  const files = await api('GET', '/api/audio').catch(() => []);
-  const el = document.getElementById('audio-file-list');
-  if (!files.length) { el.textContent = 'Keine Audio-Dateien vorhanden.'; return; }
-  el.innerHTML = files.map(f => `
-    <span style="display:inline-flex;gap:6px;align-items:center;margin-right:12px;margin-bottom:4px;">
-      <button onclick="playAudioFile('/audio/${esc(f.name)}',0.8)" class="btn btn-small btn-icon" title="Abspielen">▶</button>
-      <span>${esc(f.name)} <span style="color:#444">(${(f.size/1024).toFixed(1)} KB)</span></span>
-      <button onclick="deleteAudioFile('${esc(f.name)}')" class="btn btn-small btn-icon btn-danger" title="Löschen">✕</button>
-    </span>`).join('');
-}
-
-async function deleteAudioFile(name) {
-  if (!confirm(`"${name}" löschen?`)) return;
-  await api('DELETE', `/api/audio/${encodeURIComponent(name)}`);
-  refreshAudioFileList();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1454,7 +1091,7 @@ async function importShow(input) {
     if (!bundle.show) throw new Error('Ungültiges Format – "show" fehlt.');
     const result = await api('POST', '/api/io/show', bundle);
     fb.style.color = 'var(--green)';
-    fb.textContent = `Importiert: "${result.show.name}" mit ${result.cuelists.length} Cuelist(en).`;
+    fb.textContent = `Importiert: "${result.show.name}" mit ${result.show.cues.length} Cue(s).`;
     input.value = '';
     await loadAdmin();
   } catch (e) {
@@ -1938,17 +1575,12 @@ function esc(str) {
 applySettings(loadSettings());
 connect();
 
-// Pre-fill role selector on load
 (async () => {
   const shows = await api('GET', '/api/shows').catch(() => []);
   if (shows.length) {
     currentShowId = shows[0].id;
     const s = shows[0];
     document.getElementById('live-show-name').textContent = s.name;
-    const roles = s.roles || [];
-    const roleSel = document.getElementById('role-select');
-    roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r =>
-      `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
   }
 })();
 </script>

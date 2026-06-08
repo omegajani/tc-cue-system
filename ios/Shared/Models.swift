@@ -8,11 +8,8 @@ struct CueModel: Codable, Identifiable, Equatable {
     let tc: String
     let title: String
     let message: String
-    let alertType: String   // "info" | "warning" | "urgent"
     let color: String       // hex "#rrggbb"
-    let targetRoles: [String]
     let warnOffsetSec: Int
-    let audioType: String?
 
     var swiftUIColor: Color {
         Color(hex: color) ?? .accentColor

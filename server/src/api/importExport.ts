@@ -37,6 +37,11 @@ router.post("/show", (req, res) => {
       color: cue.color,
     })),
     positions: (show.positions ?? []).map((position) => ({ ...position, id: randomUUID() })),
+    checklists: (show.checklists ?? []).map((checklist) => ({
+      ...checklist,
+      id: randomUUID(),
+      items: checklist.items.map((item) => ({ ...item, id: randomUUID() })),
+    })),
   };
 
   upsertShow(newShow);

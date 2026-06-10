@@ -16,12 +16,31 @@ export interface ShowPosition {
   endTc: string;
 }
 
+export type ChecklistTrigger =
+  | { type: "before-first-cue" }
+  | { type: "after-cue"; cueId: string }
+  | { type: "time"; time: string };
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  checked: boolean;
+}
+
+export interface Checklist {
+  id: string;
+  title: string;
+  trigger: ChecklistTrigger;
+  items: ChecklistItem[];
+}
+
 export interface Show {
   id: string;
   name: string;
   date: string;
   cues: Cue[];
   positions: ShowPosition[];
+  checklists?: Checklist[];
   tcSource: TCSource;
   fallbackMode: FallbackMode;
   fps?: 24 | 25 | 29.97 | 30;

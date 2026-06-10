@@ -6,8 +6,14 @@ export interface Cue {
   tc: string; // HH:MM:SS:FF
   title: string;
   message: string;
-  warnOffsetSec: number;
   color: string;
+}
+
+export interface ShowPosition {
+  id: string;
+  name: string;
+  startTc: string;
+  endTc: string;
 }
 
 export interface Show {
@@ -15,6 +21,7 @@ export interface Show {
   name: string;
   date: string;
   cues: Cue[];
+  positions: ShowPosition[];
   tcSource: TCSource;
   fallbackMode: FallbackMode;
   fps?: 24 | 25 | 29.97 | 30;
@@ -29,6 +36,7 @@ export interface TCUpdateEvent {
   previousCue: Cue | null;
   currentCue: Cue | null;
   nextCue: Cue | null;
+  currentPosition: ShowPosition | null;
 }
 
 export interface CueFireEvent {
@@ -39,14 +47,7 @@ export interface CueFireEvent {
   nextCue: Cue | null;
 }
 
-export interface CueWarningEvent {
-  type: "CUE_WARNING";
-  tc: string;
-  cue: Cue;
-  secondsUntil: number;
-}
-
-export type WSEvent = TCUpdateEvent | CueFireEvent | CueWarningEvent;
+export type WSEvent = TCUpdateEvent | CueFireEvent;
 
 // TC as frame count for arithmetic
 export interface TCFrames {

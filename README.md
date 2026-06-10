@@ -61,7 +61,6 @@ Server läuft auf **Port 3000**. Web-UI erreichbar unter `http://localhost:3000`
 // Server → Client
 { "type": "TC_UPDATE", "tc": "01:00:10:00", "currentCue": {...}, "nextCue": {...} }
 { "type": "CUE_FIRE",  "tc": "...", "cue": {...}, "previousCue": {...}, "nextCue": {...} }
-{ "type": "CUE_WARNING", "tc": "...", "cue": {...}, "secondsUntil": 10 }
 ```
 
 ## iOS-App
@@ -77,6 +76,31 @@ Server läuft auf **Port 3000**. Web-UI erreichbar unter `http://localhost:3000`
 1. `ios/TCCue.xcodeproj` in Xcode öffnen
 2. Team in den Signing-Einstellungen aller Targets setzen
 3. **TCCue**-Schema wählen, Gerät auswählen, bauen
+
+### Schneller Catalyst-Testlauf
+
+Für UI, Serververbindung, WebSocket und Timecode kann die iOS-Oberfläche direkt
+auf dem Mac getestet werden:
+
+```bash
+brew install xcodegen # einmalig
+./scripts/build-catalyst.sh
+```
+
+Server, Timecode und Catalyst-App gemeinsam starten:
+
+```bash
+./scripts/run-local.sh
+```
+
+Der Catalyst-Testlauf verwendet lokal automatisch `127.0.0.1:3000`. Live
+Activities, Haptik und Watch-Verbindung müssen weiterhin auf echten Geräten
+geprüft werden.
+
+Hinweis: Ein direkter GUI-Start als Kindprozess einer sandboxed Entwicklungs-App
+kann von macOS bei der App-Registrierung beendet werden. Das ist kein App-Crash.
+Das Skript aus einem normalen Terminal oder die gebaute App per Doppelklick
+starten.
 
 ### Features
 

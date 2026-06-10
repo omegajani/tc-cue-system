@@ -7,37 +7,53 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		04B1A46D2F97A58A002B5EF3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B1A44C2F97A4EB002B5EF3 /* WidgetKit.framework */; };
-		04B1A46E2F97A58A002B5EF3 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B1A44E2F97A4EB002B5EF3 /* SwiftUI.framework */; };
-		04B1A47D2F97A58A002B5EF3 /* TCCueWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 04B1A46C2F97A58A002B5EF3 /* TCCueWidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		03A3B00218B45A40F3379267 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F98CD36F09EFD3BAF275259 /* HapticManager.swift */; };
+		10FA6CAC20AB772A6069DCEA /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1316225AE829BB31A00E8FC8 /* BonjourDiscovery.swift */; };
 		14EE5BF4A08A296F9C63CB8A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 10F8C508F98F7023BBEF6A17 /* Assets.xcassets */; };
+		1978C3E212EDDA4542D53F9D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059C323D90EABF898B46DBD5 /* ContentView.swift */; };
 		20C5EE41CD42CF57AEF13340 /* WatchLiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA03912CCAE0DB1535220E0E /* WatchLiveView.swift */; };
 		26748493431D0445AEC983C1 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F7AAD94E2EF014AC12FEAF /* LiveActivityManager.swift */; };
+		2891A0995F274D5574667946 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B4EEF496EB001B78164EAB /* Models.swift */; };
 		2A19A7D55F1D5AE08BAAFBD2 /* LiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AE3DCAD0EEAC41DD0F0D4B /* LiveView.swift */; };
+		2DEEEA5AA18788B957221F44 /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */; };
+		35D8D49C0136A60F212BA8DF /* TCCueActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */; };
+		479612DF3A908E5AC00DE900 /* TCCueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E846F0C000197BB109062F1D /* TCCueWidget.swift */; };
 		4FF2FE313F31D7BEC84B1127 /* TCCueWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D7BBBE030D2C089526A64A3 /* TCCueWatchApp.swift */; };
+		58434CB4872191F4C2E028FA /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
 		597743EF1156B7E01137AC9A /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F98CD36F09EFD3BAF275259 /* HapticManager.swift */; };
+		680356DF98A0BB6D75CD374B /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7373FA266E78B08412256B9B /* AppIntent.swift */; };
 		73E6CD8C474363FD56D2BF28 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1484BD3E5EE3B4CF523B14 /* SettingsView.swift */; };
+		752CECC63340665C3A3ED533 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1484BD3E5EE3B4CF523B14 /* SettingsView.swift */; };
 		78C5887507E1C877329FB157 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B4EEF496EB001B78164EAB /* Models.swift */; };
+		7F327732757E9D2239F1907D /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
 		83D030B5D9A275B8758E33FD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059C323D90EABF898B46DBD5 /* ContentView.swift */; };
+		8DBFDC3868B97393B9C14FA4 /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
 		8E64E2EE62D05340BC4F28FC /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */; };
 		8F972476598A56DAACF75C37 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1316225AE829BB31A00E8FC8 /* BonjourDiscovery.swift */; };
-		A3F7C2E1B4D506789ABCDE01 /* TCCueActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */; };
+		90C7287B67D6E604EF19989A /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9EA79D4446C1BA07F81945 /* LiveActivityManager.swift */; };
+		9A0FCA8F230D8B8CEB17E387 /* TCWSClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */; };
+		A89117146346DD36CE0189AC /* LiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AE3DCAD0EEAC41DD0F0D4B /* LiveView.swift */; };
 		B3319816E4B1E2203689856A /* TCWSClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */; };
+		C0A3E11724171D063219262B /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
 		C6F1FA627DB83996D672682E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B4EEF496EB001B78164EAB /* Models.swift */; };
+		CFD3178B182A1D381D4C397A /* TCCueApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94732B700E30F94021C41265 /* TCCueApp.swift */; };
 		D2FF321B5709EBA1373F350E /* TCCueActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */; };
+		D4478A566FEF4636FE6B4988 /* TCCueWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FC1F7C438770D79B396F7D43 /* TCCueWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D4930A8881A894862DC3DA93 /* TCCueWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90B1EFBE031509E271EFEAE /* TCCueWidgetBundle.swift */; };
 		D77B0E4F5358D0D46708B133 /* TCWSClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */; };
 		D9B69A4A17DBB2766E30E339 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F926FD5D24ED85845DD86DB9 /* Assets.xcassets */; };
 		E74853AA981BA64586DECABA /* WatchState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550077F1B2E0C7BF02B57B37 /* WatchState.swift */; };
 		E784414E25E00A66B5EA9FA9 /* TCCueApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94732B700E30F94021C41265 /* TCCueApp.swift */; };
+		F072AEC71E3BE0F8506DCA2E /* TCCueWidgetLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4756FC736280A0409FDDEA /* TCCueWidgetLiveActivity.swift */; };
 		F82844CE68AD4FD8038ABC0E /* TCCueWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B954E2D1DA122786C3804340 /* TCCueWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		04B1A47B2F97A58A002B5EF3 /* PBXContainerItemProxy */ = {
+		28BEDE49C359C9F8A787B8B3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 9B9D7BF6120DAE39FA42ECD6 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 04B1A46B2F97A58A002B5EF3;
+			remoteGlobalIDString = 3C1E41D9F8F6E0B41F1171D0;
 			remoteInfo = TCCueWidgetExtension;
 		};
 		F310982B0159D60F3956D540 /* PBXContainerItemProxy */ = {
@@ -50,13 +66,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		04B1A4612F97A4EC002B5EF3 /* Embed Foundation Extensions */ = {
+		8858963B094A6899DB33C296 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				04B1A47D2F97A58A002B5EF3 /* TCCueWidgetExtension.appex in Embed Foundation Extensions */,
+				D4478A566FEF4636FE6B4988 /* TCCueWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -75,59 +91,44 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		04B1A44C2F97A4EB002B5EF3 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		04B1A44E2F97A4EB002B5EF3 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		04B1A46C2F97A58A002B5EF3 /* TCCueWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TCCueWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		059C323D90EABF898B46DBD5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0D7BBBE030D2C089526A64A3 /* TCCueWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueWatchApp.swift; sourceTree = "<group>"; };
 		10F8C508F98F7023BBEF6A17 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1316225AE829BB31A00E8FC8 /* BonjourDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonjourDiscovery.swift; sourceTree = "<group>"; };
 		13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
 		39F7AAD94E2EF014AC12FEAF /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lexend-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		45AE3DCAD0EEAC41DD0F0D4B /* LiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveView.swift; sourceTree = "<group>"; };
 		4F98CD36F09EFD3BAF275259 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		54CC7D808606584DE945BD53 /* TCCueCatalyst.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TCCueCatalyst.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		550077F1B2E0C7BF02B57B37 /* WatchState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchState.swift; sourceTree = "<group>"; };
+		7373FA266E78B08412256B9B /* AppIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
 		85B4EEF496EB001B78164EAB /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		8AC02BD36EE10DD50D92E2FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		8FF5EE201281B05F94C39494 /* TCCue.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TCCue.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B4756FC736280A0409FDDEA /* TCCueWidgetLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueWidgetLiveActivity.swift; sourceTree = "<group>"; };
+		8FF5EE201281B05F94C39494 /* TCCue.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TCCue.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94732B700E30F94021C41265 /* TCCueApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueApp.swift; sourceTree = "<group>"; };
 		9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueActivityAttributes.swift; sourceTree = "<group>"; };
 		9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCWSClient.swift; sourceTree = "<group>"; };
 		B954E2D1DA122786C3804340 /* TCCueWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TCCueWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD1484BD3E5EE3B4CF523B14 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		E2E532DE8869E2770AC0E4CD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E846F0C000197BB109062F1D /* TCCueWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueWidget.swift; sourceTree = "<group>"; };
+		F90B1EFBE031509E271EFEAE /* TCCueWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueWidgetBundle.swift; sourceTree = "<group>"; };
 		F926FD5D24ED85845DD86DB9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FA03912CCAE0DB1535220E0E /* WatchLiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLiveView.swift; sourceTree = "<group>"; };
+		FC1F7C438770D79B396F7D43 /* TCCueWidgetExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TCCueWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF9EA79D4446C1BA07F81945 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		04B1A4502F97A4EB002B5EF3 /* TCCueWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TCCueWidget;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		04B1A4692F97A58A002B5EF3 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				04B1A46E2F97A58A002B5EF3 /* SwiftUI.framework in Frameworks */,
-				04B1A46D2F97A58A002B5EF3 /* WidgetKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
-		04B1A44B2F97A4EB002B5EF3 /* Frameworks */ = {
+		133F927365EB915292F4A65E /* TCCueCatalyst */ = {
 			isa = PBXGroup;
 			children = (
-				04B1A44C2F97A4EB002B5EF3 /* WidgetKit.framework */,
-				04B1A44E2F97A4EB002B5EF3 /* SwiftUI.framework */,
+				FF9EA79D4446C1BA07F81945 /* LiveActivityManager.swift */,
 			);
-			name = Frameworks;
+			name = TCCueCatalyst;
+			path = TCCueCatalyst;
 			sourceTree = "<group>";
 		};
 		189745EED95C535F41BC3CFB /* TCCue */ = {
@@ -142,6 +143,7 @@
 				13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */,
 				3DEC447DEEFBE2EF87293C26 /* Views */,
 			);
+			name = TCCue;
 			path = TCCue;
 			sourceTree = "<group>";
 		};
@@ -159,8 +161,9 @@
 			isa = PBXGroup;
 			children = (
 				8FF5EE201281B05F94C39494 /* TCCue.app */,
+				54CC7D808606584DE945BD53 /* TCCueCatalyst.app */,
 				B954E2D1DA122786C3804340 /* TCCueWatch.app */,
-				04B1A46C2F97A58A002B5EF3 /* TCCueWidgetExtension.appex */,
+				FC1F7C438770D79B396F7D43 /* TCCueWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -170,7 +173,9 @@
 			children = (
 				85B4EEF496EB001B78164EAB /* Models.swift */,
 				9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */,
+				E0E49D53B34D578E2E1CBF34 /* Resources */,
 			);
+			name = Shared;
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -188,11 +193,23 @@
 				9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */,
 				58A6B692B936D6F313259C6C /* Shared */,
 				189745EED95C535F41BC3CFB /* TCCue */,
+				133F927365EB915292F4A65E /* TCCueCatalyst */,
 				A4F4AD73918838235D4342B4 /* TCCueWatch */,
-				04B1A4502F97A4EB002B5EF3 /* TCCueWidget */,
-				04B1A44B2F97A4EB002B5EF3 /* Frameworks */,
+				A0ECBE6293F6748848752AF7 /* TCCueWidget */,
 				4EA136284F169A99FE71EB62 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A0ECBE6293F6748848752AF7 /* TCCueWidget */ = {
+			isa = PBXGroup;
+			children = (
+				7373FA266E78B08412256B9B /* AppIntent.swift */,
+				E846F0C000197BB109062F1D /* TCCueWidget.swift */,
+				F90B1EFBE031509E271EFEAE /* TCCueWidgetBundle.swift */,
+				8B4756FC736280A0409FDDEA /* TCCueWidgetLiveActivity.swift */,
+			);
+			name = TCCueWidget;
+			path = TCCueWidget;
 			sourceTree = "<group>";
 		};
 		A4F4AD73918838235D4342B4 /* TCCueWatch */ = {
@@ -204,32 +221,37 @@
 				550077F1B2E0C7BF02B57B37 /* WatchState.swift */,
 				5B9B8D6AE6F9DBC524DBA435 /* Views */,
 			);
+			name = TCCueWatch;
 			path = TCCueWatch;
+			sourceTree = "<group>";
+		};
+		E0E49D53B34D578E2E1CBF34 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		04B1A46B2F97A58A002B5EF3 /* TCCueWidgetExtension */ = {
+		3C1E41D9F8F6E0B41F1171D0 /* TCCueWidgetExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 04B1A47F2F97A58A002B5EF3 /* Build configuration list for PBXNativeTarget "TCCueWidgetExtension" */;
+			buildConfigurationList = 9B02CA782AEBF85CB0C35A7B /* Build configuration list for PBXNativeTarget "TCCueWidgetExtension" */;
 			buildPhases = (
-				04B1A4682F97A58A002B5EF3 /* Sources */,
-				04B1A4692F97A58A002B5EF3 /* Frameworks */,
-				04B1A46A2F97A58A002B5EF3 /* Resources */,
+				9825EF3A623DBA0F851CE4D9 /* Sources */,
+				655A4C18C74BD180E85DAFB4 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				04B1A4502F97A4EB002B5EF3 /* TCCueWidget */,
-			);
 			name = TCCueWidgetExtension;
 			packageProductDependencies = (
 			);
 			productName = TCCueWidgetExtension;
-			productReference = 04B1A46C2F97A58A002B5EF3 /* TCCueWidgetExtension.appex */;
+			productReference = FC1F7C438770D79B396F7D43 /* TCCueWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		B342F790EE806CCC452C1533 /* TCCue */ = {
@@ -238,20 +260,38 @@
 			buildPhases = (
 				24643333E73916903903CA5C /* Sources */,
 				862D7D8D547415345BAFD72E /* Resources */,
+				8858963B094A6899DB33C296 /* Embed Foundation Extensions */,
 				CD3368929434CFB46D0ED3F8 /* Embed Watch Content */,
-				04B1A4612F97A4EC002B5EF3 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				35EBC88498FF9B99DE4AF5AE /* PBXTargetDependency */,
-				04B1A47C2F97A58A002B5EF3 /* PBXTargetDependency */,
+				4F4F12343E6F5BB7687AE523 /* PBXTargetDependency */,
 			);
 			name = TCCue;
 			packageProductDependencies = (
 			);
 			productName = TCCue;
 			productReference = 8FF5EE201281B05F94C39494 /* TCCue.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DE5B167FCAA2453E7D55E293 /* TCCueCatalyst */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0EA149C77FBE6F21526DD9C /* Build configuration list for PBXNativeTarget "TCCueCatalyst" */;
+			buildPhases = (
+				F927D745F0B383D5930FA0FC /* Sources */,
+				2D157AD8F89E23DCE4869A80 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TCCueCatalyst;
+			packageProductDependencies = (
+			);
+			productName = TCCueCatalyst;
+			productReference = 54CC7D808606584DE945BD53 /* TCCueCatalyst.app */;
 			productType = "com.apple.product-type.application";
 		};
 		FDF9F223839E694DF5D9EF0C /* TCCueWatch */ = {
@@ -279,12 +319,8 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					04B1A46B2F97A58A002B5EF3 = {
-						CreatedOnToolsVersion = 26.4.1;
-					};
 				};
 			};
 			buildConfigurationList = C5916FCFE7370403445DD129 /* Build configuration list for PBXProject "TCCue" */;
@@ -302,17 +338,19 @@
 			projectRoot = "";
 			targets = (
 				B342F790EE806CCC452C1533 /* TCCue */,
+				DE5B167FCAA2453E7D55E293 /* TCCueCatalyst */,
 				FDF9F223839E694DF5D9EF0C /* TCCueWatch */,
-				04B1A46B2F97A58A002B5EF3 /* TCCueWidgetExtension */,
+				3C1E41D9F8F6E0B41F1171D0 /* TCCueWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		04B1A46A2F97A58A002B5EF3 /* Resources */ = {
+		2D157AD8F89E23DCE4869A80 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0A3E11724171D063219262B /* Lexend-VariableFont_wght.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +359,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				14EE5BF4A08A296F9C63CB8A /* Assets.xcassets in Resources */,
+				58434CB4872191F4C2E028FA /* Lexend-VariableFont_wght.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		655A4C18C74BD180E85DAFB4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DBFDC3868B97393B9C14FA4 /* Lexend-VariableFont_wght.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,20 +376,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				D9B69A4A17DBB2766E30E339 /* Assets.xcassets in Resources */,
+				7F327732757E9D2239F1907D /* Lexend-VariableFont_wght.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		04B1A4682F97A58A002B5EF3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A3F7C2E1B4D506789ABCDE01 /* TCCueActivityAttributes.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		20928A37DAC2517D0EB2423B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -373,39 +413,55 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9825EF3A623DBA0F851CE4D9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				680356DF98A0BB6D75CD374B /* AppIntent.swift in Sources */,
+				35D8D49C0136A60F212BA8DF /* TCCueActivityAttributes.swift in Sources */,
+				479612DF3A908E5AC00DE900 /* TCCueWidget.swift in Sources */,
+				D4930A8881A894862DC3DA93 /* TCCueWidgetBundle.swift in Sources */,
+				F072AEC71E3BE0F8506DCA2E /* TCCueWidgetLiveActivity.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F927D745F0B383D5930FA0FC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10FA6CAC20AB772A6069DCEA /* BonjourDiscovery.swift in Sources */,
+				1978C3E212EDDA4542D53F9D /* ContentView.swift in Sources */,
+				03A3B00218B45A40F3379267 /* HapticManager.swift in Sources */,
+				90C7287B67D6E604EF19989A /* LiveActivityManager.swift in Sources */,
+				A89117146346DD36CE0189AC /* LiveView.swift in Sources */,
+				2891A0995F274D5574667946 /* Models.swift in Sources */,
+				752CECC63340665C3A3ED533 /* SettingsView.swift in Sources */,
+				CFD3178B182A1D381D4C397A /* TCCueApp.swift in Sources */,
+				9A0FCA8F230D8B8CEB17E387 /* TCWSClient.swift in Sources */,
+				2DEEEA5AA18788B957221F44 /* WatchBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		04B1A47C2F97A58A002B5EF3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 04B1A46B2F97A58A002B5EF3 /* TCCueWidgetExtension */;
-			targetProxy = 04B1A47B2F97A58A002B5EF3 /* PBXContainerItemProxy */;
-		};
 		35EBC88498FF9B99DE4AF5AE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FDF9F223839E694DF5D9EF0C /* TCCueWatch */;
 			targetProxy = F310982B0159D60F3956D540 /* PBXContainerItemProxy */;
 		};
+		4F4F12343E6F5BB7687AE523 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3C1E41D9F8F6E0B41F1171D0 /* TCCueWidgetExtension */;
+			targetProxy = 28BEDE49C359C9F8A787B8B3 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		04B1A4802F97A58A002B5EF3 /* Debug */ = {
+		378F266951D113B9F1BC1254 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
 				INFOPLIST_FILE = TCCueWidgetInfo.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -413,65 +469,57 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = TCCueWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		42CB6C466A0A67D54598F2EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = TCCue/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.catalyst;
+				PRODUCT_NAME = TCCueCatalyst;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		44E452D39E2C5B594B961FAC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				INFOPLIST_FILE = TCCueWidgetInfo.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.widget;
+				PRODUCT_NAME = TCCueWidgetExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
-		};
-		04B1A4812F97A58A002B5EF3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				INFOPLIST_FILE = TCCueWidgetInfo.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
 		};
 		5ACDFF1ED37B5720E0FEA8B1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				INFOPLIST_FILE = TCCueWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.watch;
 				PRODUCT_NAME = TCCueWatch;
@@ -552,8 +600,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				INFOPLIST_FILE = TCCue/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -571,9 +617,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				INFOPLIST_FILE = TCCueWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.watch;
 				PRODUCT_NAME = TCCueWatch;
@@ -647,8 +690,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				INFOPLIST_FILE = TCCue/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -662,18 +703,29 @@
 			};
 			name = Debug;
 		};
+		AE8B0C39CB1728BBD5D8FF59 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = TCCue/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tccue.ios.catalyst;
+				PRODUCT_NAME = TCCueCatalyst;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		04B1A47F2F97A58A002B5EF3 /* Build configuration list for PBXNativeTarget "TCCueWidgetExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				04B1A4802F97A58A002B5EF3 /* Debug */,
-				04B1A4812F97A58A002B5EF3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		327E4E973FB9B729BF0556B1 /* Build configuration list for PBXNativeTarget "TCCue" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -683,11 +735,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		9B02CA782AEBF85CB0C35A7B /* Build configuration list for PBXNativeTarget "TCCueWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44E452D39E2C5B594B961FAC /* Debug */,
+				378F266951D113B9F1BC1254 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		AC909135A93A446D56F71555 /* Build configuration list for PBXNativeTarget "TCCueWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5ACDFF1ED37B5720E0FEA8B1 /* Debug */,
 				8A1C749E52393798F3DD5F2B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C0EA149C77FBE6F21526DD9C /* Build configuration list for PBXNativeTarget "TCCueCatalyst" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE8B0C39CB1728BBD5D8FF59 /* Debug */,
+				42CB6C466A0A67D54598F2EE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

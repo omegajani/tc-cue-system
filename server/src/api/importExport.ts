@@ -29,7 +29,14 @@ router.post("/show", (req, res) => {
   const newShow: Show = {
     ...show,
     id: newShowId,
-    cues: (show.cues ?? []).map((cue) => ({ ...cue, id: randomUUID() })),
+    cues: (show.cues ?? []).map((cue) => ({
+      id: randomUUID(),
+      tc: cue.tc,
+      title: cue.title,
+      message: cue.message,
+      color: cue.color,
+    })),
+    positions: (show.positions ?? []).map((position) => ({ ...position, id: randomUUID() })),
   };
 
   upsertShow(newShow);

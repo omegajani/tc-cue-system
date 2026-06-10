@@ -16,6 +16,10 @@
 	<string>1.0</string>
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Lexend-VariableFont_wght.ttf</string>
+	</array>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>

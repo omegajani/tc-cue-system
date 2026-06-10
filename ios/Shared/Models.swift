@@ -9,11 +9,17 @@ struct CueModel: Codable, Identifiable, Equatable {
     let title: String
     let message: String
     let color: String       // hex "#rrggbb"
-    let warnOffsetSec: Int
 
     var swiftUIColor: Color {
         Color(hex: color) ?? .accentColor
     }
+}
+
+struct ShowPositionModel: Codable, Identifiable, Equatable {
+    let id: String
+    let name: String
+    let startTc: String
+    let endTc: String
 }
 
 struct TCUpdateEvent: Codable {
@@ -22,6 +28,7 @@ struct TCUpdateEvent: Codable {
     let previousCue: CueModel?
     let currentCue: CueModel?
     let nextCue: CueModel?
+    let currentPosition: ShowPositionModel?
 }
 
 struct CueFireEvent: Codable {
@@ -30,13 +37,6 @@ struct CueFireEvent: Codable {
     let cue: CueModel
     let previousCue: CueModel?
     let nextCue: CueModel?
-}
-
-struct CueWarningEvent: Codable {
-    let type: String
-    let tc: String
-    let cue: CueModel
-    let secondsUntil: Int
 }
 
 struct WSTypeSniff: Codable {

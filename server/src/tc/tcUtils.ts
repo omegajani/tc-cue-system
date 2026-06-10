@@ -11,8 +11,13 @@ export function getFPS(): number { return _fps; }
 
 export function parseTc(tc: string): TCFrames {
   const parts = tc.split(":").map(Number);
-  if (parts.length !== 4) throw new Error(`Invalid TC: ${tc}`);
+  if (parts.length !== 4 || parts.some((part) => !Number.isFinite(part))) {
+    throw new Error(`Invalid TC: ${tc}`);
+  }
   const [hours, minutes, seconds, frames] = parts;
+  if (hours < 0 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59 || frames < 0 || frames >= _fps) {
+    throw new Error(`Invalid TC: ${tc}`);
+  }
   const fps = _fps;
   return {
     hours, minutes, seconds, frames,

@@ -151,6 +151,95 @@
         "title": "Akt 2 Beginn",
         "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
         "color": "#8b5cf6"
+      },
+      {
+        "id": "bf420ce0-5afc-437e-a4bc-031472bfdf1f",
+        "tc": "02:01:00:00",
+        "title": "Test: Traum Übergang",
+        "message": "Übergang für Wovon träumst du vorbereiten.",
+        "color": "#38bdf8"
+      },
+      {
+        "id": "f38080f5-3d5d-4249-aa43-e3e649bfc90f",
+        "tc": "02:33:00:00",
+        "title": "Test: Lift off Effekt",
+        "message": "Effekt und Lichtwechsel für Lift off auslösen.",
+        "color": "#a78bfa"
+      },
+      {
+        "id": "b1c2e814-d342-473c-a48e-13a40f62b750",
+        "tc": "03:32:00:00",
+        "title": "Test: Running Mitte",
+        "message": "Bühnenaktion zur Songmitte prüfen.",
+        "color": "#fb7185"
+      },
+      {
+        "id": "ce0b5f8e-b143-4417-ae24-a37eaa1cf857",
+        "tc": "04:02:00:00",
+        "title": "Test: Eclipse Blackout",
+        "message": "Blackout für Eclipse of Delight vorbereiten.",
+        "color": "#818cf8"
+      },
+      {
+        "id": "c561d5a4-329f-4b78-8aca-9ba340c437ce",
+        "tc": "05:32:00:00",
+        "title": "Test: Weightless Fokus",
+        "message": "Fokuswechsel während Weightless auslösen.",
+        "color": "#34d399"
+      },
+      {
+        "id": "08fb0f1c-a79a-44cd-877b-54d6689ad9e9",
+        "tc": "07:33:00:00",
+        "title": "Test: Sunset Umbau",
+        "message": "Umbau für Sunset kontrollieren.",
+        "color": "#f59e0b"
+      }
+    ],
+    "checklists": [
+      {
+        "id": "bd061410-2189-4939-9a20-0c97c0b4d844",
+        "title": "Preset Show",
+        "trigger": {
+          "type": "time",
+          "time": "14:36"
+        },
+        "items": [
+          {
+            "id": "467a3e78-9884-4143-9ded-279a74e8f2bf",
+            "text": "Mikros verteilen",
+            "checked": true
+          },
+          {
+            "id": "146e1d0d-ce23-41da-849d-1e8ffa6d3413",
+            "text": "Bock haben",
+            "checked": true
+          },
+          {
+            "id": "b2393697-3dbf-4d94-af24-ec91eea305b7",
+            "text": "Saufen!",
+            "checked": true
+          }
+        ]
+      },
+      {
+        "id": "14c7f1b2-82be-436e-b9f3-f7cf01aa3f3d",
+        "title": "Pause",
+        "trigger": {
+          "type": "after-cue",
+          "cueId": "cue-003"
+        },
+        "items": [
+          {
+            "id": "ba392775-111b-443f-b916-852b6b890b8b",
+            "text": "Mikro von Seitenbühne links holen",
+            "checked": true
+          },
+          {
+            "id": "59cc3b81-d33e-4c13-862e-7947d1cac873",
+            "text": "rauchen",
+            "checked": true
+          }
+        ]
       }
     ]
   }

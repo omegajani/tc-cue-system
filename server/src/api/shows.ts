@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
-import { Cue, Show, ShowPosition } from "../types.js";
+import { Checklist, Cue, Show, ShowPosition } from "../types.js";
 import { getShows, getShow, upsertShow, deleteShow } from "../engine/store.js";
 import { cueEngine } from "../engine/cueEngine.js";
 
@@ -17,7 +17,7 @@ router.get("/:id", (req, res) => {
 });
 
 router.post("/", (req, res) => {
-  const show: Show = { ...req.body, id: randomUUID(), cues: req.body.cues ?? [], positions: req.body.positions ?? [] };
+  const show: Show = { ...req.body, id: randomUUID(), cues: req.body.cues ?? [], positions: req.body.positions ?? [], checklists: req.body.checklists ?? [] };
   upsertShow(show);
   cueEngine.loadShow(show);
   res.status(201).json(show);
@@ -113,6 +113,51 @@ router.delete("/:id/positions/:positionId", (req, res) => {
   show.positions = (show.positions ?? []).filter((position) => position.id !== req.params.positionId);
   upsertShow(show);
   cueEngine.loadShow(show);
+  res.status(204).send();
+});
+
+router.post("/:id/checklists", (req, res) => {
+  const show = getShow(req.params.id);
+  if (!show) return res.status(404).json({ error: "Show not found" });
+  const checklist: Checklist = {
+    id: randomUUID(),
+    title: req.body.title,
+    trigger: req.body.trigger,
+    items: (req.body.items ?? []).map((item: { text: string; checked?: boolean }) => ({
+      id: randomUUID(),
+      text: item.text,
+      checked: item.checked ?? false,
+    })),
+  };
+  show.checklists = [...(show.checklists ?? []), checklist];
+  upsertShow(show);
+  res.status(201).json(checklist);
+});
+
+router.put("/:id/checklists/:checklistId", (req, res) => {
+  const show = getShow(req.params.id);
+  if (!show) return res.status(404).json({ error: "Show not found" });
+  const idx = (show.checklists ?? []).findIndex((checklist) => checklist.id === req.params.checklistId);
+  if (idx === -1) return res.status(404).json({ error: "Checklist not found" });
+  show.checklists![idx] = {
+    ...show.checklists![idx],
+    ...req.body,
+    id: req.params.checklistId,
+    items: (req.body.items ?? show.checklists![idx].items).map((item: { id?: string; text: string; checked?: boolean }) => ({
+      id: item.id ?? randomUUID(),
+      text: item.text,
+      checked: item.checked ?? false,
+    })),
+  };
+  upsertShow(show);
+  res.json(show.checklists![idx]);
+});
+
+router.delete("/:id/checklists/:checklistId", (req, res) => {
+  const show = getShow(req.params.id);
+  if (!show) return res.status(404).json({ error: "Show not found" });
+  show.checklists = (show.checklists ?? []).filter((checklist) => checklist.id !== req.params.checklistId);
+  upsertShow(show);
   res.status(204).send();
 });
 

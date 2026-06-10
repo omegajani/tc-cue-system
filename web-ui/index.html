@@ -20,6 +20,14 @@
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
     }
+    #screen-flash { position:fixed; inset:0; z-index:1000; pointer-events:none; opacity:0; background:#fff; }
+    #screen-flash.fire { animation:screen-flash .55s ease-out; }
+    @keyframes screen-flash {
+      0% { opacity:0; }
+      12% { opacity:.88; }
+      32% { opacity:.28; }
+      100% { opacity:0; }
+    }
     #tc-display, #live-tc, .live-cue-tc, .live-cue-countdown, #ltc-decoded-tc, #mtc-decoded-tc {
       font-family: 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
       font-variant-numeric: tabular-nums lining-nums;
@@ -66,7 +74,7 @@
     #live-cue-list::-webkit-scrollbar { width:6px; }
     #live-cue-list::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.2); }
     .live-cue-row { position:relative; display:grid; grid-template-columns:96px 10px minmax(0,1fr) auto; gap:13px; align-items:center; min-height:58px; width:100%; padding:11px 16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); box-shadow:inset 0 1px rgba(255,255,255,.11),0 8px 24px rgba(0,0,0,.12); color:var(--muted); cursor:pointer; overflow:hidden; transform-origin:center top; scroll-snap-align:start; scroll-snap-stop:always; transition:transform .25s,opacity .25s,min-height .25s,padding .25s,border-color .25s,background .25s,box-shadow .25s; backdrop-filter:blur(20px) saturate(135%); -webkit-backdrop-filter:blur(20px) saturate(135%); }
-    .live-cue-row:hover { border-color:rgba(255,255,255,.22); background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.04)); }
+    .live-cue-row:hover { min-height:82px; opacity:1; transform:scale(1); border-color:rgba(255,255,255,.22); background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.04)); }
     .live-cue-row.past { opacity:.28; transform:scale(.93); }
     .live-cue-row.depth-3 { opacity:.38; transform:scale(.94); }
     .live-cue-row.depth-2 { opacity:.52; transform:scale(.96); }
@@ -74,22 +82,67 @@
     .live-cue-row.current { min-height:104px; padding:18px 19px; opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 68%,white 12%); background:linear-gradient(145deg,color-mix(in srgb,var(--cue-color) 20%,rgba(255,255,255,.1)),rgba(255,255,255,.035)); box-shadow:inset 0 1px rgba(255,255,255,.28),0 15px 40px color-mix(in srgb,var(--cue-color) 18%,transparent); }
     .live-cue-row.next { opacity:.9; }
     .live-cue-row.picker-selected { opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 52%,white 12%); box-shadow:inset 0 1px rgba(255,255,255,.22),0 12px 32px color-mix(in srgb,var(--cue-color) 14%,transparent); }
+    .live-cue-time { width:96px; min-width:96px; overflow:hidden; }
+    .live-cue-song { margin-bottom:4px; overflow:hidden; color:rgba(255,255,255,.42); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
     .live-cue-tc { width:96px; font-size:10px; letter-spacing:1px; white-space:nowrap; }
     .live-cue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cue-color); }
     .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
     .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
+    .live-cue-row:hover .live-cue-message { display:block; }
+    .live-cue-row.preview-visible { min-height:82px; }
+    .live-cue-row.preview-visible .live-cue-message { display:block; }
     .live-cue-row.current .live-cue-tc { color: var(--cue-color); font-size: 12px; font-weight: bold; }
+    .live-cue-row.current .live-cue-song { color:color-mix(in srgb,var(--cue-color) 70%,white 30%); font-size:10px; }
     .live-cue-row.current .live-cue-dot { width: 11px; height: 11px; }
     .live-cue-row.current .live-cue-title { color:#fff; font-size:clamp(20px,3.2vw,30px); line-height:1.1; }
     .live-cue-row.current .live-cue-message { display:block; }
-    .live-cue-state { margin-top: 6px; color: var(--cue-color); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    .live-cue-state { min-height:11px; margin-bottom:3px; overflow:hidden; color:var(--cue-color); font-size:8px; font-weight:700; letter-spacing:.75px; line-height:1.1; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
     .live-cue-countdown { min-width:52px; color:var(--cue-color); font-size:11px; font-weight:700; text-align:right; white-space:nowrap; }
+    .live-checklist-queue { --cue-color:#2dd4bf; border-color:rgba(45,212,191,.16); background:linear-gradient(145deg,rgba(45,212,191,.075),rgba(255,255,255,.02)); }
+    .live-checklist-queue.done { --cue-color:#10b981; border-color:rgba(16,185,129,.2); background:linear-gradient(145deg,rgba(16,185,129,.09),rgba(255,255,255,.02)); }
+    .live-checklist-queue:hover { min-height:82px; border-color:rgba(45,212,191,.3); background:linear-gradient(145deg,rgba(45,212,191,.11),rgba(255,255,255,.03)); }
+    .live-checklist-queue .live-cue-title { color:rgba(153,246,228,.78); }
+    .live-checklist-queue-trigger { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-transform:uppercase; }
+    .live-checklist-queue-count { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; white-space:nowrap; }
+    .live-checklist-queue-preview { display:none; margin-top:7px; color:rgba(255,255,255,.58); font-size:11px; line-height:1.4; }
+    .live-checklist-queue:hover .live-checklist-queue-preview { display:block; }
+    .live-checklist-queue-preview span { display:block; position:relative; padding-left:12px; }
+    .live-checklist-queue-preview span:before { content:'•'; position:absolute; left:0; color:rgba(94,234,212,.5); }
+    .live-checklist-queue.done .live-checklist-queue-preview span { color:rgba(255,255,255,.4); text-decoration:line-through; }
+    #live-checklists { display:none; flex:0 0 auto; margin-bottom:14px; gap:10px; }
+    #live-checklists.show { display:grid; }
+    .live-checklist { position:relative; overflow:hidden; border:1px solid rgba(45,212,191,.42); border-radius:22px; padding:16px; background:linear-gradient(135deg,rgba(13,148,136,.22),rgba(15,23,42,.72)); box-shadow:inset 0 1px rgba(255,255,255,.17),0 16px 38px rgba(0,0,0,.22); cursor:pointer; }
+    .live-checklist:before { content:''; position:absolute; width:180px; height:180px; right:-80px; top:-105px; border-radius:50%; background:rgba(45,212,191,.15); filter:blur(3px); pointer-events:none; }
+    .live-checklist-header { position:relative; display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
+    .live-checklist-heading { min-width:0; }
+    .live-checklist-kicker { margin-bottom:3px; color:#5eead4; font-size:9px; font-weight:750; letter-spacing:1.4px; text-transform:uppercase; }
+    .live-checklist-title { color:#fff; font-size:17px; font-weight:680; overflow-wrap:anywhere; }
+    .live-checklist-complete { border:1px solid rgba(94,234,212,.45); border-radius:99px; padding:7px 11px; background:rgba(15,118,110,.18); color:#99f6e4; font:600 10px inherit; cursor:pointer; white-space:nowrap; }
+    .live-checklist-complete:hover { background:rgba(15,118,110,.38); }
+    .live-checklist.done { padding:12px 16px; border-color:rgba(52,211,153,.3); background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(15,23,42,.55)); }
+    .live-checklist.done .live-checklist-header { margin-bottom:0; }
+    .live-checklist-done-state { display:flex; align-items:center; gap:7px; color:#6ee7b7; font-size:10px; font-weight:700; letter-spacing:.5px; white-space:nowrap; }
+    .live-checklist-done-state:before { content:'✓'; display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:rgba(16,185,129,.17); font-size:12px; }
+    .live-checklist-items { position:relative; display:grid; gap:7px; }
+    .live-checklist-item { display:flex; align-items:center; gap:10px; min-height:38px; padding:8px 10px; border:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(255,255,255,.045); color:rgba(255,255,255,.88); font-size:12px; cursor:pointer; transition:opacity .15s,background .15s; }
+    .live-checklist-item input { width:18px; height:18px; accent-color:#14b8a6; flex:0 0 auto; }
+    .live-checklist-item.checked { opacity:.45; background:rgba(255,255,255,.018); color:var(--muted); text-decoration:line-through; }
     #no-cue { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; }
 
     /* ── MODAL ──────────────────────────────────────────────────────── */
-    #modal-overlay, #position-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
-    #modal-overlay.show, #position-modal-overlay.show { display: flex; }
+    #modal-overlay, #position-modal-overlay, #checklist-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
+    #modal-overlay.show, #position-modal-overlay.show, #checklist-modal-overlay.show { display: flex; }
     #modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+    #checklist-modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; width:580px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+    #checklist-modal h3 { margin-bottom:18px; color:var(--muted); font-size:14px; letter-spacing:1px; text-transform:uppercase; }
+    .checklist-item-editor { display:grid; gap:8px; }
+    .checklist-item-editor-row { display:grid; grid-template-columns:26px minmax(0,1fr) 30px; gap:8px; align-items:center; }
+    .checklist-item-editor-number { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:rgba(45,212,191,.12); color:#5eead4; font-size:10px; font-weight:700; }
+    .checklist-item-editor-row input { min-height:38px; border-radius:9px; }
+    .checklist-item-remove { width:30px; height:30px; border:0; border-radius:50%; background:transparent; color:var(--muted); cursor:pointer; font-size:17px; }
+    .checklist-item-remove:hover { background:rgba(239,68,68,.12); color:var(--red); }
+    .checklist-item-add { margin-top:9px; border:1px dashed rgba(45,212,191,.38); border-radius:9px; padding:9px 12px; background:rgba(45,212,191,.045); color:#5eead4; font:600 11px inherit; cursor:pointer; }
+    .checklist-item-add:hover { background:rgba(45,212,191,.1); }
     #modal h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 18px; }
     .form-row { margin-bottom: 13px; }
     .form-row label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
@@ -107,14 +160,55 @@
     .page-heading h1 { font-size: 25px; letter-spacing: -.5px; margin-bottom: 5px; }
     .page-heading p { color: var(--muted); font-size: 12px; line-height: 1.5; }
     .edit-layout, .settings-grid, .show-layout { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
+    .edit-layout { gap:18px; }
+    .edit-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; padding:18px 20px; border:1px solid rgba(245,158,11,.18); border-radius:16px; background:linear-gradient(135deg,rgba(245,158,11,.07),var(--surface)); }
+    .edit-overview-kicker { margin-bottom:4px; color:var(--accent); font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+    .edit-overview-name { font-size:18px; font-weight:680; }
+    .edit-overview-hint { margin-top:4px; color:var(--muted); font-size:10px; }
+    .edit-overview-counts { display:flex; gap:8px; }
+    .edit-overview-count { min-width:68px; padding:9px 10px; border:1px solid rgba(255,255,255,.06); border-radius:10px; background:rgba(255,255,255,.025); text-align:center; }
+    .edit-overview-count strong { display:block; font-size:17px; }
+    .edit-overview-count span { display:block; margin-top:2px; color:var(--muted); font-size:8px; letter-spacing:.5px; text-transform:uppercase; }
     .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-    .show-layout { grid-template-columns:minmax(260px,.8fr) minmax(360px,1.2fr); align-items:start; }
-    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin: 0; }
-    .show-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
-    .show-card h2 { margin-bottom:15px; color:var(--muted); font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase; }
+    .show-layout { grid-template-columns:minmax(280px,.72fr) minmax(420px,1.28fr); align-items:start; }
+    .show-main { display:grid; gap:16px; }
+    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin: 0; }
+    .edit-card .section-header { justify-content:space-between; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+    .edit-card .section-header h2 { color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.1px; text-transform:none; }
+    .edit-card-description { margin-top:4px; color:var(--muted); font-size:10px; line-height:1.45; }
+    .edit-section-title { min-width:0; }
+    .edit-section-toggle { display:flex; align-items:center; gap:10px; min-width:0; border:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+    .edit-section-chevron { display:grid; place-items:center; flex:0 0 auto; width:23px; height:23px; border:1px solid var(--border); border-radius:50%; color:var(--muted); font-size:11px; transition:transform .18s,color .18s,border-color .18s; }
+    .edit-card.collapsed .edit-section-chevron { transform:rotate(-90deg); }
+    .edit-section-toggle:hover .edit-section-chevron { border-color:var(--accent); color:var(--accent); }
+    .edit-card.collapsed .section-header { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+    .edit-card.collapsed .edit-section-body { display:none; }
+    .edit-tools { margin-bottom:14px; border:1px solid rgba(255,255,255,.06); border-radius:10px; background:rgba(255,255,255,.018); }
+    .edit-tools summary { padding:10px 12px; color:var(--muted); cursor:pointer; font-size:10px; font-weight:650; letter-spacing:.5px; text-transform:uppercase; user-select:none; }
+    .edit-tools-content { padding:0 12px 12px; }
+    .show-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; }
+    .show-card h2 { margin-bottom:4px; color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.15px; }
+    .show-card-description { margin-bottom:17px; color:var(--muted); font-size:11px; line-height:1.5; }
+    .show-library { position:sticky; top:20px; }
     .show-card .admin-select { width:100%; min-height:40px; margin-bottom:12px; }
-    .show-card .form-row input { min-height:40px; }
-    #show-active-state { min-height:18px; margin-top:12px; color:var(--muted); font-size:11px; }
+    .show-card .form-row input, .show-card .form-row select { min-height:42px; border-radius:8px; }
+    .show-fields { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(160px,.65fr); gap:12px; }
+    .show-fields .show-field-wide { grid-column:1 / -1; }
+    .show-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+    .show-transfer-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .show-transfer-actions .btn { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:9px; }
+    .show-transfer-note { margin-top:12px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .show-save-note { display:flex; gap:9px; align-items:flex-start; margin-top:14px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
+    .show-save-note:before { content:'i'; display:grid; place-items:center; flex:0 0 auto; width:17px; height:17px; border-radius:50%; background:rgba(59,130,246,.14); color:#93c5fd; font-size:10px; font-weight:700; }
+    #show-active-state { display:inline-flex; align-items:center; gap:7px; min-height:26px; margin-top:14px; padding:5px 9px; border:1px solid var(--border); border-radius:99px; color:var(--muted); font-size:10px; }
+    #show-active-state:before { content:''; width:6px; height:6px; border-radius:50%; background:var(--muted); }
+    #show-active-state.active { border-color:rgba(16,185,129,.3); color:#6ee7b7; background:rgba(16,185,129,.06); }
+    #show-active-state.active:before { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,.6); }
+    .show-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+    .show-summary-item { padding:10px 8px; border:1px solid rgba(255,255,255,.05); border-radius:10px; background:rgba(255,255,255,.025); text-align:center; }
+    .show-summary-value { display:block; margin-bottom:3px; color:var(--text); font-size:18px; font-weight:680; }
+    .show-summary-label { display:block; color:var(--muted); font-size:8px; letter-spacing:.6px; text-transform:uppercase; }
+    .show-feedback { min-height:15px; margin-top:10px; font-size:10px; color:var(--green); }
     .settings-wide { grid-column: 1 / -1; }
     .section { margin-bottom: 28px; }
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -128,11 +222,12 @@
     #sim-state { font-size: 11px; color: var(--muted); }
 
     /* Cue table */
-    .cue-table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: middle; }
-    th { background: var(--surface2); color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
-    tr:hover td { background: rgba(255,255,255,.02); }
+    .cue-table-wrap { overflow-x:auto; border:1px solid rgba(255,255,255,.055); border-radius:11px; }
+    table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
+    th, td { border:0; border-bottom:1px solid rgba(255,255,255,.055); padding:7px 10px; text-align:left; vertical-align:middle; }
+    tr:last-child td { border-bottom:0; }
+    th { background:rgba(255,255,255,.025); color:var(--muted); font-weight:normal; text-transform:uppercase; font-size:9px; letter-spacing:.6px; white-space:nowrap; }
+    tr:hover td { background:rgba(255,255,255,.022); }
     td.actions { white-space: nowrap; }
     .inline-edit { width:100%; min-width:90px; border:1px solid transparent; border-radius:6px; background:transparent; color:inherit; padding:6px 7px; font:inherit; transition:border-color .15s,background .15s; }
     .inline-edit:hover { border-color:var(--border); background:rgba(255,255,255,.025); }
@@ -141,6 +236,10 @@
     .inline-edit-tc { font-family:'SFMono-Regular','SF Mono',Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; letter-spacing:1px; white-space:nowrap; }
     .inline-color { width:30px; height:26px; margin-right:5px; padding:1px; border:1px solid var(--border); border-radius:6px; background:transparent; vertical-align:middle; cursor:pointer; }
     .inline-title-wrap { display:flex; align-items:center; min-width:170px; }
+    .checklist-cards { display:grid; gap:10px; }
+    .checklist-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:14px 15px; border:1px solid rgba(45,212,191,.2); border-radius:12px; background:linear-gradient(135deg,rgba(45,212,191,.055),var(--surface2)); }
+    .checklist-card-title { margin-bottom:4px; font-size:13px; font-weight:650; }
+    .checklist-card-meta { color:var(--muted); font-size:10px; }
     .color-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 4px; }
     .badge { border-radius: 3px; padding: 2px 6px; font-size: 10px; }
     .badge-info { background: rgba(59,130,246,.2); color: #93c5fd; }
@@ -189,17 +288,23 @@
       .view { padding: 16px 12px; }
       .settings-grid { grid-template-columns: 1fr; }
       .show-layout { grid-template-columns:1fr; }
+      .show-library { position:static; }
+      .show-fields, .show-transfer-actions { grid-template-columns:1fr; }
+      .show-fields .show-field-wide { grid-column:auto; }
+      .edit-overview { grid-template-columns:1fr; }
+      .edit-overview-counts { display:grid; grid-template-columns:repeat(3,1fr); }
       .settings-wide { grid-column: auto; }
       #view-live { padding-top:0; }
       #live-picker-shell { height:calc(100vh - 92px); min-height:460px; }
       #live-position { border-radius:19px; }
       #live-position-content { padding:14px 15px 18px; }
       .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
-      .live-cue-tc { width:78px; }
+      .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
     }
   </style>
 </head>
 <body>
+<div id="screen-flash" aria-hidden="true"></div>
 
 <!-- ── STATUS BAR ──────────────────────────────────────────────────────── -->
 <div id="status-bar">
@@ -220,46 +325,66 @@
 <div id="view-show" class="view">
   <div class="page-heading">
     <h1>Show</h1>
-    <p>Show auswählen, laden, umbenennen und speichern.</p>
+    <p>Shows verwalten, laden und ihre grundlegenden Eigenschaften bearbeiten.</p>
   </div>
   <div class="show-layout">
-    <div class="show-card">
-      <h2>Show laden</h2>
+    <div class="show-card show-library">
+      <h2>Show auswählen</h2>
+      <p class="show-card-description">„Laden“ aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
       <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
       <div class="toolbar">
         <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
         <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
       </div>
       <div id="show-active-state"></div>
+      <div class="show-summary">
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-positions">0</span><span class="show-summary-label">Songs</span></div>
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-cues">0</span><span class="show-summary-label">Cues</span></div>
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-checklists">0</span><span class="show-summary-label">Listen</span></div>
+      </div>
     </div>
 
-    <div class="show-card">
-      <h2>Show bearbeiten</h2>
-      <div class="form-row">
-        <label>Name</label>
-        <input id="show-name-input" type="text" placeholder="Name der Show" />
+    <div class="show-main">
+      <div class="show-card">
+        <h2>Basisdaten</h2>
+        <p class="show-card-description">Name, Aufführungsdatum und Verhalten beim Ausfall der Timecode-Quelle.</p>
+        <div class="show-fields">
+          <div class="form-row show-field-wide">
+            <label>Name der Show</label>
+            <input id="show-name-input" type="text" placeholder="Name der Show" />
+          </div>
+          <div class="form-row">
+            <label>Aufführungsdatum</label>
+            <input id="show-date-input" type="date" />
+          </div>
+          <div class="form-row">
+            <label>Bei Timecode-Ausfall</label>
+            <select id="s-fallback">
+              <option value="stop">Timecode stoppen</option>
+              <option value="continue">Weiterlaufen lassen</option>
+              <option value="loop">Als Schleife weiterlaufen</option>
+            </select>
+          </div>
+        </div>
+        <div class="show-actions">
+          <div id="show-save-feedback" class="show-feedback"></div>
+          <button class="btn btn-primary" onclick="saveSelectedShow()">Basisdaten speichern</button>
+        </div>
+        <div class="show-save-note">Songs, Cues und Aufgabenlisten werden auf der Edit-Seite automatisch gespeichert. Dieser Button speichert nur die Basisdaten oben.</div>
       </div>
-      <div class="form-row">
-        <label>Datum</label>
-        <input id="show-date-input" type="date" />
+
+      <div class="show-card">
+        <h2>Sicherung und Austausch</h2>
+        <p class="show-card-description">Optional: Show als Datei sichern oder auf ein anderes TC-Cue-System übertragen.</p>
+        <div class="show-transfer-actions">
+          <button class="btn" onclick="exportSelectedShow()" title="Show als JSON exportieren">Show exportieren ↓</button>
+          <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
+            Show importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+          </label>
+        </div>
+        <p class="show-transfer-note">Beim Import wird eine neue Show angelegt. Die aktuell geladene Show bleibt unverändert.</p>
+        <div id="import-feedback" class="show-feedback"></div>
       </div>
-      <div class="form-row">
-        <label>Fallback-Modus</label>
-        <select id="s-fallback">
-          <option value="stop">Stop</option>
-          <option value="continue">Weiterlaufen</option>
-          <option value="loop">Loop</option>
-        </select>
-      </div>
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="saveSelectedShow()">Speichern</button>
-        <button class="btn" onclick="exportSelectedShow()" title="Show als JSON exportieren">Exportieren ↓</button>
-        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
-          Importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
-        </label>
-      </div>
-      <div id="show-save-feedback" style="font-size:11px;margin-top:12px;"></div>
-      <div id="import-feedback" style="font-size:11px;margin-top:6px;"></div>
     </div>
   </div>
 </div>
@@ -288,6 +413,28 @@
         <option value="normal">Normal</option>
         <option value="large">Groß</option>
       </select>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Vorschau für die nächsten Cues
+        <span class="sp-hint">Zeigt die Nachrichten der nächsten Cues dauerhaft an</span>
+      </div>
+      <select id="s-next-cue-previews" onchange="onSettingChange()">
+        <option value="0">Keine</option>
+        <option value="1">1 Cue</option>
+        <option value="2">2 Cues</option>
+        <option value="3">3 Cues</option>
+        <option value="4">4 Cues</option>
+        <option value="5">5 Cues</option>
+      </select>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Bildschirmflash
+        <span class="sp-hint">Lässt den Bildschirm bei einem ausgelösten Cue kurz aufleuchten</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-screen-flash" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <button class="btn btn-primary btn-small" onclick="triggerScreenFlash(true)">Flash testen</button>
     </div>
   </div>
 
@@ -541,6 +688,43 @@
   </div>
 </div>
 
+<!-- ── MODAL: Checklist bearbeiten ─────────────────────────────────────── -->
+<div id="checklist-modal-overlay" onclick="if(event.target===this)closeChecklistModal()">
+  <div id="checklist-modal">
+    <h3 id="checklist-modal-title">Checklist</h3>
+    <input type="hidden" id="f-checklist-id" />
+    <div class="form-row">
+      <label>Name</label>
+      <input id="f-checklist-title" type="text" placeholder="Vorbereitung Bühne" />
+    </div>
+    <div class="form-row">
+      <label>Einblenden</label>
+      <select id="f-checklist-trigger" onchange="updateChecklistTriggerFields()">
+        <option value="before-first-cue">Vor dem ersten Cue</option>
+        <option value="after-cue">Nach einem Cue</option>
+        <option value="time">Zu einer Uhrzeit</option>
+      </select>
+    </div>
+    <div class="form-row" id="checklist-trigger-cue-row" style="display:none;">
+      <label>Nach Cue</label>
+      <select id="f-checklist-cue"></select>
+    </div>
+    <div class="form-row" id="checklist-trigger-time-row" style="display:none;">
+      <label>Uhrzeit</label>
+      <input id="f-checklist-time" type="time" value="19:00" />
+    </div>
+    <div class="form-row">
+      <label>Listenpunkte</label>
+      <div id="f-checklist-items" class="checklist-item-editor"></div>
+      <button class="checklist-item-add" type="button" onclick="addChecklistItemField()">+ Listenpunkt hinzufügen</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeChecklistModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveChecklist()">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
 <div id="view-live" class="view active">
   <div id="live-picker-shell">
@@ -557,7 +741,8 @@
         </div>
       </div>
     </div>
-    <div id="live-cue-list" onscroll="onLivePickerScroll()"><div id="no-cue">Warte auf Timecode…</div></div>
+    <div id="live-checklists"></div>
+    <div id="live-cue-list" onscroll="onLivePickerScroll()" onmouseenter="onLivePickerEnter()" onmousemove="onLivePickerEnter()" onmouseleave="onLivePickerLeave()"><div id="no-cue">Warte auf Timecode…</div></div>
   </div>
 </div>
 
@@ -565,36 +750,64 @@
 <div id="view-edit" class="view">
   <div class="page-heading">
     <h1>Show bearbeiten</h1>
-    <p>Positionen, Songs und Cues der geladenen Show einrichten.</p>
+    <p>Songs, Cues und Aufgabenlisten der geladenen Show direkt bearbeiten.</p>
   </div>
   <div class="edit-layout">
 
+  <div class="edit-overview">
+    <div>
+      <div class="edit-overview-kicker">Geladene Show</div>
+      <div class="edit-overview-name" id="edit-show-name">Keine Show geladen</div>
+      <div class="edit-overview-hint">Änderungen in Tabellenfeldern werden beim Verlassen des Feldes gespeichert.</div>
+    </div>
+    <div class="edit-overview-counts">
+      <div class="edit-overview-count"><strong id="edit-count-positions">0</strong><span>Songs</span></div>
+      <div class="edit-overview-count"><strong id="edit-count-cues">0</strong><span>Cues</span></div>
+      <div class="edit-overview-count"><strong id="edit-count-checklists">0</strong><span>Listen</span></div>
+    </div>
+  </div>
+
   <!-- Positions / Songs -->
-  <div class="section edit-card">
+  <div class="section edit-card" data-edit-section="positions">
     <div class="section-header">
-      <h2>Positionen / Songs</h2>
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('positions')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Songs und Positionen</h2>
+          <span class="edit-card-description">Zeitbereiche definieren, in denen Songs oder Showpositionen aktiv sind.</span>
+        </span>
+      </button>
       <div class="toolbar">
-        <button class="btn btn-primary btn-small" onclick="openPositionModal(null)">+ Position hinzufügen</button>
+        <button class="btn btn-primary" onclick="openPositionModal(null)">+ Song / Position</button>
       </div>
     </div>
-    <div class="cue-table-wrap" id="position-table-wrap">
-      <p class="empty-hint">Keine Show ausgewählt.</p>
+    <div class="edit-section-body">
+      <div class="cue-table-wrap" id="position-table-wrap">
+        <p class="empty-hint">Keine Show ausgewählt.</p>
+      </div>
     </div>
   </div>
 
   <!-- Cues -->
-  <div class="section edit-card">
+  <div class="section edit-card" data-edit-section="cues">
     <div class="section-header">
-      <h2>Cues</h2>
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('cues')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Cues</h2>
+          <span class="edit-card-description">Timecode, Farbe, Titel und Nachricht direkt in der Tabelle bearbeiten.</span>
+        </span>
+      </button>
       <div class="toolbar">
-        <button class="btn btn-primary btn-small" onclick="openCueModal(null)">+ Cue hinzufügen</button>
+        <button class="btn btn-primary" onclick="openCueModal(null)">+ Cue</button>
       </div>
     </div>
 
+    <div class="edit-section-body">
     <!-- CSV Import -->
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none; padding:4px 0;">CSV Import</summary>
-      <div style="margin-top:10px;">
+    <details class="edit-tools">
+      <summary>CSV-Werkzeuge</summary>
+      <div class="edit-tools-content">
         <div class="toolbar" style="margin-bottom:6px;">
           <input type="file" id="csv-file" accept=".csv,.txt" style="font-size:12px;color:var(--muted);" />
           <button class="btn btn-accent" onclick="importCSV()">Importieren</button>
@@ -612,6 +825,26 @@
     <div class="cue-table-wrap" id="cue-table-wrap">
       <p class="empty-hint">Keine Show ausgewählt.</p>
     </div>
+    </div>
+  </div>
+
+  <!-- Checklists -->
+  <div class="section edit-card" data-edit-section="checklists">
+    <div class="section-header">
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('checklists')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Aufgabenlisten</h2>
+          <span class="edit-card-description">Vorbereitungen und Aufgaben zu einem Cue oder einer Uhrzeit einblenden.</span>
+        </span>
+      </button>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="openChecklistModal(null)">+ Aufgabenliste</button>
+      </div>
+    </div>
+    <div class="edit-section-body">
+      <div id="checklist-wrap"><p class="empty-hint">Keine Show ausgewählt.</p></div>
+    </div>
   </div>
 
   </div>
@@ -625,14 +858,18 @@
 let ws, reconnectTimer;
 let currentShowId = null;
 let allShows = [];
+let _triggeredChecklistIds = new Set();
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ════════════════════════════════════════════════════════════════════════════
 const SETTINGS_KEY = 'tc-cue-settings';
+const EDIT_SECTIONS_KEY = 'tc-cue-edit-sections';
 const SETTING_DEFAULTS = {
   showFrames:      true,
   liveFontSize:    'normal',
+  nextCuePreviews: 0,
+  screenFlash:     false,
   autoResetOnStop: true,
   alarmEnabled:    true,
   alarmVolume:     80,
@@ -653,6 +890,8 @@ function getCurrentSettingsFromUI() {
   return {
     showFrames:       document.getElementById('s-show-frames').checked,
     liveFontSize:     document.getElementById('s-live-font').value,
+    nextCuePreviews:  Number(document.getElementById('s-next-cue-previews').value),
+    screenFlash:      document.getElementById('s-screen-flash').checked,
     autoResetOnStop:  document.getElementById('s-auto-reset').checked,
     alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
     alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
@@ -663,6 +902,10 @@ function applySettings(s) {
   // Live TC font size
   const liveTc = document.getElementById('live-tc');
   liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(30px,5vw,48px)' : s.liveFontSize === 'large' ? 'clamp(48px,9vw,84px)' : '';
+  window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
+  window._screenFlash = !!s.screenFlash;
+  _liveCueRenderSignature = '';
+  if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   // TC format label update for current display
   updateTcDisplayFormat(s.showFrames);
 }
@@ -677,6 +920,8 @@ function openSettings() {
   // Populate UI
   document.getElementById('s-show-frames').checked = s.showFrames;
   document.getElementById('s-live-font').value     = s.liveFontSize;
+  document.getElementById('s-next-cue-previews').value = String(s.nextCuePreviews);
+  document.getElementById('s-screen-flash').checked = s.screenFlash;
   document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
   document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
   document.getElementById('s-alarm-volume').value = s.alarmVolume;
@@ -774,12 +1019,39 @@ function showView(name, btn) {
   document.getElementById('view-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'show') loadAdmin();
-  if (name === 'edit') loadAdmin();
+  if (name === 'edit') {
+    loadAdmin();
+    applyEditSectionState();
+  }
   if (name === 'settings') openSettings();
   if (name === 'live') {
     _pickerBrowsing = false;
     requestAnimationFrame(() => followLiveCurrentCue(false));
   }
+}
+
+function toggleEditSection(section) {
+  const card = document.querySelector(`[data-edit-section="${section}"]`);
+  if (!card) return;
+  card.classList.toggle('collapsed');
+  const state = loadEditSectionState();
+  state[section] = card.classList.contains('collapsed');
+  localStorage.setItem(EDIT_SECTIONS_KEY, JSON.stringify(state));
+}
+
+function loadEditSectionState() {
+  try {
+    return JSON.parse(localStorage.getItem(EDIT_SECTIONS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function applyEditSectionState() {
+  const state = loadEditSectionState();
+  document.querySelectorAll('[data-edit-section]').forEach(card => {
+    card.classList.toggle('collapsed', !!state[card.dataset.editSection]);
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -813,9 +1085,12 @@ function handleEvent(evt) {
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
     renderCurrentPosition(evt.currentPosition, tc);
+    renderLiveChecklists(evt.currentCue);
   }
   if (evt.type === 'CUE_FIRE') {
     playAlarm();
+    triggerScreenFlash();
+    focusFiredCue(evt);
   }
 }
 
@@ -854,10 +1129,65 @@ let _lastCurrentCue = null;
 let _lastNextCue = null;
 let _lastTcString = '00:00:00:00';
 let _liveCueRenderSignature = '';
+let _liveChecklistRenderSignature = '';
 let _pickerBrowsing = false;
 let _pickerScrollTimer = null;
+let _pickerHovered = false;
 let _suppressPickerScroll = false;
 let _pickerSelectionFrame = null;
+
+function renderLiveChecklists(currentCue = _lastCurrentCue) {
+  const wrap = document.getElementById('live-checklists');
+  const show = allShows.find(show => show.id === currentShowId);
+  if (!show) return;
+  const cues = [...(show.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  const firstCue = cues[0];
+  const now = new Date().toTimeString().slice(0, 5);
+  const triggeredBefore = [..._triggeredChecklistIds].sort().join(',');
+  for (const checklist of show.checklists || []) {
+    const trigger = checklist.trigger || { type: 'before-first-cue' };
+    const due = trigger.type === 'before-first-cue'
+      ? !currentCue || currentCue.id === firstCue?.id
+      : trigger.type === 'after-cue'
+        ? !!currentCue && tcStringToSeconds(currentCue.tc) >= tcStringToSeconds(cues.find(cue => cue.id === trigger.cueId)?.tc || '99:00:00:00')
+        : now >= trigger.time;
+    if (due) _triggeredChecklistIds.add(checklist.id);
+  }
+  if (triggeredBefore !== [..._triggeredChecklistIds].sort().join(',')) _liveCueRenderSignature = '';
+  const visible = (show.checklists || []).filter(checklist =>
+    _triggeredChecklistIds.has(checklist.id) && checklist.items.some(item => !item.checked)
+  );
+  wrap.classList.toggle('show', visible.length > 0);
+  const signature = JSON.stringify(visible.map(checklist => [
+    checklist.id,
+    checklist.title,
+    checklist.items.map(item => [item.id, item.text, item.checked]),
+  ]));
+  if (signature === _liveChecklistRenderSignature) return;
+  _liveChecklistRenderSignature = signature;
+  wrap.innerHTML = visible.map(checklist => {
+    const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
+    return `
+    <div class="live-checklist ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+      <div class="live-checklist-header">
+        <div class="live-checklist-heading">
+          <div class="live-checklist-kicker">${done ? 'Aufgabenliste erledigt' : 'Aufgabenliste'}</div>
+          <div class="live-checklist-title">${esc(checklist.title)}</div>
+        </div>
+        ${done
+          ? '<div class="live-checklist-done-state">Erledigt</div>'
+          : `<button class="live-checklist-complete" onclick="event.stopPropagation();completeChecklist('${checklist.id}')">Alle abhaken</button>`}
+      </div>
+      ${done ? '' : `<div class="live-checklist-items">
+        ${checklist.items.map(item => `
+          <label class="live-checklist-item ${item.checked ? 'checked' : ''}" onclick="event.stopPropagation()">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem('${checklist.id}','${item.id}',this.checked)" />
+            <span>${esc(item.text)}</span>
+          </label>`).join('')}
+      </div>`}
+    </div>`;
+  }).join('');
+}
 
 function renderLiveCues(cur, next, tcString) {
   _lastCurrentCue = cur;
@@ -874,8 +1204,17 @@ function renderLiveCues(cur, next, tcString) {
 
   const focusId = cur?.id || next?.id;
   const focusIndex = Math.max(0, cues.findIndex(cue => cue.id === focusId));
+  const previewCount = window._nextCuePreviews || 0;
+  const currentIndex = cues.findIndex(cue => cue.id === cur?.id);
+  const nextIndex = cues.findIndex(cue => cue.id === next?.id);
+  const previewStart = currentIndex >= 0 ? currentIndex + 1 : nextIndex >= 0 ? nextIndex : 0;
+  const previewCueIds = new Set(cues.slice(previewStart, previewStart + previewCount).map(cue => cue.id));
   const signature = JSON.stringify([
     cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
+    (show?.positions || []).map(position => [position.id, position.name, position.startTc, position.endTc]),
+    (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.items.map(item => [item.id, item.text, item.checked])]),
+    [..._triggeredChecklistIds].sort(),
+    previewCount,
     cur?.id,
     next?.id,
   ]);
@@ -887,21 +1226,51 @@ function renderLiveCues(cur, next, tcString) {
 
   const previousScrollTop = list.scrollTop;
   const shouldFollow = !_pickerBrowsing;
-  list.innerHTML = cues.map((cue, index) => {
+  const queuedChecklists = (show?.checklists || []).filter(checklist =>
+    !_triggeredChecklistIds.has(checklist.id) || checklist.items.every(item => item.checked)
+  );
+  const entries = [
+    ...cues.map((cue, index) => ({ type: 'cue', cue, cueIndex: index, sort: tcStringToSeconds(cue.tc) })),
+    ...queuedChecklists.map(checklist => ({ type: 'checklist', checklist, sort: checklistSortPosition(checklist, cues) })),
+  ].sort((a, b) => a.sort - b.sort || (a.type === 'cue' ? -1 : 1));
+  list.innerHTML = entries.map(entry => {
+    if (entry.type === 'checklist') {
+      const checklist = entry.checklist;
+      const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
+      return `
+        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+          <div class="live-cue-time">
+            <div class="live-cue-song">Aufgabenliste</div>
+            <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
+          </div>
+          <div class="live-cue-dot"></div>
+          <div>
+            <div class="live-cue-title">${esc(checklist.title)}</div>
+            <div class="live-checklist-queue-preview">${checklist.items.map(item => `<span>${esc(item.text)}</span>`).join('')}</div>
+          </div>
+          <div class="live-checklist-queue-count">${done ? '✓ Erledigt' : `${checklist.items.length} Punkte`}</div>
+        </div>`;
+    }
+    const cue = entry.cue;
+    const index = entry.cueIndex;
+    const position = findPositionForCue(cue, show);
     const isCurrent = cue.id === cur?.id;
     const isNext = cue.id === next?.id;
     const isPast = tcStringToSeconds(cue.tc) < tcStringToSeconds(tcString) && !isCurrent;
     const state = isCurrent ? 'Aktueller Cue' : isNext ? 'Als Nächstes' : '';
     const depth = Math.min(3, Math.abs(index - focusIndex));
-    const classes = ['live-cue-row', isCurrent ? 'current' : '', isNext ? 'next' : '', isPast ? 'past' : '', depth ? `depth-${depth}` : ''].filter(Boolean).join(' ');
+    const classes = ['live-cue-row', isCurrent ? 'current' : '', isNext ? 'next' : '', previewCueIds.has(cue.id) ? 'preview-visible' : '', isPast ? 'past' : '', depth ? `depth-${depth}` : ''].filter(Boolean).join(' ');
     return `
       <div class="${classes}" data-cue-id="${cue.id}" style="--cue-color:${cue.color}" onclick="openCueModal('${cue.id}')">
-        <div class="live-cue-tc">${cue.tc}</div>
+        <div class="live-cue-time">
+          ${state ? `<div class="live-cue-state">${state}</div>` : '<div class="live-cue-state">&nbsp;</div>'}
+          <div class="live-cue-tc">${cue.tc}</div>
+        </div>
         <div class="live-cue-dot"></div>
         <div>
+          ${position ? `<div class="live-cue-song">${esc(position.name)}</div>` : ''}
           <div class="live-cue-title">${esc(cue.title)}</div>
           <div class="live-cue-message">${esc(cue.message)}</div>
-          ${state ? `<div class="live-cue-state">${state}</div>` : ''}
         </div>
         ${isNext ? '<div class="live-cue-countdown" data-next-countdown></div>' : '<div></div>'}
       </div>`;
@@ -914,6 +1283,21 @@ function renderLiveCues(cur, next, tcString) {
     else list.scrollTop = previousScrollTop;
     updateLivePickerSelection();
   });
+}
+
+function checklistSortPosition(checklist, cues) {
+  const trigger = checklist.trigger || { type: 'before-first-cue' };
+  if (trigger.type === 'before-first-cue') return -2;
+  if (trigger.type === 'time') return -1;
+  const cue = cues.find(item => item.id === trigger.cueId);
+  return cue ? tcStringToSeconds(cue.tc) + 0.0001 : Number.MAX_SAFE_INTEGER;
+}
+
+function findPositionForCue(cue, show) {
+  const cueSeconds = tcStringToSeconds(cue.tc);
+  return [...(show?.positions || [])]
+    .filter(position => cueSeconds >= tcStringToSeconds(position.startTc) && cueSeconds <= tcStringToSeconds(position.endTc))
+    .sort((a, b) => tcStringToSeconds(b.startTc) - tcStringToSeconds(a.startTc))[0] || null;
 }
 
 function updateLiveCueCountdown(nextCue, tcString) {
@@ -945,11 +1329,47 @@ function onLivePickerScroll() {
   updateLivePickerSelection();
   if (_suppressPickerScroll) return;
   _pickerBrowsing = true;
+  if (_pickerHovered) {
+    clearTimeout(_pickerScrollTimer);
+    return;
+  }
+  scheduleLivePickerReset();
+}
+
+function onLivePickerEnter() {
+  _pickerHovered = true;
+  clearTimeout(_pickerScrollTimer);
+  _pickerScrollTimer = null;
+}
+
+function onLivePickerLeave() {
+  _pickerHovered = false;
+  if (_pickerBrowsing) scheduleLivePickerReset();
+}
+
+function scheduleLivePickerReset() {
   clearTimeout(_pickerScrollTimer);
   _pickerScrollTimer = setTimeout(() => {
+    const list = document.getElementById('live-cue-list');
+    if (_pickerHovered || list.matches(':hover')) {
+      _pickerHovered = true;
+      _pickerScrollTimer = null;
+      return;
+    }
     _pickerBrowsing = false;
+    _pickerScrollTimer = null;
     followLiveCurrentCue(true);
-  }, 8000);
+  }, 4000);
+}
+
+function focusFiredCue(evt) {
+  clearTimeout(_pickerScrollTimer);
+  _pickerBrowsing = false;
+  _lastCurrentCue = evt.cue;
+  _lastNextCue = evt.nextCue;
+  _lastTcString = evt.tc;
+  renderLiveCues(evt.cue, evt.nextCue, evt.tc);
+  requestAnimationFrame(() => followLiveCurrentCue(true));
 }
 
 function updateLivePickerSelection() {
@@ -1036,25 +1456,41 @@ async function loadAdmin() {
 
   if (activeShow) {
     document.getElementById('s-fallback').value = activeShow.fallbackMode || 'stop';
+    renderEditOverview(activeShow);
     renderPositionTable(activeShow);
     renderCueTable(activeShow);
+    renderChecklistAdmin(activeShow);
   } else {
+    renderEditOverview(null);
     document.getElementById('position-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
     document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+    document.getElementById('checklist-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
   }
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
   previewSelectedShow();
 }
 
+function renderEditOverview(show) {
+  document.getElementById('edit-show-name').textContent = show?.name || 'Keine Show geladen';
+  document.getElementById('edit-count-positions').textContent = show?.positions?.length || 0;
+  document.getElementById('edit-count-cues').textContent = show?.cues?.length || 0;
+  document.getElementById('edit-count-checklists').textContent = show?.checklists?.length || 0;
+}
+
 function previewSelectedShow() {
   const selectedId = document.getElementById('show-select').value;
   const show = allShows.find(item => item.id === selectedId);
+  const activeState = document.getElementById('show-active-state');
   document.getElementById('show-name-input').value = show?.name || '';
   document.getElementById('show-date-input').value = show?.date || '';
   document.getElementById('s-fallback').value = show?.fallbackMode || 'stop';
-  document.getElementById('show-active-state').textContent = show
+  activeState.textContent = show
     ? show.id === currentShowId ? 'Diese Show ist geladen.' : 'Ausgewählt, aber noch nicht geladen.'
     : 'Keine Show vorhanden.';
+  activeState.classList.toggle('active', !!show && show.id === currentShowId);
+  document.getElementById('show-summary-positions').textContent = show?.positions?.length || 0;
+  document.getElementById('show-summary-cues').textContent = show?.cues?.length || 0;
+  document.getElementById('show-summary-checklists').textContent = show?.checklists?.length || 0;
   document.getElementById('show-save-feedback').textContent = '';
 }
 
@@ -1062,18 +1498,38 @@ async function loadSelectedShow() {
   const id = document.getElementById('show-select').value;
   if (!id) return;
   currentShowId = id;
-  const s = allShows.find(x => x.id === id);
+  _triggeredChecklistIds = new Set();
+  let s = allShows.find(x => x.id === id);
+  if (s) s = await resetChecklistsForShow(s);
   document.getElementById('live-show-name').textContent = s ? s.name : '–';
   if (s) {
     document.getElementById('s-fallback').value = s.fallbackMode || 'stop';
+    renderEditOverview(s);
     renderPositionTable(s);
     renderCueTable(s);
+    renderChecklistAdmin(s);
     restoreTcSourceUI(s);
   }
   await api('POST', `/api/shows/${id}/activate`).catch(() => {});
   _liveCueRenderSignature = '';
   renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  renderLiveChecklists(_lastCurrentCue);
   previewSelectedShow();
+}
+
+async function resetChecklistsForShow(show) {
+  const changed = (show.checklists || []).filter(checklist => checklist.items.some(item => item.checked));
+  if (!changed.length) return show;
+  await Promise.all(changed.map(checklist =>
+    api('PUT', `/api/shows/${show.id}/checklists/${checklist.id}`, {
+      ...checklist,
+      items: checklist.items.map(item => ({ ...item, checked: false })),
+    })
+  ));
+  const updated = await api('GET', `/api/shows/${show.id}`);
+  const index = allShows.findIndex(item => item.id === show.id);
+  if (index !== -1) allShows[index] = updated;
+  return updated;
 }
 
 async function selectShow(id) {
@@ -1112,6 +1568,7 @@ async function saveSelectedShow() {
   if (id === currentShowId) {
     renderPositionTable(updated);
     renderCueTable(updated);
+    renderChecklistAdmin(updated);
   }
 }
 
@@ -1318,15 +1775,168 @@ async function deleteCue(cueId) {
   await reloadCurrentShow();
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// CHECKLISTS
+// ════════════════════════════════════════════════════════════════════════════
+function checklistTriggerLabel(checklist, show) {
+  const trigger = checklist.trigger || { type: 'before-first-cue' };
+  if (trigger.type === 'before-first-cue') return 'Vor dem ersten Cue';
+  if (trigger.type === 'time') return `Um ${trigger.time} Uhr`;
+  const cue = show.cues.find(cue => cue.id === trigger.cueId);
+  return `Nach Cue „${cue?.title || 'Gelöschter Cue'}“`;
+}
+
+function renderChecklistAdmin(show) {
+  const wrap = document.getElementById('checklist-wrap');
+  const checklists = show.checklists || [];
+  if (!checklists.length) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Checklists angelegt.</p>';
+    return;
+  }
+  wrap.innerHTML = `<div class="checklist-cards">${checklists.map(checklist => {
+    return `
+      <div class="checklist-card">
+        <div>
+          <div class="checklist-card-title">${esc(checklist.title)}</div>
+          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))} · ${checklist.items.length} Punkte</div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-small" onclick="openChecklistModal('${checklist.id}')">Bearbeiten</button>
+          <button class="btn btn-small btn-danger" onclick="deleteChecklist('${checklist.id}')">Löschen</button>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+function openChecklistModal(checklistId) {
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  document.getElementById('checklist-modal-title').textContent = checklist ? 'Checklist bearbeiten' : 'Neue Checklist';
+  document.getElementById('f-checklist-id').value = checklist?.id || '';
+  document.getElementById('f-checklist-title').value = checklist?.title || '';
+  document.getElementById('f-checklist-trigger').value = checklist?.trigger?.type || 'before-first-cue';
+  document.getElementById('f-checklist-cue').innerHTML = (show?.cues || []).map(cue =>
+    `<option value="${cue.id}">${esc(cue.title)} (${cue.tc})</option>`
+  ).join('');
+  document.getElementById('f-checklist-cue').value = checklist?.trigger?.cueId || show?.cues?.[0]?.id || '';
+  document.getElementById('f-checklist-time').value = checklist?.trigger?.time || '19:00';
+  renderChecklistItemEditor(checklist?.items?.length ? checklist.items : [{ text: '', checked: false }]);
+  updateChecklistTriggerFields();
+  document.getElementById('checklist-modal-overlay').classList.add('show');
+  document.getElementById('f-checklist-title').focus();
+}
+
+function closeChecklistModal() {
+  document.getElementById('checklist-modal-overlay').classList.remove('show');
+}
+
+function updateChecklistTriggerFields() {
+  const type = document.getElementById('f-checklist-trigger').value;
+  document.getElementById('checklist-trigger-cue-row').style.display = type === 'after-cue' ? '' : 'none';
+  document.getElementById('checklist-trigger-time-row').style.display = type === 'time' ? '' : 'none';
+}
+
+function renderChecklistItemEditor(items) {
+  document.getElementById('f-checklist-items').innerHTML = items.map(item => `
+    <div class="checklist-item-editor-row" data-id="${item.id || ''}" data-checked="${item.checked ? 'true' : 'false'}">
+      <span class="checklist-item-editor-number"></span>
+      <input type="text" value="${esc(item.text)}" placeholder="Was muss erledigt werden?" />
+      <button class="checklist-item-remove" type="button" onclick="removeChecklistItemField(this)" title="Listenpunkt entfernen">×</button>
+    </div>`).join('');
+  numberChecklistItemFields();
+}
+
+function addChecklistItemField() {
+  const wrap = document.getElementById('f-checklist-items');
+  wrap.insertAdjacentHTML('beforeend', `
+    <div class="checklist-item-editor-row" data-id="" data-checked="false">
+      <span class="checklist-item-editor-number"></span>
+      <input type="text" placeholder="Was muss erledigt werden?" />
+      <button class="checklist-item-remove" type="button" onclick="removeChecklistItemField(this)" title="Listenpunkt entfernen">×</button>
+    </div>`);
+  numberChecklistItemFields();
+  wrap.lastElementChild.querySelector('input').focus();
+}
+
+function removeChecklistItemField(button) {
+  button.closest('.checklist-item-editor-row').remove();
+  numberChecklistItemFields();
+}
+
+function numberChecklistItemFields() {
+  document.querySelectorAll('#f-checklist-items .checklist-item-editor-number').forEach((number, index) => {
+    number.textContent = index + 1;
+  });
+}
+
+async function saveChecklist() {
+  const id = document.getElementById('f-checklist-id').value;
+  const title = document.getElementById('f-checklist-title').value.trim();
+  const items = [...document.querySelectorAll('#f-checklist-items .checklist-item-editor-row')].map(row => ({
+    id: row.dataset.id || undefined,
+    text: row.querySelector('input').value.trim(),
+    checked: row.dataset.checked === 'true',
+  })).filter(item => item.text);
+  const type = document.getElementById('f-checklist-trigger').value;
+  if (!title || !items.length) {
+    alert('Name und mindestens ein Punkt sind erforderlich.');
+    return;
+  }
+  const trigger = type === 'after-cue'
+    ? { type, cueId: document.getElementById('f-checklist-cue').value }
+    : type === 'time'
+      ? { type, time: document.getElementById('f-checklist-time').value }
+      : { type };
+  if (id) await api('PUT', `/api/shows/${currentShowId}/checklists/${id}`, { title, trigger, items });
+  else await api('POST', `/api/shows/${currentShowId}/checklists`, { title, trigger, items });
+  closeChecklistModal();
+  await reloadCurrentShow();
+}
+
+async function toggleChecklistItem(checklistId, itemId, checked) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  if (!checklist) return;
+  checklist.items = checklist.items.map(item => item.id === itemId ? { ...item, checked } : item);
+  const updated = { ...checklist, items: checklist.items.map(item => ({ ...item })) };
+  renderLiveChecklists(_lastCurrentCue);
+  await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, updated);
+  await reloadCurrentShow();
+}
+
+async function completeChecklist(checklistId) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  if (!checklist) return;
+  checklist.items = checklist.items.map(item => ({ ...item, checked: true }));
+  renderLiveChecklists(_lastCurrentCue);
+  await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, {
+    ...checklist,
+    items: checklist.items,
+  });
+  await reloadCurrentShow();
+}
+
+async function deleteChecklist(checklistId) {
+  if (!confirm('Checklist wirklich löschen?')) return;
+  await api('DELETE', `/api/shows/${currentShowId}/checklists/${checklistId}`);
+  _triggeredChecklistIds.delete(checklistId);
+  await reloadCurrentShow();
+}
+
 async function reloadCurrentShow() {
   const updated = await api('GET', `/api/shows/${currentShowId}`);
   const idx = allShows.findIndex(show => show.id === currentShowId);
   if (idx !== -1) allShows[idx] = updated;
+  renderEditOverview(updated);
   renderPositionTable(updated);
   renderCueTable(updated);
+  renderChecklistAdmin(updated);
   if (document.getElementById('show-select').value === currentShowId) previewSelectedShow();
   _liveCueRenderSignature = '';
   renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  renderLiveChecklists(_lastCurrentCue);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1391,6 +2001,14 @@ function parseCSVLine(line) {
 // ALARM
 // ════════════════════════════════════════════════════════════════════════════
 let _audioCtx = null;
+
+function triggerScreenFlash(force = false) {
+  if (!force && !window._screenFlash) return;
+  const flash = document.getElementById('screen-flash');
+  flash.classList.remove('fire');
+  void flash.offsetWidth;
+  flash.classList.add('fire');
+}
 
 async function playAlarm(force = false) {
   const settings = loadSettings();
@@ -1947,7 +2565,12 @@ function esc(str) {
 // ════════════════════════════════════════════════════════════════════════════
 // Apply saved settings on startup
 applySettings(loadSettings());
+applyEditSectionState();
 connect();
+setInterval(() => {
+  renderLiveChecklists(_lastCurrentCue);
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+}, 30000);
 
 (async () => {
   const shows = await api('GET', '/api/shows').catch(() => []);
@@ -1956,6 +2579,8 @@ connect();
     currentShowId = shows[0].id;
     const s = shows[0];
     document.getElementById('live-show-name').textContent = s.name;
+    renderLiveChecklists(null);
+    renderLiveCues(null, null, '00:00:00:00');
   }
 })();
 </script>

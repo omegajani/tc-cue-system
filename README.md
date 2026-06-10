@@ -1,111 +1,112 @@
 # TC Cue System
 
-Theater-Timecode-basiertes Cue-System für Bühnenproduktionen. Ein Node.js-Server empfängt Timecode (LTC, MTC, RTP-MIDI, OSC oder Simulator), feuert Cues automatisch zum richtigen TC-Zeitpunkt und sendet diese per WebSocket an verbundene iOS-Clients.
+Browserbasiertes Timecode- und Cue-System für Bühnenproduktionen. Die Web-App
+verwaltet Shows, Songs, Cues und Aufgabenlisten und zeigt den laufenden
+Timecode im lokalen Netzwerk an.
 
-![App Screenshot](Bildschirmfoto%202026-04-23%20um%2014.01.18.png)
+## Auf einem neuen Mac installieren
 
-## Komponenten
+Benötigt werden:
 
+- macOS
+- [Git](https://git-scm.com/) (ist mit den Xcode Command Line Tools verfügbar)
+- [Node.js 18 oder neuer](https://nodejs.org/)
+- Zugriff auf dieses GitHub-Repository
+
+Im Terminal:
+
+```bash
+git clone https://github.com/omegajani/tc-cue-system.git
+cd tc-cue-system
+./Install.command
 ```
-tc-cue-system/
-├── server/        Node.js + TypeScript — TC-Ingestion, Cue-Engine, WebSocket-Broker
-├── web-ui/        Browser-Oberfläche — Show- und Cue-Verwaltung, Simulator
-├── ios/           Xcode-Projekt
-│   ├── TCCue          iOS-App (Verbindung, Live-Ansicht, Einstellungen)
-│   ├── TCCueWatch     watchOS-Begleit-App
-│   └── TCCueWidget    Live Activity / Dynamic Island
+
+Danach kann die App direkt im Finder bedient werden:
+
+| Datei | Funktion |
+| --- | --- |
+| `Install.command` | Installiert alle benötigten Pakete |
+| `Start.command` | Startet den Server und öffnet die Web-App |
+| `Stop.command` | Stoppt den Server |
+| `Update.command` | Sichert Shows, lädt Updates von GitHub und installiert sie |
+
+Falls macOS eine `.command`-Datei beim ersten Mal blockiert: Rechtsklick auf die
+Datei, **Öffnen** wählen und bestätigen.
+
+## Updates
+
+Für normale Updates genügt ein Doppelklick auf `Update.command`.
+
+Das Update:
+
+1. bricht sicher ab, wenn lokale Code-Änderungen noch nicht gesichert sind,
+2. legt eine Sicherung der Shows an,
+3. lädt die aktuelle Version vom derzeit verwendeten Git-Branch,
+4. installiert geänderte Pakete,
+5. startet die Web-App erneut, falls sie vorher lief.
+
+Lokale Shows liegen nicht im Git-Ordner und werden daher durch Updates nicht
+überschrieben:
+
+```text
+~/Library/Application Support/TC Cue System/shows.json
 ```
 
-## Server
+Automatische Sicherungen vor Updates liegen im Unterordner `backups`.
 
-### Voraussetzungen
+## Gemeinsam entwickeln
 
-- Node.js 18+
+Vor der Arbeit den aktuellen Stand laden:
 
-### Starten
+```bash
+git pull --ff-only
+```
+
+Änderungen anschließend auf einem eigenen Branch veröffentlichen:
+
+```bash
+git switch -c name/meine-aenderung
+git add .
+git commit -m "Kurze Beschreibung"
+git push -u origin name/meine-aenderung
+```
+
+Danach auf GitHub einen Pull Request öffnen. So können Änderungen geprüft und
+zusammengeführt werden, ohne den stabilen Stand direkt zu verändern.
+
+## Manuell starten
 
 ```bash
 cd server
-npm install
-npm run dev      # Entwicklung (hot reload)
-npm start        # Produktion
+npm ci
+npm start
 ```
 
-Server läuft auf **Port 3000**. Web-UI erreichbar unter `http://localhost:3000`.
+Die Web-App ist anschließend unter [http://localhost:3000](http://localhost:3000)
+erreichbar. Andere Geräte im gleichen Netzwerk verwenden die im Bereich
+**Einstellungen > Netzwerk** angezeigte Adresse.
 
-### TC-Quellen
-
-| Quelle | Beschreibung |
-|--------|-------------|
-| Simulator | Im Web-UI steuerbar (Start / Pause / Stop / Seek) |
-| LTC (Browser) | Browser dekodiert LTC-Audio, POST an `/api/tc/browser-tick` |
-| MTC (Web MIDI) | Browser empfängt MTC via Web MIDI API, POST an `/api/tc/midi-tick` |
-| RTP-MIDI | Direkt am Server über Netzwerk-MIDI |
-| OSC | OSC-Timecode-Input |
-
-### API-Endpunkte (Auswahl)
-
-| Methode | Pfad | Beschreibung |
-|---------|------|-------------|
-| `POST` | `/api/simulator/start` | TC starten (optional `{ tc }`) |
-| `POST` | `/api/simulator/stop` | TC stoppen + Engine reset |
-| `POST` | `/api/simulator/pause` | TC pausieren |
-| `POST` | `/api/simulator/seek` | Zu TC-Position springen `{ tc }` |
-| `POST` | `/api/engine/reset` | Gefeuerte Cues zurücksetzen |
-| `POST` | `/api/engine/fps` | FPS setzen `{ fps: 24|25|29.97|30 }` |
-| `GET`  | `/api/health` | Serverstatus |
-
-### WebSocket-Events
-
-```jsonc
-// Server → Client
-{ "type": "TC_UPDATE", "tc": "01:00:10:00", "currentCue": {...}, "nextCue": {...} }
-{ "type": "CUE_FIRE",  "tc": "...", "cue": {...}, "previousCue": {...}, "nextCue": {...} }
-```
-
-## iOS-App
-
-### Voraussetzungen
-
-- Xcode 16+
-- iOS 17+ Gerät
-- Apple Developer Account
-
-### Bauen & Installieren
-
-1. `ios/TCCue.xcodeproj` in Xcode öffnen
-2. Team in den Signing-Einstellungen aller Targets setzen
-3. **TCCue**-Schema wählen, Gerät auswählen, bauen
-
-### Schneller Catalyst-Testlauf
-
-Für UI, Serververbindung, WebSocket und Timecode kann die iOS-Oberfläche direkt
-auf dem Mac getestet werden:
+## Entwicklung und Prüfung
 
 ```bash
-brew install xcodegen # einmalig
-./scripts/build-catalyst.sh
+cd server
+npm run dev
+npm run typecheck
 ```
 
-Server, Timecode und Catalyst-App gemeinsam starten:
+## Projektstruktur
 
-```bash
-./scripts/run-local.sh
+```text
+server/       Node.js-Server, Cue-Engine, API und WebSocket
+web-ui/       Browser-Oberfläche
+scripts/      Installation, Start, Stop, Updates und lokale Hilfsskripte
+ios/          iOS- und watchOS-Projekte für spätere Weiterentwicklung
 ```
 
-Der Catalyst-Testlauf verwendet lokal automatisch `127.0.0.1:3000`. Live
-Activities, Haptik und Watch-Verbindung müssen weiterhin auf echten Geräten
-geprüft werden.
+## Unterstützte Timecode-Quellen
 
-Hinweis: Ein direkter GUI-Start als Kindprozess einer sandboxed Entwicklungs-App
-kann von macOS bei der App-Registrierung beendet werden. Das ist kein App-Crash.
-Das Skript aus einem normalen Terminal oder die gebaute App per Doppelklick
-starten.
-
-### Features
-
-- **Bonjour-Discovery** — Server im lokalen Netzwerk automatisch finden
-- **Live-Ansicht** — aktueller Cue, nächster Cue, laufender TC
-- **Live Activity / Dynamic Island** — Cue-Info auf dem Sperrbildschirm
-- **Haptisches Feedback** bei neuen Cues
-- **watchOS-App** — Cue-Info und Haptik am Handgelenk
+- Simulator in der Web-App
+- Browser-LTC
+- Browser-MTC / Web MIDI
+- RTP-MIDI
+- OSC

@@ -26,8 +26,7 @@ final class WatchState: NSObject, ObservableObject, WCSessionDelegate {
 
     @Published var currentCue: WatchCue?
     @Published var nextCue: WatchNextCue?
-    @Published var lastEvent: String = ""  // "fire" | "warning"
-    @Published var secondsUntilWarning: Int = 0
+    @Published var lastEvent: String = ""
 
     private override init() { super.init() }
 
@@ -74,11 +73,10 @@ final class WatchState: NSObject, ObservableObject, WCSessionDelegate {
         currentCue = cue
         nextCue = next
         lastEvent = event
-        secondsUntilWarning = msg["secondsUntil"] as? Int ?? 0
 
         // Haptics
         switch event {
-        case "fire", "warning":
+        case "fire":
             WKInterfaceDevice.current().play(.notification)
         default: break
         }

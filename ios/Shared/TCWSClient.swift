@@ -8,22 +8,18 @@ import Foundation
 ///   doesn't contend with the main actor.
 /// - TC display updates are driven by a 25 fps timer on the main actor so the
 ///   display is always smooth regardless of TCP burst delivery patterns.
-/// - CUE_FIRE / CUE_WARNING are dispatched to the main actor immediately.
+/// - CUE_FIRE is dispatched to the main actor immediately.
 @MainActor
 final class TCWSClient: ObservableObject {
     @Published var connectionState: ConnectionState = .disconnected
     @Published var previousCue: CueModel?
     @Published var currentCue: CueModel?
     @Published var nextCue: CueModel?
+    @Published var currentPosition: ShowPositionModel?
     @Published var currentTc: String = "--:--:--:--"
-    @Published var warningCue: CueModel?
-    @Published var warningSecondsUntil: Int = 0
     @Published var lastError: String?
-    private var warningReceivedAt: Date?
-    private var warningInitialSeconds: Int = 0
 
     var onCueFire: ((CueModel, CueModel?) -> Void)?
-    var onCueWarning: ((CueModel, Int) -> Void)?
 
     private var task: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
@@ -43,7 +39,7 @@ final class TCWSClient: ObservableObject {
         let stored = UserDefaults.standard.string(forKey: "serverURL")?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !stored.isEmpty { return stored }
-#if targetEnvironment(simulator)
+#if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
         return "127.0.0.1:3000"
 #else
         return ""
@@ -73,8 +69,7 @@ final class TCWSClient: ObservableObject {
         previousCue = nil
         currentCue = nil
         nextCue = nil
-        warningCue = nil
-        warningReceivedAt = nil
+        currentPosition = nil
         currentTc = "--:--:--:--"
     }
 
@@ -137,11 +132,7 @@ final class TCWSClient: ObservableObject {
         if s.prev != previousCue { previousCue = s.prev }
         if s.cur != currentCue { currentCue = s.cur }
         if s.next != nextCue { nextCue = s.next }
-        if let t = warningReceivedAt {
-            let remaining = max(0, warningInitialSeconds - Int(Date().timeIntervalSince(t)))
-            if remaining != warningSecondsUntil { warningSecondsUntil = remaining }
-            if remaining == 0 { warningReceivedAt = nil }
-        }
+        if s.position != currentPosition { currentPosition = s.position }
     }
 
     // MARK: - Cue Events (main actor, immediate)
@@ -150,19 +141,7 @@ final class TCWSClient: ObservableObject {
         previousCue = ev.previousCue
         currentCue = ev.cue
         nextCue = ev.nextCue
-        if warningCue?.id == ev.cue.id {
-            warningCue = nil
-            warningReceivedAt = nil
-        }
         onCueFire?(ev.cue, ev.nextCue)
-    }
-
-    private func handleCueWarning(_ ev: CueWarningEvent) {
-        warningCue = ev.cue
-        warningInitialSeconds = ev.secondsUntil
-        warningReceivedAt = Date()
-        warningSecondsUntil = ev.secondsUntil
-        onCueWarning?(ev.cue, ev.secondsUntil)
     }
 
     func handleDisconnect(error: String? = nil) {
@@ -203,16 +182,12 @@ final class TCWSClient: ObservableObject {
                 case "TC_UPDATE":
                     guard let ev = try? dec.decode(TCUpdateEvent.self, from: data) else { continue }
                     // Write to snapshot — read by display timer on main actor
-                    snapshot.update(tc: ev.tc, prev: ev.previousCue, cur: ev.currentCue, next: ev.nextCue)
+                    snapshot.update(tc: ev.tc, prev: ev.previousCue, cur: ev.currentCue, next: ev.nextCue, position: ev.currentPosition)
 
                 case "CUE_FIRE":
                     guard let ev = try? dec.decode(CueFireEvent.self, from: data) else { continue }
                     // Cue events go to main actor immediately
                     await MainActor.run { client?.handleCueFire(ev) }
-
-                case "CUE_WARNING":
-                    guard let ev = try? dec.decode(CueWarningEvent.self, from: data) else { continue }
-                    await MainActor.run { client?.handleCueWarning(ev) }
 
                 default: break
                 }
@@ -233,15 +208,16 @@ final class TCSnapshot: @unchecked Sendable {
     private var _prev: CueModel? = nil
     private var _cur: CueModel? = nil
     private var _next: CueModel? = nil
+    private var _position: ShowPositionModel? = nil
 
-    func update(tc: String, prev: CueModel?, cur: CueModel?, next: CueModel?) {
+    func update(tc: String, prev: CueModel?, cur: CueModel?, next: CueModel?, position: ShowPositionModel?) {
         lock.withLock {
-            _tc = tc; _prev = prev; _cur = cur; _next = next
+            _tc = tc; _prev = prev; _cur = cur; _next = next; _position = position
         }
     }
 
-    func read() -> (tc: String, prev: CueModel?, cur: CueModel?, next: CueModel?) {
-        lock.withLock { (_tc, _prev, _cur, _next) }
+    func read() -> (tc: String, prev: CueModel?, cur: CueModel?, next: CueModel?, position: ShowPositionModel?) {
+        lock.withLock { (_tc, _prev, _cur, _next, _position) }
     }
 }
 

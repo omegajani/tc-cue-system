@@ -45,7 +45,7 @@ function ingestTc(tc: string, source: string) {
   lastBrowserTc = tc;
   lastBrowserFrames = nowFrames;
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 }
 
 // Browser LTC relay: browser decodes LTC, POSTs TC here → cue engine → broadcast
@@ -98,37 +98,37 @@ const server = http.createServer(app);
 initWS(server);
 
 // Wire TC events → CueEngine → WebSocket broadcast
+let lastSimulatorFrames = -1;
 simulator.on("stop", () => {
   cueEngine.reset();
+  lastSimulatorFrames = -1;
   lastBrowserTc = "";
   lastBrowserFrames = -1;
-  broadcast({ type: "TC_UPDATE", tc: "00:00:00:00", previousCue: null, currentCue: null, nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc: "00:00:00:00", previousCue: null, currentCue: null, nextCue: cueEngine.getNextCue(), currentPosition: null });
 });
 
 simulator.on("tc", (tc: string) => {
+  const nowFrames = parseTc(tc).totalFrames;
+  if (lastSimulatorFrames >= 0 && nowFrames < lastSimulatorFrames) cueEngine.reset();
+  lastSimulatorFrames = nowFrames;
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 // Wire rtpMIDI → cueEngine
 rtpMidiInput.on("tc", (tc: string) => {
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 // Wire OSC → cueEngine
 oscTcInput.on("tc", (tc: string) => {
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 cueEngine.on("cueFire", (event) => {
   console.log(`[Engine] CUE FIRE: ${event.cue.title} @ ${event.tc}`);
-  broadcast(event);
-});
-
-cueEngine.on("cueWarning", (event) => {
-  console.log(`[Engine] CUE WARNING: ${event.cue.title} in ${event.secondsUntil}s`);
   broadcast(event);
 });
 

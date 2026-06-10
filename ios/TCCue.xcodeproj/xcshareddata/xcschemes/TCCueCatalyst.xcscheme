@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FDF9F223839E694DF5D9EF0C"
-               BuildableName = "TCCueWatch.app"
-               BlueprintName = "TCCueWatch"
+               BlueprintIdentifier = "DE5B167FCAA2453E7D55E293"
+               BuildableName = "TCCueCatalyst.app"
+               BlueprintName = "TCCueCatalyst"
                ReferencedContainer = "container:TCCue.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -32,9 +32,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FDF9F223839E694DF5D9EF0C"
-            BuildableName = "TCCueWatch.app"
-            BlueprintName = "TCCueWatch"
+            BlueprintIdentifier = "DE5B167FCAA2453E7D55E293"
+            BuildableName = "TCCueCatalyst.app"
+            BlueprintName = "TCCueCatalyst"
             ReferencedContainer = "container:TCCue.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -55,9 +55,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FDF9F223839E694DF5D9EF0C"
-            BuildableName = "TCCueWatch.app"
-            BlueprintName = "TCCueWatch"
+            BlueprintIdentifier = "DE5B167FCAA2453E7D55E293"
+            BuildableName = "TCCueCatalyst.app"
+            BlueprintName = "TCCueCatalyst"
             ReferencedContainer = "container:TCCue.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -74,9 +74,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FDF9F223839E694DF5D9EF0C"
-            BuildableName = "TCCueWatch.app"
-            BlueprintName = "TCCueWatch"
+            BlueprintIdentifier = "DE5B167FCAA2453E7D55E293"
+            BuildableName = "TCCueCatalyst.app"
+            BlueprintName = "TCCueCatalyst"
             ReferencedContainer = "container:TCCue.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

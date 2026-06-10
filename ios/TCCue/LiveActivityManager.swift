@@ -20,9 +20,7 @@ final class LiveActivityManager {
             currentCueColor: "#888888",
             currentCueTc: "--:--:--:--",
             nextCueTitle: nil,
-            nextCueTc: nil,
-            isWarning: false,
-            warningSecondsUntil: 0
+            nextCueTc: nil
         )
         let content = ActivityContent(state: state, staleDate: nil)
         do {
@@ -44,18 +42,14 @@ final class LiveActivityManager {
         }
     }
 
-    func update(cue: CueModel?, nextCue: CueModel?, currentTc: String, isWarning: Bool, warningSeconds: Int) {
+    func update(cue: CueModel?, nextCue: CueModel?, currentTc: String) {
         guard let activity else { return }
-        // When no cue is active (TC stopped or restarted), suppress any lingering alert
-        let effectiveIsWarning = cue != nil && isWarning
         let state = TCCueActivityAttributes.ContentState(
             currentCueTitle: cue?.title ?? "Kein Cue",
             currentCueColor: cue?.color ?? "#888888",
             currentCueTc: currentTc,
             nextCueTitle: nextCue?.title,
-            nextCueTc: nextCue?.tc,
-            isWarning: effectiveIsWarning,
-            warningSecondsUntil: effectiveIsWarning ? warningSeconds : 0
+            nextCueTc: nextCue?.tc
         )
         Task {
             await activity.update(ActivityContent(state: state, staleDate: nil))

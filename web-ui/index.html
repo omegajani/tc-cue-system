@@ -11,13 +11,27 @@
       --accent: #f59e0b; --green: #10b981; --red: #ef4444; --blue: #3b82f6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; min-height: 100vh; }
+    body {
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+      min-height:100vh;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    #tc-display, #live-tc, .live-cue-tc, .live-cue-countdown, #ltc-decoded-tc, #mtc-decoded-tc {
+      font-family: 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums lining-nums;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      font-kerning: none;
+    }
 
     /* ── STATUS BAR ─────────────────────────────────────────────────── */
     #status-bar { display: flex; align-items: center; gap: 12px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
-    #tc-display { font-size: 17px; font-weight: bold; letter-spacing: 2px; color: var(--accent); margin-left: auto; }
+    #tc-display { display:inline-block; width:13ch; flex:0 0 13ch; font-size:17px; font-weight:bold; letter-spacing:2px; color:var(--accent); margin-left:auto; text-align:right; white-space:nowrap; }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
     nav { display: flex; border-bottom: 1px solid var(--border); }
@@ -30,45 +44,51 @@
     .view.active { display: block; }
 
     /* ── LIVE VIEW ──────────────────────────────────────────────────── */
-    #live-tc { font-size: clamp(36px, 7vw, 72px); font-weight: bold; letter-spacing: 4px; color: var(--accent); text-align: center; margin: 20px 0 4px; }
-    #live-show-name { text-align: center; font-size: 11px; color: var(--muted); margin-bottom: 16px; letter-spacing: 1px; text-transform: uppercase; }
+    #view-live { padding-top: 0; overflow: hidden; }
+    #live-picker-shell { max-width:880px; height:calc(100vh - 94px); min-height:520px; margin:0 auto; display:flex; flex-direction:column; overflow:hidden; }
+    #live-glass-header { flex:0 0 auto; padding:12px 0 10px; }
+    #live-show-name { text-align: center; font-size: 10px; color: rgba(255,255,255,.42); margin-bottom: 7px; letter-spacing: 1.4px; text-transform: uppercase; }
+    #live-position { position: relative; min-height: 146px; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035)); box-shadow: 0 22px 55px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.26), inset 0 -1px rgba(255,255,255,.05); backdrop-filter: blur(34px) saturate(155%); -webkit-backdrop-filter: blur(34px) saturate(155%); }
+    #live-position:after { content:''; position:absolute; inset:1px 14% auto; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent); }
+    #live-position-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(110deg, rgba(37,99,235,.46), rgba(96,165,250,.14)); border-right: 1px solid rgba(191,219,254,.48); box-shadow: 12px 0 38px rgba(59,130,246,.2); transition: width .12s linear; }
+    #live-position-content { position:relative; z-index:1; min-height:146px; padding:17px 23px 21px; }
+    #live-position-header { position:relative; z-index:2; display:flex; align-items:baseline; gap:10px; }
+    #live-position-name { flex: 1; font-size: clamp(15px, 2.5vw, 20px); font-weight: 650; color:rgba(255,255,255,.9); }
+    #live-position-remaining { color: rgba(219,234,254,.8); font-size: 10px; white-space: nowrap; }
+    #live-tc { position:absolute; inset:50% 0 auto; width:100%; transform:translateY(-50%); font-size:clamp(42px,7vw,72px); font-weight:680; letter-spacing:4px; color:#fff; line-height:1; text-align:center; white-space:nowrap; text-shadow:0 3px 22px rgba(0,0,0,.42); }
+    #live-position:not(.show) #live-position-fill { width: 0 !important; }
+    #live-position:not(.show) #live-position-name, #live-position:not(.show) #live-position-remaining { color: var(--muted); }
+    #ltc-decoded-tc, #mtc-decoded-tc { display:inline-block; min-width:13ch; text-align:right; white-space:nowrap; }
 
-    /* Active alert panel */
-    #active-alert { border-radius: 10px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--border); transition: border-color .3s; }
-    #active-alert.has-cue { border-width: 2px; }
-    .alert-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
-    .alert-panel-body { padding: 16px 20px 18px; }
-    .alert-elapsed { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .alert-title { font-size: clamp(20px, 4vw, 36px); font-weight: bold; line-height: 1.15; margin-bottom: 6px; }
-    .alert-message { font-size: 15px; color: #bbb; margin-bottom: 10px; }
-    .alert-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .alert-tc-badge { font-size: 11px; letter-spacing: 1px; color: var(--muted); background: var(--surface2); padding: 3px 8px; border-radius: 3px; }
-
-    /* Urgent pulse */
-    @keyframes urgent-pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
-
-    /* Next cue strip */
-    #next-cue-strip { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-radius: 7px; border: 1px dashed var(--border); font-size: 13px; margin-bottom: 12px; }
-    #next-cue-strip.hidden { display: none; }
-    .next-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); flex-shrink: 0; }
-    .next-title { flex: 1; font-weight: bold; }
-    .next-tc { font-size: 11px; color: var(--muted); flex-shrink: 0; letter-spacing: 1px; }
-    .next-countdown { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: var(--surface2); color: var(--accent); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-
-    #warn-banner { display: none; background: rgba(245,158,11,.13); border: 1px solid var(--accent); border-radius: 6px; padding: 9px 16px; margin-bottom: 10px; text-align: center; font-size: 13px; }
-    #warn-banner.show { display: block; }
+    /* Cue picker list */
+    #live-cue-list { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.22) transparent; padding:0 2px; scroll-padding-top:0; display:flex; flex-direction:column; gap:9px; perspective:900px; scroll-snap-type:y mandatory; }
+    #live-cue-list:after { content:''; flex:0 0 calc(100% - 104px); }
+    #live-cue-list::-webkit-scrollbar { width:6px; }
+    #live-cue-list::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.2); }
+    .live-cue-row { position:relative; display:grid; grid-template-columns:96px 10px minmax(0,1fr) auto; gap:13px; align-items:center; min-height:58px; width:100%; padding:11px 16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); box-shadow:inset 0 1px rgba(255,255,255,.11),0 8px 24px rgba(0,0,0,.12); color:var(--muted); cursor:pointer; overflow:hidden; transform-origin:center top; scroll-snap-align:start; scroll-snap-stop:always; transition:transform .25s,opacity .25s,min-height .25s,padding .25s,border-color .25s,background .25s,box-shadow .25s; backdrop-filter:blur(20px) saturate(135%); -webkit-backdrop-filter:blur(20px) saturate(135%); }
+    .live-cue-row:hover { border-color:rgba(255,255,255,.22); background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.04)); }
+    .live-cue-row.past { opacity:.28; transform:scale(.93); }
+    .live-cue-row.depth-3 { opacity:.38; transform:scale(.94); }
+    .live-cue-row.depth-2 { opacity:.52; transform:scale(.96); }
+    .live-cue-row.depth-1 { opacity:.72; transform:scale(.98); }
+    .live-cue-row.current { min-height:104px; padding:18px 19px; opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 68%,white 12%); background:linear-gradient(145deg,color-mix(in srgb,var(--cue-color) 20%,rgba(255,255,255,.1)),rgba(255,255,255,.035)); box-shadow:inset 0 1px rgba(255,255,255,.28),0 15px 40px color-mix(in srgb,var(--cue-color) 18%,transparent); }
+    .live-cue-row.next { opacity:.9; }
+    .live-cue-row.picker-selected { opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 52%,white 12%); box-shadow:inset 0 1px rgba(255,255,255,.22),0 12px 32px color-mix(in srgb,var(--cue-color) 14%,transparent); }
+    .live-cue-tc { width:96px; font-size:10px; letter-spacing:1px; white-space:nowrap; }
+    .live-cue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cue-color); }
+    .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
+    .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
+    .live-cue-row.current .live-cue-tc { color: var(--cue-color); font-size: 12px; font-weight: bold; }
+    .live-cue-row.current .live-cue-dot { width: 11px; height: 11px; }
+    .live-cue-row.current .live-cue-title { color:#fff; font-size:clamp(20px,3.2vw,30px); line-height:1.1; }
+    .live-cue-row.current .live-cue-message { display:block; }
+    .live-cue-state { margin-top: 6px; color: var(--cue-color); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    .live-cue-countdown { min-width:52px; color:var(--cue-color); font-size:11px; font-weight:700; text-align:right; white-space:nowrap; }
     #no-cue { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; }
 
-    /* ── FLASH ──────────────────────────────────────────────────────── */
-    #flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; z-index: 200; display: flex; align-items: center; justify-content: center; }
-    #flash.show { opacity: 1; }
-    #flash-inner { background: rgba(0,0,0,.9); border-radius: 12px; padding: 30px 44px; text-align: center; border: 2px solid var(--accent); max-width: 580px; }
-    #flash-title { font-size: 30px; font-weight: bold; }
-    #flash-msg { margin-top: 8px; font-size: 17px; color: #ccc; }
-
     /* ── MODAL ──────────────────────────────────────────────────────── */
-    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
-    #modal-overlay.show { display: flex; }
+    #modal-overlay, #position-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
+    #modal-overlay.show, #position-modal-overlay.show { display: flex; }
     #modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
     #modal h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 18px; }
     .form-row { margin-bottom: 13px; }
@@ -82,7 +102,20 @@
     .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
 
-    /* ── ADMIN ──────────────────────────────────────────────────────── */
+    /* ── EDIT / SETTINGS ────────────────────────────────────────────── */
+    .page-heading { max-width: 1180px; margin: 2px auto 24px; }
+    .page-heading h1 { font-size: 25px; letter-spacing: -.5px; margin-bottom: 5px; }
+    .page-heading p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .edit-layout, .settings-grid, .show-layout { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
+    .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    .show-layout { grid-template-columns:minmax(260px,.8fr) minmax(360px,1.2fr); align-items:start; }
+    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin: 0; }
+    .show-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
+    .show-card h2 { margin-bottom:15px; color:var(--muted); font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase; }
+    .show-card .admin-select { width:100%; min-height:40px; margin-bottom:12px; }
+    .show-card .form-row input { min-height:40px; }
+    #show-active-state { min-height:18px; margin-top:12px; color:var(--muted); font-size:11px; }
+    .settings-wide { grid-column: 1 / -1; }
     .section { margin-bottom: 28px; }
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .section-header h2 { font-size: 13px; font-weight: normal; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0; flex-shrink: 0; }
@@ -101,6 +134,13 @@
     th { background: var(--surface2); color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
     tr:hover td { background: rgba(255,255,255,.02); }
     td.actions { white-space: nowrap; }
+    .inline-edit { width:100%; min-width:90px; border:1px solid transparent; border-radius:6px; background:transparent; color:inherit; padding:6px 7px; font:inherit; transition:border-color .15s,background .15s; }
+    .inline-edit:hover { border-color:var(--border); background:rgba(255,255,255,.025); }
+    .inline-edit:focus { outline:none; border-color:var(--accent); background:var(--bg); }
+    .inline-edit-title { font-weight:650; }
+    .inline-edit-tc { font-family:'SFMono-Regular','SF Mono',Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; letter-spacing:1px; white-space:nowrap; }
+    .inline-color { width:30px; height:26px; margin-right:5px; padding:1px; border:1px solid var(--border); border-radius:6px; background:transparent; vertical-align:middle; cursor:pointer; }
+    .inline-title-wrap { display:flex; align-items:center; min-width:170px; }
     .color-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 4px; }
     .badge { border-radius: 3px; padding: 2px 6px; font-size: 10px; }
     .badge-info { background: rgba(59,130,246,.2); color: #93c5fd; }
@@ -123,20 +163,7 @@
     .empty-hint { color: var(--muted); font-size: 12px; padding: 20px 0; }
     .csv-hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
 
-    /* ── SETTINGS PANEL ─────────────────────────────────────────────── */
-    #settings-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:400; }
-    #settings-backdrop.show { display:block; }
-    #settings-panel {
-      position:fixed; top:0; right:-420px; width:400px; max-width:95vw; height:100vh;
-      background:var(--surface); border-left:1px solid var(--border);
-      z-index:401; overflow-y:auto; transition:right .25s ease; padding:0;
-    }
-    #settings-panel.show { right:0; }
-    .sp-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
-    .sp-header h2 { font-size:14px; font-weight:normal; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0; }
-    .sp-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px 8px; }
-    .sp-close:hover { color:var(--text); }
-    .sp-section { padding:16px 20px; border-bottom:1px solid var(--border); }
+    /* ── SETTINGS ───────────────────────────────────────────────────── */
     .sp-section h3 { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 14px; }
     .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
     .sp-row:last-child { margin-bottom:0; }
@@ -158,8 +185,18 @@
     .url-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .url-item:last-child { margin-bottom:0; }
     .url-item code { flex:1; color:var(--accent); font-size:12px; }
-    /* Gear button in nav */
-    #btn-settings { margin-left:auto; }
+    @media (max-width: 760px) {
+      .view { padding: 16px 12px; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .show-layout { grid-template-columns:1fr; }
+      .settings-wide { grid-column: auto; }
+      #view-live { padding-top:0; }
+      #live-picker-shell { height:calc(100vh - 92px); min-height:460px; }
+      #live-position { border-radius:19px; }
+      #live-position-content { padding:14px 15px 18px; }
+      .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
+      .live-cue-tc { width:78px; }
+    }
   </style>
 </head>
 <body>
@@ -174,36 +211,70 @@
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <nav>
   <button class="active" data-view="live" onclick="showView('live',this)">Live</button>
-  <button data-view="admin" onclick="showView('admin',this)">Admin</button>
-  <button id="btn-settings" onclick="openSettings()" title="Einstellungen">⚙</button>
+  <button data-view="show" onclick="showView('show',this)">Show</button>
+  <button data-view="edit" onclick="showView('edit',this)">Edit</button>
+  <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
 </nav>
 
-<!-- ── SETTINGS BACKDROP ───────────────────────────────────────────────── -->
-<div id="settings-backdrop" onclick="closeSettings()"></div>
-
-<!-- ── SETTINGS PANEL ─────────────────────────────────────────────────── -->
-<div id="settings-panel">
-  <div class="sp-header">
-    <h2>Einstellungen</h2>
-    <button class="sp-close" onclick="closeSettings()">✕</button>
+<!-- ── SHOW VIEW ──────────────────────────────────────────────────────── -->
+<div id="view-show" class="view">
+  <div class="page-heading">
+    <h1>Show</h1>
+    <p>Show auswählen, laden, umbenennen und speichern.</p>
   </div>
+  <div class="show-layout">
+    <div class="show-card">
+      <h2>Show laden</h2>
+      <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
+        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
+      </div>
+      <div id="show-active-state"></div>
+    </div>
+
+    <div class="show-card">
+      <h2>Show bearbeiten</h2>
+      <div class="form-row">
+        <label>Name</label>
+        <input id="show-name-input" type="text" placeholder="Name der Show" />
+      </div>
+      <div class="form-row">
+        <label>Datum</label>
+        <input id="show-date-input" type="date" />
+      </div>
+      <div class="form-row">
+        <label>Fallback-Modus</label>
+        <select id="s-fallback">
+          <option value="stop">Stop</option>
+          <option value="continue">Weiterlaufen</option>
+          <option value="loop">Loop</option>
+        </select>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="saveSelectedShow()">Speichern</button>
+        <button class="btn" onclick="exportSelectedShow()" title="Show als JSON exportieren">Exportieren ↓</button>
+        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
+          Importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+        </label>
+      </div>
+      <div id="show-save-feedback" style="font-size:11px;margin-top:12px;"></div>
+      <div id="import-feedback" style="font-size:11px;margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS VIEW ──────────────────────────────────────────────────── -->
+<div id="view-settings" class="view">
+  <div class="page-heading">
+    <h1>Einstellungen</h1>
+    <p>Technische Steuerung, Timecode-Quelle, Anzeige und Netzwerk.</p>
+  </div>
+  <div class="settings-grid">
 
   <!-- Anzeige -->
   <div class="sp-section">
     <h3>Live-Ansicht</h3>
-    <div class="sp-row">
-      <div class="sp-label">Flash-Dauer
-        <span class="sp-hint">Wie lange der Cue-Overlay sichtbar bleibt</span>
-      </div>
-      <span id="flash-dur-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
-      <input type="range" min="1000" max="8000" step="500" id="s-flash-dur" oninput="onSettingChange()" />
-    </div>
-    <div class="sp-row">
-      <div class="sp-label">Nächsten Cue anzeigen
-        <span class="sp-hint">Teaser für den folgenden Cue in der Live-Ansicht</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="s-show-next" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
-    </div>
     <div class="sp-row">
       <div class="sp-label">Frames anzeigen
         <span class="sp-hint">TC-Format: HH:MM:SS:FF statt HH:MM:SS</span>
@@ -242,18 +313,36 @@
     </div>
   </div>
 
-  <!-- Show-Einstellungen -->
+  <!-- Audio -->
   <div class="sp-section">
-    <h3>Show-Einstellungen</h3>
+    <h3>Audio</h3>
     <div class="sp-row">
-      <div class="sp-label">Fallback-Modus
-        <span class="sp-hint">Was passiert wenn das TC-Signal aussetzt</span>
+      <div class="sp-label">Alarmton
+        <span class="sp-hint">Spielt bei jedem ausgelösten Cue denselben Alarmton</span>
       </div>
-      <select id="s-fallback" onchange="saveShowSettings()">
-        <option value="stop">Stop</option>
-        <option value="continue">Weiterlaufen</option>
-        <option value="loop">Loop</option>
-      </select>
+      <label class="toggle"><input type="checkbox" id="s-alarm-enabled" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Lautstärke
+        <span class="sp-hint" id="alarm-volume-value">80 %</span>
+      </div>
+      <input type="range" id="s-alarm-volume" min="0" max="100" step="5" oninput="onAlarmVolumeInput()" onchange="onSettingChange()" />
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary btn-small" onclick="testAlarm()">Alarm testen</button>
+      <span id="alarm-test-feedback" style="font-size:10px;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- Simulator -->
+  <div class="sp-section" id="simulator-section">
+    <h3>Simulator <span id="sim-state" style="margin-left:6px;"></span></h3>
+    <div class="sim-controls">
+      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
+      <button class="btn" onclick="simPause()">⏸ Pause</button>
+      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
+      <input type="text" id="seek-input" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
+      <button class="btn" onclick="simSeek()">Seek →</button>
     </div>
   </div>
 
@@ -382,22 +471,15 @@
   </div>
 
   <!-- Netzwerk -->
-  <div class="sp-section">
+  <div class="sp-section settings-wide">
     <h3>Netzwerk</h3>
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Server-URLs für Geräte im gleichen WLAN:</p>
     <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
   </div>
 
-  <div style="padding:16px 20px;">
+  <div class="settings-wide">
     <button class="btn btn-small" onclick="resetAllSettings()" style="color:var(--red);border-color:var(--red);">Einstellungen zurücksetzen</button>
   </div>
-</div>
-
-<!-- ── FLASH ───────────────────────────────────────────────────────────── -->
-<div id="flash">
-  <div id="flash-inner">
-    <div id="flash-title"></div>
-    <div id="flash-msg"></div>
   </div>
 </div>
 
@@ -409,7 +491,7 @@
     <div class="form-2col">
       <div class="form-row">
         <label>TC (HH:MM:SS:FF)</label>
-        <input id="f-tc" type="text" placeholder="00:01:23:12" />
+        <input id="f-tc" type="text" inputmode="numeric" placeholder="00:01:23:12" oninput="formatTimecodeInput(this)" />
       </div>
       <div class="form-row">
         <label>Farbe</label>
@@ -424,10 +506,6 @@
       <label>Nachricht</label>
       <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
     </div>
-    <div class="form-row">
-      <label>Vorwarnung (Sekunden)</label>
-      <input id="f-warn" type="number" min="0" max="120" value="10" />
-    </div>
     <div class="modal-actions">
       <div style="flex:1"></div>
       <button class="btn" onclick="closeModal()">Abbrechen</button>
@@ -436,63 +514,76 @@
   </div>
 </div>
 
-<!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
-<div id="view-live" class="view active">
-  <div id="live-tc">--:--:--:--</div>
-  <div id="live-show-name">–</div>
-  <div id="warn-banner"></div>
-
-  <!-- Persistent active alert -->
-  <div id="active-alert">
-    <div id="no-cue">Warte auf Timecode…</div>
-  </div>
-
-  <!-- Next cue strip -->
-  <div id="next-cue-strip" class="hidden">
-    <span class="next-label">Nächster</span>
-    <span class="next-title" id="next-title">–</span>
-    <span class="next-tc" id="next-tc-val"></span>
-    <span class="next-countdown" id="next-countdown"></span>
+<!-- ── MODAL: Position bearbeiten ───────────────────────────────────────── -->
+<div id="position-modal-overlay" onclick="if(event.target===this)closePositionModal()">
+  <div id="modal">
+    <h3 id="position-modal-title">Position</h3>
+    <input type="hidden" id="f-position-id" />
+    <div class="form-row">
+      <label>Name / Song</label>
+      <input id="f-position-name" type="text" placeholder="Song 1 / Eröffnung" />
+    </div>
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Start-TC</label>
+        <input id="f-position-start" type="text" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
+      </div>
+      <div class="form-row">
+        <label>End-TC</label>
+        <input id="f-position-end" type="text" inputmode="numeric" placeholder="00:03:30:00" oninput="formatTimecodeInput(this)" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closePositionModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="savePosition()">Speichern</button>
+    </div>
   </div>
 </div>
 
-<!-- ── ADMIN VIEW ──────────────────────────────────────────────────────── -->
-<div id="view-admin" class="view">
-
-  <!-- Shows -->
-  <div class="section">
-    <div class="section-header">
-      <h2>Show</h2>
-      <select class="admin-select" id="show-select" onchange="selectShow(this.value)"></select>
-      <div class="toolbar">
-        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
-        <button class="btn" onclick="exportCurrentShow()" title="Show als JSON exportieren">Exportieren ↓</button>
-        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
-          Importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
-        </label>
+<!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
+<div id="view-live" class="view active">
+  <div id="live-picker-shell">
+    <div id="live-glass-header">
+      <div id="live-show-name">–</div>
+      <div id="live-position">
+        <div id="live-position-fill"></div>
+        <div id="live-position-content">
+          <div id="live-position-header">
+            <div id="live-position-name">Keine Position aktiv</div>
+            <div id="live-position-remaining"></div>
+          </div>
+          <div id="live-tc">--:--:--:--</div>
+        </div>
       </div>
     </div>
-    <div id="import-feedback" style="font-size:11px;margin-top:6px;"></div>
+    <div id="live-cue-list" onscroll="onLivePickerScroll()"><div id="no-cue">Warte auf Timecode…</div></div>
   </div>
+</div>
 
-  <hr class="divider" />
+<!-- ── EDIT VIEW ───────────────────────────────────────────────────────── -->
+<div id="view-edit" class="view">
+  <div class="page-heading">
+    <h1>Show bearbeiten</h1>
+    <p>Positionen, Songs und Cues der geladenen Show einrichten.</p>
+  </div>
+  <div class="edit-layout">
 
-  <!-- Simulator -->
-  <div class="section" id="simulator-section">
-    <div class="section-header"><h2>Simulator</h2><span id="sim-state"></span></div>
-    <div class="sim-controls">
-      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
-      <button class="btn" onclick="simPause()">⏸ Pause</button>
-      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
-      <input type="text" id="seek-input" placeholder="00:00:00:00" />
-      <button class="btn" onclick="simSeek()">Seek →</button>
+  <!-- Positions / Songs -->
+  <div class="section edit-card">
+    <div class="section-header">
+      <h2>Positionen / Songs</h2>
+      <div class="toolbar">
+        <button class="btn btn-primary btn-small" onclick="openPositionModal(null)">+ Position hinzufügen</button>
+      </div>
+    </div>
+    <div class="cue-table-wrap" id="position-table-wrap">
+      <p class="empty-hint">Keine Show ausgewählt.</p>
     </div>
   </div>
 
-  <hr class="divider" />
-
   <!-- Cues -->
-  <div class="section">
+  <div class="section edit-card">
     <div class="section-header">
       <h2>Cues</h2>
       <div class="toolbar">
@@ -510,7 +601,7 @@
           <button class="btn" onclick="downloadCSVTemplate()">Vorlage ↓</button>
         </div>
         <p class="csv-hint">
-          Format: <code>tc,title,message,warnOffsetSec,color</code><br>
+          Format: <code>tc,title,message,color</code><br>
           Farbe optional (Standard: #f59e0b)
         </p>
         <pre id="csv-feedback" style="font-size:11px;color:var(--green);margin-top:6px;"></pre>
@@ -523,6 +614,7 @@
     </div>
   </div>
 
+  </div>
 </div>
 
 
@@ -539,11 +631,11 @@ let allShows = [];
 // ════════════════════════════════════════════════════════════════════════════
 const SETTINGS_KEY = 'tc-cue-settings';
 const SETTING_DEFAULTS = {
-  flashDuration:   3500,
-  showNextCue:     true,
   showFrames:      true,
   liveFontSize:    'normal',
   autoResetOnStop: true,
+  alarmEnabled:    true,
+  alarmVolume:     80,
 };
 
 function loadSettings() {
@@ -559,22 +651,18 @@ function saveSettings() {
 
 function getCurrentSettingsFromUI() {
   return {
-    flashDuration:    parseInt(document.getElementById('s-flash-dur').value),
-    showNextCue:      document.getElementById('s-show-next').checked,
     showFrames:       document.getElementById('s-show-frames').checked,
     liveFontSize:     document.getElementById('s-live-font').value,
     autoResetOnStop:  document.getElementById('s-auto-reset').checked,
+    alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
+    alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
   };
 }
 
 function applySettings(s) {
-  // Flash duration is read at fire-time from flashTimer
-  // Next cue visibility
-  const strip = document.getElementById('next-cue-strip');
-  if (strip && !s.showNextCue) strip.className = 'hidden';
   // Live TC font size
   const liveTc = document.getElementById('live-tc');
-  liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(24px,4vw,40px)' : s.liveFontSize === 'large' ? 'clamp(56px,12vw,120px)' : '';
+  liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(30px,5vw,48px)' : s.liveFontSize === 'large' ? 'clamp(48px,9vw,84px)' : '';
   // TC format label update for current display
   updateTcDisplayFormat(s.showFrames);
 }
@@ -587,38 +675,30 @@ function updateTcDisplayFormat(showFrames) {
 function openSettings() {
   const s = loadSettings();
   // Populate UI
-  document.getElementById('s-flash-dur').value  = s.flashDuration;
-  document.getElementById('flash-dur-val').textContent = (s.flashDuration / 1000).toFixed(1) + 's';
-  document.getElementById('s-show-next').checked   = s.showNextCue;
   document.getElementById('s-show-frames').checked = s.showFrames;
   document.getElementById('s-live-font').value     = s.liveFontSize;
   document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
+  document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
+  document.getElementById('s-alarm-volume').value = s.alarmVolume;
+  document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
 
-  // Show settings
+  // Engine settings
   const show = allShows.find(s => s.id === currentShowId);
   if (show) {
-    document.getElementById('s-fallback').value = show.fallbackMode || 'stop';
-    document.getElementById('s-fps').value      = String(show.fps || 25);
+    document.getElementById('s-fps').value = String(show.fps || 25);
   }
 
   // TC source
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
   loadNetworkInfo();
-
-  document.getElementById('settings-panel').classList.add('show');
-  document.getElementById('settings-backdrop').classList.add('show');
-}
-
-function closeSettings() {
-  document.getElementById('settings-panel').classList.remove('show');
-  document.getElementById('settings-backdrop').classList.remove('show');
 }
 
 function onSettingChange() {
-  // Update live labels
-  const dur = parseInt(document.getElementById('s-flash-dur').value);
-  document.getElementById('flash-dur-val').textContent = (dur / 1000).toFixed(1) + 's';
   saveSettings();
+}
+
+function onAlarmVolumeInput() {
+  document.getElementById('alarm-volume-value').textContent = `${document.getElementById('s-alarm-volume').value} %`;
 }
 
 async function onFpsChange(val) {
@@ -640,8 +720,25 @@ async function saveShowSettings() {
 }
 
 async function loadNetworkInfo() {
-  const data = await api('GET', '/api/network').catch(() => ({ urls: [], ips: [] }));
   const urlsEl = document.getElementById('network-urls');
+  urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Lade…</span>';
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  let data;
+  try {
+    const response = await fetch('/api/network', { signal: controller.signal });
+    if (!response.ok) throw new Error(`GET /api/network → ${response.status}`);
+    data = await response.json();
+  } catch {
+    urlsEl.innerHTML = `
+      <span style="color:var(--muted);font-size:12px;">Server-Adressen konnten nicht geladen werden.</span>
+      <button class="btn btn-small" onclick="loadNetworkInfo()" style="margin-left:8px;">Erneut laden</button>`;
+    return;
+  } finally {
+    clearTimeout(timeout);
+  }
+
   if (!data.urls.length) {
     urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Keine externen IPs gefunden</span>';
   } else {
@@ -676,7 +773,13 @@ function showView(name, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin') loadAdmin();
+  if (name === 'show') loadAdmin();
+  if (name === 'edit') loadAdmin();
+  if (name === 'settings') openSettings();
+  if (name === 'live') {
+    _pickerBrowsing = false;
+    requestAnimationFrame(() => followLiveCurrentCue(false));
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -684,7 +787,11 @@ function showView(name, btn) {
 // ════════════════════════════════════════════════════════════════════════════
 function connect() {
   ws = new WebSocket(`ws://${location.host}`);
-  ws.onopen  = () => { setWsStatus(true);  clearTimeout(reconnectTimer); };
+  ws.onopen  = () => {
+    setWsStatus(true);
+    clearTimeout(reconnectTimer);
+    if (document.getElementById('view-settings').classList.contains('active')) loadNetworkInfo();
+  };
   ws.onclose = () => { setWsStatus(false); reconnectTimer = setTimeout(connect, 2000); };
   ws.onerror = () => ws.close();
   ws.onmessage = e => handleEvent(JSON.parse(e.data));
@@ -698,8 +805,6 @@ function setWsStatus(ok) {
 // ════════════════════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════════════════════
-let flashTimer;
-
 function handleEvent(evt) {
   const tc = evt.tc;
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
@@ -707,85 +812,165 @@ function handleEvent(evt) {
     document.getElementById('tc-display').textContent = displayTc;
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
-    if (document.getElementById('show-tc-log').checked) logAppend('tc', tc, null);
+    renderCurrentPosition(evt.currentPosition, tc);
   }
   if (evt.type === 'CUE_FIRE') {
     playAlarm();
-    showActiveAlert(evt.cue);
-    showFlash(evt.cue);
-    hideWarning();
-    logAppend('fire', tc, evt.cue);
   }
-  if (evt.type === 'CUE_WARNING') {
-    playAlarm();
-    showWarning(evt.cue, evt.secondsUntil);
-    logAppend('warn', tc, evt.cue, evt.secondsUntil);
+}
+
+function renderCurrentPosition(position, tcString) {
+  const panel = document.getElementById('live-position');
+  if (!position) {
+    panel.classList.remove('show');
+    document.getElementById('live-position-name').textContent = 'Keine Position aktiv';
+    document.getElementById('live-position-remaining').textContent = '';
+    document.getElementById('live-position-fill').style.width = '0';
+    return;
   }
+  const start = tcStringToSeconds(position.startTc);
+  const end = tcStringToSeconds(position.endTc);
+  const now = tcStringToSeconds(tcString);
+  const duration = Math.max(0.001, end - start);
+  const progress = Math.max(0, Math.min(1, (now - start) / duration));
+  const remaining = Math.max(0, Math.ceil(end - now));
+  document.getElementById('live-position-name').textContent = position.name;
+  document.getElementById('live-position-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
+  document.getElementById('live-position-fill').style.width = `${progress * 100}%`;
+  panel.classList.add('show');
+}
+
+function formatRemainingTime(seconds) {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // LIVE VIEW
 // ════════════════════════════════════════════════════════════════════════════
-let _alertFiredAt = null;
-let _elapsedInterval = null;
 let _lastCurrentCue = null;
 let _lastNextCue = null;
-let _lastTcFrames = 0;   // updated on TC_UPDATE for next-cue countdown
+let _lastTcString = '00:00:00:00';
+let _liveCueRenderSignature = '';
+let _pickerBrowsing = false;
+let _pickerScrollTimer = null;
+let _suppressPickerScroll = false;
+let _pickerSelectionFrame = null;
 
 function renderLiveCues(cur, next, tcString) {
   _lastCurrentCue = cur;
   _lastNextCue = next;
-
-  const panel = document.getElementById('active-alert');
-
-  if (!cur) {
-    panel.className = '';
-    panel.innerHTML = '<div id="no-cue">Warte auf Timecode…</div>';
-    document.getElementById('next-cue-strip').className = 'hidden';
+  _lastTcString = tcString;
+  const list = document.getElementById('live-cue-list');
+  const show = allShows.find(show => show.id === currentShowId);
+  const cues = [...(show?.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  if (!cues.length) {
+    list.innerHTML = '<div id="no-cue">Keine Cues in dieser Show.</div>';
+    _liveCueRenderSignature = '';
     return;
   }
 
-  panel.className = 'has-cue';
-  panel.style.borderColor = cur.color;
-  panel.style.background  = cur.color + '10';
+  const focusId = cur?.id || next?.id;
+  const focusIndex = Math.max(0, cues.findIndex(cue => cue.id === focusId));
+  const signature = JSON.stringify([
+    cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
+    cur?.id,
+    next?.id,
+  ]);
 
-  panel.innerHTML = `
-    <div class="alert-panel-header" style="background:${cur.color}18;">
-      <span style="color:${cur.color};font-weight:bold;letter-spacing:1px;">● AKTUELLER CUE</span>
-      <span class="alert-elapsed" id="alert-elapsed"></span>
-    </div>
-    <div class="alert-panel-body">
-      <div class="alert-title" style="color:${cur.color}">${esc(cur.title)}</div>
-      <div class="alert-message">${esc(cur.message)}</div>
-      <div class="alert-meta">
-        <span class="alert-tc-badge">@ ${cur.tc}</span>
-      </div>
-    </div>`;
-
-  // Start elapsed counter if this is a new cue
-  if (!_alertFiredAt || _lastCurrentCue?.id !== cur.id) {
-    // firedAt set by showActiveAlert; here we just keep it running
+  if (signature === _liveCueRenderSignature) {
+    updateLiveCueCountdown(next, tcString);
+    return;
   }
-  updateElapsed();
 
-  // Next cue strip
-  renderNextStrip(next, tcString);
+  const previousScrollTop = list.scrollTop;
+  const shouldFollow = !_pickerBrowsing;
+  list.innerHTML = cues.map((cue, index) => {
+    const isCurrent = cue.id === cur?.id;
+    const isNext = cue.id === next?.id;
+    const isPast = tcStringToSeconds(cue.tc) < tcStringToSeconds(tcString) && !isCurrent;
+    const state = isCurrent ? 'Aktueller Cue' : isNext ? 'Als Nächstes' : '';
+    const depth = Math.min(3, Math.abs(index - focusIndex));
+    const classes = ['live-cue-row', isCurrent ? 'current' : '', isNext ? 'next' : '', isPast ? 'past' : '', depth ? `depth-${depth}` : ''].filter(Boolean).join(' ');
+    return `
+      <div class="${classes}" data-cue-id="${cue.id}" style="--cue-color:${cue.color}" onclick="openCueModal('${cue.id}')">
+        <div class="live-cue-tc">${cue.tc}</div>
+        <div class="live-cue-dot"></div>
+        <div>
+          <div class="live-cue-title">${esc(cue.title)}</div>
+          <div class="live-cue-message">${esc(cue.message)}</div>
+          ${state ? `<div class="live-cue-state">${state}</div>` : ''}
+        </div>
+        ${isNext ? '<div class="live-cue-countdown" data-next-countdown></div>' : '<div></div>'}
+      </div>`;
+  }).join('');
+  _liveCueRenderSignature = signature;
+  updateLiveCueCountdown(next, tcString);
+
+  requestAnimationFrame(() => {
+    if (shouldFollow) followLiveCurrentCue(false);
+    else list.scrollTop = previousScrollTop;
+    updateLivePickerSelection();
+  });
 }
 
-function renderNextStrip(next, tcString) {
-  const strip = document.getElementById('next-cue-strip');
-  if (!next) { strip.className = 'hidden'; return; }
-  strip.className = '';
-  strip.style.borderColor = next.color + '80';
-  document.getElementById('next-title').textContent = next.title;
-  document.getElementById('next-tc-val').textContent = '@ ' + next.tc;
-  // Countdown calculated from current TC
-  if (tcString) {
-    const nowSec  = tcStringToSeconds(tcString);
-    const cueSec  = tcStringToSeconds(next.tc);
-    const diff    = Math.max(0, Math.round(cueSec - nowSec));
-    document.getElementById('next-countdown').textContent = diff > 0 ? `in ${diff}s` : 'jetzt';
-  }
+function updateLiveCueCountdown(nextCue, tcString) {
+  const countdown = document.querySelector('[data-next-countdown]');
+  if (!countdown || !nextCue) return;
+  const secondsUntil = Math.max(0, Math.ceil(tcStringToSeconds(nextCue.tc) - tcStringToSeconds(tcString)));
+  countdown.textContent = `in ${formatRemainingTime(secondsUntil)}`;
+}
+
+function followLiveCurrentCue(smooth = true) {
+  const cueId = _lastCurrentCue?.id || _lastNextCue?.id;
+  if (!cueId) return;
+  const list = document.getElementById('live-cue-list');
+  const row = list.querySelector(`[data-cue-id="${cueId}"]`);
+  if (!row) return;
+  const listTop = list.getBoundingClientRect().top;
+  const rowTop = row.getBoundingClientRect().top;
+  const targetTop = Math.max(0, list.scrollTop + rowTop - listTop);
+  _suppressPickerScroll = true;
+  list.scrollTo({ top: targetTop, behavior: smooth ? 'smooth' : 'auto' });
+  updateLivePickerSelection();
+  setTimeout(() => {
+    _suppressPickerScroll = false;
+    updateLivePickerSelection();
+  }, smooth ? 450 : 50);
+}
+
+function onLivePickerScroll() {
+  updateLivePickerSelection();
+  if (_suppressPickerScroll) return;
+  _pickerBrowsing = true;
+  clearTimeout(_pickerScrollTimer);
+  _pickerScrollTimer = setTimeout(() => {
+    _pickerBrowsing = false;
+    followLiveCurrentCue(true);
+  }, 8000);
+}
+
+function updateLivePickerSelection() {
+  if (_pickerSelectionFrame) return;
+  _pickerSelectionFrame = requestAnimationFrame(() => {
+    _pickerSelectionFrame = null;
+    const list = document.getElementById('live-cue-list');
+    const rows = [...list.querySelectorAll('.live-cue-row')];
+    if (!rows.length) return;
+    const listTop = list.getBoundingClientRect().top;
+    let selected = rows[0];
+    let smallestDistance = Infinity;
+    rows.forEach(row => {
+      const distance = Math.abs(row.getBoundingClientRect().top - listTop);
+      if (distance < smallestDistance) {
+        smallestDistance = distance;
+        selected = row;
+      }
+    });
+    rows.forEach(row => row.classList.toggle('picker-selected', row === selected));
+  });
 }
 
 function tcStringToSeconds(tc) {
@@ -793,38 +978,23 @@ function tcStringToSeconds(tc) {
   return p[0]*3600 + p[1]*60 + p[2] + p[3]/25;
 }
 
-function showActiveAlert(cue) {
-  _alertFiredAt = Date.now();
-  clearInterval(_elapsedInterval);
-  _elapsedInterval = setInterval(updateElapsed, 1000);
+function formatTimecodeValue(value) {
+  const trimmed = String(value).trim();
+  const digits = trimmed.replace(/\D/g, '');
+  return digits.length === 8 ? digits.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1:$2:$3:$4') : trimmed;
 }
 
-function updateElapsed() {
-  const el = document.getElementById('alert-elapsed');
-  if (!el || !_alertFiredAt) return;
-  const sec = Math.floor((Date.now() - _alertFiredAt) / 1000);
-  el.textContent = sec < 60 ? `vor ${sec}s` : `vor ${Math.floor(sec/60)}m ${sec%60}s`;
+function formatTimecodeInput(input) {
+  const formatted = formatTimecodeValue(input.value);
+  if (formatted !== input.value && formatted.includes(':')) input.value = formatted;
 }
 
-function showFlash(cue) {
-  document.getElementById('flash-title').textContent = cue.title;
-  document.getElementById('flash-title').style.color = cue.color;
-  document.getElementById('flash-msg').textContent   = cue.message;
-  document.getElementById('flash').style.setProperty('--flash-color', cue.color);
-  document.getElementById('flash-inner').style.borderColor = cue.color;
-  document.getElementById('flash').classList.add('show');
-  clearTimeout(flashTimer);
-  flashTimer = setTimeout(() => document.getElementById('flash').classList.remove('show'), loadSettings().flashDuration);
+function inlineEditKeydown(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.currentTarget.blur();
+  }
 }
-
-function showWarning(cue, sec) {
-  const b = document.getElementById('warn-banner');
-  b.textContent = `⚠  In ${sec}s: ${cue.title}`;
-  b.style.borderColor = cue.color;
-  b.classList.add('show');
-}
-function hideWarning() { document.getElementById('warn-banner').classList.remove('show'); }
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // SIMULATOR
@@ -843,45 +1013,208 @@ async function simStop() {
   if (loadSettings().autoResetOnStop) await api('POST', '/api/engine/reset').catch(() => {});
 }
 async function simSeek() {
-  const tc = document.getElementById('seek-input').value.trim() || '00:00:00:00';
+  const tc = formatTimecodeValue(document.getElementById('seek-input').value) || '00:00:00:00';
   const d  = await api('POST', '/api/simulator/seek', { tc });
   document.getElementById('sim-state').textContent = 'Seek → ' + d.tc;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// ADMIN – SHOWS
+// EDIT – SHOWS
 // ════════════════════════════════════════════════════════════════════════════
 async function loadAdmin() {
   allShows = await api('GET', '/api/shows');
   const sel = document.getElementById('show-select');
+  const selectedId = allShows.some(show => show.id === sel.value) ? sel.value : currentShowId;
   sel.innerHTML = allShows.length
-    ? allShows.map(s => `<option value="${s.id}" ${s.id===currentShowId?'selected':''}>${esc(s.name)} (${s.date})</option>`).join('')
+    ? allShows.map(s => `<option value="${s.id}" ${s.id===selectedId?'selected':''}>${esc(s.name)} (${s.date})</option>`).join('')
     : '<option value="">– Keine Shows –</option>';
   if (!currentShowId && allShows.length) currentShowId = allShows[0].id;
+  if (!sel.value && currentShowId) sel.value = currentShowId;
 
   const activeShow = allShows.find(s => s.id === currentShowId);
   document.getElementById('live-show-name').textContent = activeShow ? activeShow.name : '–';
 
-  if (activeShow) renderCueTable(activeShow);
-  else document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+  if (activeShow) {
+    document.getElementById('s-fallback').value = activeShow.fallbackMode || 'stop';
+    renderPositionTable(activeShow);
+    renderCueTable(activeShow);
+  } else {
+    document.getElementById('position-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+    document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+  }
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
+  previewSelectedShow();
 }
 
-async function selectShow(id) {
+function previewSelectedShow() {
+  const selectedId = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === selectedId);
+  document.getElementById('show-name-input').value = show?.name || '';
+  document.getElementById('show-date-input').value = show?.date || '';
+  document.getElementById('s-fallback').value = show?.fallbackMode || 'stop';
+  document.getElementById('show-active-state').textContent = show
+    ? show.id === currentShowId ? 'Diese Show ist geladen.' : 'Ausgewählt, aber noch nicht geladen.'
+    : 'Keine Show vorhanden.';
+  document.getElementById('show-save-feedback').textContent = '';
+}
+
+async function loadSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  if (!id) return;
   currentShowId = id;
   const s = allShows.find(x => x.id === id);
   document.getElementById('live-show-name').textContent = s ? s.name : '–';
-  if (s) renderCueTable(s);
+  if (s) {
+    document.getElementById('s-fallback').value = s.fallbackMode || 'stop';
+    renderPositionTable(s);
+    renderCueTable(s);
+    restoreTcSourceUI(s);
+  }
   await api('POST', `/api/shows/${id}/activate`).catch(() => {});
+  _liveCueRenderSignature = '';
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  previewSelectedShow();
 }
 
-function openNewShowDialog() {
+async function selectShow(id) {
+  document.getElementById('show-select').value = id;
+  await loadSelectedShow();
+}
+
+async function saveSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === id);
+  const feedback = document.getElementById('show-save-feedback');
+  if (!show) return;
+  const name = document.getElementById('show-name-input').value.trim();
+  const date = document.getElementById('show-date-input').value;
+  if (!name) {
+    feedback.style.color = 'var(--red)';
+    feedback.textContent = 'Bitte einen Namen eingeben.';
+    return;
+  }
+  const updated = await api('PUT', `/api/shows/${id}`, {
+    ...show,
+    name,
+    date,
+    fallbackMode: document.getElementById('s-fallback').value,
+  });
+  if (currentShowId && id !== currentShowId) {
+    await api('POST', `/api/shows/${currentShowId}/activate`).catch(() => {});
+  }
+  const idx = allShows.findIndex(item => item.id === id);
+  if (idx !== -1) allShows[idx] = updated;
+  if (id === currentShowId) document.getElementById('live-show-name').textContent = updated.name;
+  feedback.style.color = 'var(--green)';
+  feedback.textContent = 'Show gespeichert.';
+  const sel = document.getElementById('show-select');
+  sel.innerHTML = allShows.map(item => `<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.name)} (${item.date})</option>`).join('');
+  if (id === currentShowId) {
+    renderPositionTable(updated);
+    renderCueTable(updated);
+  }
+}
+
+async function openNewShowDialog() {
   const name = prompt('Show-Name:');
   if (!name) return;
   const date = prompt('Datum (JJJJ-MM-TT):', new Date().toISOString().slice(0,10));
   if (!date) return;
-  api('POST', '/api/shows', { name, date, cues: [], tcSource: 'simulator', fallbackMode: 'stop' })
-    .then(() => loadAdmin());
+  const created = await api('POST', '/api/shows', { name, date, cues: [], positions: [], tcSource: 'simulator', fallbackMode: 'stop' });
+  currentShowId = created.id;
+  await loadAdmin();
+  document.getElementById('show-select').value = created.id;
+  await loadSelectedShow();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// POSITIONEN / SONGS
+// ════════════════════════════════════════════════════════════════════════════
+function renderPositionTable(show) {
+  const wrap = document.getElementById('position-table-wrap');
+  const positions = [...(show.positions || [])].sort((a, b) => a.startTc.localeCompare(b.startTc));
+  if (!positions.length) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Positionen oder Songs angelegt.</p>';
+    return;
+  }
+  const rows = positions.map((position, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><input class="inline-edit inline-edit-title" value="${esc(position.name)}" aria-label="Name von ${esc(position.name)}" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','name',this.value)" /></td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(position.startTc)}" inputmode="numeric" aria-label="Start-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','startTc',this.value)" /></td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(position.endTc)}" inputmode="numeric" aria-label="End-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','endTc',this.value)" /></td>
+      <td class="actions">
+        <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deletePosition('${position.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>Position / Song</th><th>Start-TC</th><th>End-TC</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function openPositionModal(positionId) {
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
+  const show = allShows.find(show => show.id === currentShowId);
+  const position = show?.positions?.find(item => item.id === positionId);
+  document.getElementById('position-modal-title').textContent = position ? 'Position bearbeiten' : 'Neue Position';
+  document.getElementById('f-position-id').value = position?.id || '';
+  document.getElementById('f-position-name').value = position?.name || '';
+  document.getElementById('f-position-start').value = position?.startTc || '';
+  document.getElementById('f-position-end').value = position?.endTc || '';
+  document.getElementById('position-modal-overlay').classList.add('show');
+  document.getElementById('f-position-name').focus();
+}
+
+function closePositionModal() {
+  document.getElementById('position-modal-overlay').classList.remove('show');
+}
+
+async function savePosition() {
+  const id = document.getElementById('f-position-id').value;
+  const body = {
+    name: document.getElementById('f-position-name').value.trim(),
+    startTc: formatTimecodeValue(document.getElementById('f-position-start').value),
+    endTc: formatTimecodeValue(document.getElementById('f-position-end').value),
+  };
+  if (!body.name || !body.startTc || !body.endTc) {
+    alert('Name, Start-TC und End-TC sind Pflichtfelder.');
+    return;
+  }
+  if (tcStringToSeconds(body.endTc) <= tcStringToSeconds(body.startTc)) {
+    alert('Der End-TC muss nach dem Start-TC liegen.');
+    return;
+  }
+  if (id) await api('PUT', `/api/shows/${currentShowId}/positions/${id}`, body);
+  else await api('POST', `/api/shows/${currentShowId}/positions`, body);
+  closePositionModal();
+  await reloadCurrentShow();
+}
+
+async function updatePositionField(positionId, field, rawValue) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const position = show?.positions?.find(item => item.id === positionId);
+  if (!position) return;
+  const value = field === 'startTc' || field === 'endTc' ? formatTimecodeValue(rawValue) : rawValue.trim();
+  if (!value || value === position[field]) {
+    renderPositionTable(show);
+    return;
+  }
+  const updated = { ...position, [field]: value };
+  if (tcStringToSeconds(updated.endTc) <= tcStringToSeconds(updated.startTc)) {
+    alert('Der End-TC muss nach dem Start-TC liegen.');
+    renderPositionTable(show);
+    return;
+  }
+  await api('PUT', `/api/shows/${currentShowId}/positions/${positionId}`, updated);
+  await reloadCurrentShow();
+}
+
+async function deletePosition(positionId) {
+  if (!confirm('Position wirklich löschen?')) return;
+  await api('DELETE', `/api/shows/${currentShowId}/positions/${positionId}`);
+  await reloadCurrentShow();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -896,18 +1229,16 @@ function renderCueTable(show) {
   const rows = show.cues.map((c, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td style="font-weight:bold;letter-spacing:1px">${c.tc}</td>
-      <td><span class="color-swatch" style="background:${c.color}"></span>${esc(c.title)}</td>
-      <td style="color:#aaa;max-width:200px">${esc(c.message)}</td>
-      <td>${c.warnOffsetSec}s</td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(c.tc)}" inputmode="numeric" aria-label="Timecode von ${esc(c.title)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','tc',this.value)" /></td>
+      <td><div class="inline-title-wrap"><input class="inline-color" type="color" value="${esc(c.color)}" aria-label="Farbe von ${esc(c.title)}" onchange="updateCueField('${c.id}','color',this.value)" /><input class="inline-edit inline-edit-title" value="${esc(c.title)}" aria-label="Titel von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','title',this.value)" /></div></td>
+      <td><input class="inline-edit" value="${esc(c.message)}" aria-label="Nachricht von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','message',this.value)" /></td>
       <td class="actions">
-        <button class="btn btn-small btn-icon" title="Bearbeiten" onclick="openCueModal('${c.id}')">✎</button>
         <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deleteCue('${c.id}')">✕</button>
       </td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Warn</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -927,7 +1258,6 @@ async function openCueModal(cueId) {
     document.getElementById('f-tc').value        = cue.tc;
     document.getElementById('f-title').value     = cue.title;
     document.getElementById('f-message').value   = cue.message;
-    document.getElementById('f-warn').value      = cue.warnOffsetSec;
     document.getElementById('f-color').value     = cue.color;
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
@@ -935,7 +1265,6 @@ async function openCueModal(cueId) {
     document.getElementById('f-tc').value        = '';
     document.getElementById('f-title').value     = '';
     document.getElementById('f-message').value   = '';
-    document.getElementById('f-warn').value      = '10';
     document.getElementById('f-color').value     = '#f59e0b';
   }
   overlay.classList.add('show');
@@ -949,10 +1278,9 @@ function closeModal() {
 async function saveCue() {
   const id    = document.getElementById('f-cue-id').value;
   const body  = {
-    tc:           document.getElementById('f-tc').value.trim(),
+    tc:           formatTimecodeValue(document.getElementById('f-tc').value),
     title:        document.getElementById('f-title').value.trim(),
     message:      document.getElementById('f-message').value.trim(),
-    warnOffsetSec: parseInt(document.getElementById('f-warn').value) || 0,
     color:        document.getElementById('f-color').value,
   };
   if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
@@ -966,6 +1294,24 @@ async function saveCue() {
   await reloadCurrentShow();
 }
 
+async function updateCueField(cueId, field, rawValue) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const cue = show?.cues.find(item => item.id === cueId);
+  if (!cue) return;
+  const value = field === 'tc' ? formatTimecodeValue(rawValue) : rawValue.trim();
+  if ((field === 'tc' || field === 'title') && !value) {
+    alert('TC und Titel sind Pflichtfelder.');
+    renderCueTable(show);
+    return;
+  }
+  if (value === cue[field]) {
+    renderCueTable(show);
+    return;
+  }
+  await api('PUT', `/api/shows/${currentShowId}/cues/${cueId}`, { ...cue, [field]: value });
+  await reloadCurrentShow();
+}
+
 async function deleteCue(cueId) {
   if (!confirm('Cue wirklich löschen?')) return;
   await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
@@ -976,15 +1322,19 @@ async function reloadCurrentShow() {
   const updated = await api('GET', `/api/shows/${currentShowId}`);
   const idx = allShows.findIndex(show => show.id === currentShowId);
   if (idx !== -1) allShows[idx] = updated;
+  renderPositionTable(updated);
   renderCueTable(updated);
+  if (document.getElementById('show-select').value === currentShowId) previewSelectedShow();
+  _liveCueRenderSignature = '';
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // CSV IMPORT
 // ════════════════════════════════════════════════════════════════════════════
 function downloadCSVTemplate() {
-  const header = 'tc,title,message,warnOffsetSec,color';
-  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,10,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,15,#3b82f6';
+  const header = 'tc,title,message,color';
+  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,#3b82f6';
   const blob = new Blob([header + '\n' + example], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1007,13 +1357,12 @@ async function importCSV() {
   let ok = 0, fail = 0;
   for (const line of dataLines) {
     const cols = parseCSVLine(line);
-    const [tc, title, message, warnRaw, color] = cols;
+    const [tc, title, message, color] = cols;
     if (!tc || !title) { fail++; continue; }
     const body = {
       tc: tc.trim(),
       title: title.trim(),
       message: (message || '').trim(),
-      warnOffsetSec: parseInt(warnRaw) || 0,
       color: (color || '#f59e0b').trim(),
     };
     try { await api('POST', `/api/shows/${currentShowId}/cues`, body); ok++; }
@@ -1043,7 +1392,12 @@ function parseCSVLine(line) {
 // ════════════════════════════════════════════════════════════════════════════
 let _audioCtx = null;
 
-async function playAlarm() {
+async function playAlarm(force = false) {
+  const settings = loadSettings();
+  if (!force && !settings.alarmEnabled) return false;
+  const volume = Math.max(0, Math.min(1, settings.alarmVolume / 100));
+  if (volume === 0 && !force) return false;
+  const peakVolume = Math.max(0.0001, volume * 0.8);
   try {
     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (_audioCtx.state === 'suspended') await _audioCtx.resume();
@@ -1053,14 +1407,24 @@ async function playAlarm() {
     osc.frequency.value = 880;
     osc.connect(gain);
     const now = _audioCtx.currentTime;
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.8, now + 0.01);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peakVolume, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
     osc.start(now);
     osc.stop(now + 0.23);
+    return true;
   } catch (e) {
     console.warn('[Alarm] Playback failed:', e);
+    return false;
   }
+}
+
+async function testAlarm() {
+  const feedback = document.getElementById('alarm-test-feedback');
+  const played = await playAlarm(true);
+  feedback.style.color = played ? 'var(--green)' : 'var(--red)';
+  feedback.textContent = played ? 'Alarm abgespielt' : 'Audio konnte nicht abgespielt werden';
+  setTimeout(() => { feedback.textContent = ''; }, 1600);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1068,10 +1432,20 @@ async function playAlarm() {
 // ════════════════════════════════════════════════════════════════════════════
 async function exportCurrentShow() {
   if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
-  const res = await fetch(`/api/io/show/${currentShowId}`);
+  await exportShow(currentShowId);
+}
+
+async function exportSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  if (!id) { alert('Zuerst eine Show auswählen.'); return; }
+  await exportShow(id);
+}
+
+async function exportShow(id) {
+  const res = await fetch(`/api/io/show/${id}`);
   if (!res.ok) { alert('Export fehlgeschlagen.'); return; }
   const blob = await res.blob();
-  const show = allShows.find(s => s.id === currentShowId);
+  const show = allShows.find(s => s.id === id);
   const name = (show?.name || 'show').replace(/[^a-z0-9]/gi, '_');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1577,6 +1951,7 @@ connect();
 
 (async () => {
   const shows = await api('GET', '/api/shows').catch(() => []);
+  allShows = shows;
   if (shows.length) {
     currentShowId = shows[0].id;
     const s = shows[0];

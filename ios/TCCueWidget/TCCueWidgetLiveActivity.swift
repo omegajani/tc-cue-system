@@ -24,19 +24,7 @@ struct TCCueWidgetLiveActivity: Widget {
                         .foregroundStyle(Color.red)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    if context.state.isWarning, let next = context.state.nextCueTitle {
-                        HStack {
-                            Text("NÄCHSTER in \(context.state.warningSecondsUntil)s")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.orange)
-                            Text("·").foregroundStyle(.white.opacity(0.5))
-                            Text(next)
-                                .font(.system(size: 10))
-                                .foregroundStyle(.orange.opacity(0.8))
-                                .lineLimit(1)
-                            Spacer()
-                        }
-                    } else if let next = context.state.nextCueTitle,
+                    if let next = context.state.nextCueTitle,
                               let nextTc = context.state.nextCueTc {
                         HStack {
                             Text("NÄCHSTER")
@@ -88,21 +76,7 @@ private struct LockScreenView: View {
 
             Divider().overlay(Color.white.opacity(0.2))
 
-            if state.isWarning, let next = state.nextCueTitle {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.orange)
-                    Text("NÄCHSTER in \(state.warningSecondsUntil)s")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.orange)
-                    Text("·").foregroundStyle(.white.opacity(0.4))
-                    Text(next)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.orange.opacity(0.85))
-                        .lineLimit(1)
-                }
-            } else if let next = state.nextCueTitle, let nextTc = state.nextCueTc {
+            if let next = state.nextCueTitle, let nextTc = state.nextCueTc {
                 HStack(spacing: 6) {
                     Text("NÄCHSTER")
                         .font(.system(size: 9, weight: .semibold))
@@ -125,6 +99,7 @@ private struct LockScreenView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .font(.custom("Lexend", size: 11, relativeTo: .body))
         .activityBackgroundTint(Color.black)
     }
 }

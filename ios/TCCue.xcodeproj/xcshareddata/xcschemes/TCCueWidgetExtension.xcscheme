@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2640"
+   LastUpgradeVersion = "1600"
    wasCreatedForAppExtension = "YES"
-   version = "2.0">
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -16,23 +16,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "04B1A46B2F97A58A002B5EF3"
+               BlueprintIdentifier = "3C1E41D9F8F6E0B41F1171D0"
                BuildableName = "TCCueWidgetExtension.appex"
                BlueprintName = "TCCueWidgetExtension"
-               ReferencedContainer = "container:TCCue.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B342F790EE806CCC452C1533"
-               BuildableName = "TCCue.app"
-               BlueprintName = "TCCue"
                ReferencedContainer = "container:TCCue.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -43,47 +29,56 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "3C1E41D9F8F6E0B41F1171D0"
+            BuildableName = "TCCueWidgetExtension.appex"
+            BlueprintName = "TCCueWidgetExtension"
+            ReferencedContainer = "container:TCCue.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <Testables>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = ""
       selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
       launchStyle = "0"
-      askForAppToLaunch = "Yes"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
-      launchAutomaticallySubstyle = "2"
-      queueDebuggingEnableBacktraceRecording = "Yes">
+      launchAutomaticallySubstyle = "2">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B342F790EE806CCC452C1533"
-            BuildableName = "TCCue.app"
-            BlueprintName = "TCCue"
+            BlueprintIdentifier = "3C1E41D9F8F6E0B41F1171D0"
+            BuildableName = "TCCueWidgetExtension.appex"
+            BlueprintName = "TCCueWidgetExtension"
             ReferencedContainer = "container:TCCue.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
-      debugDocumentVersioning = "YES"
-      askForAppToLaunch = "Yes"
-      launchAutomaticallySubstyle = "2">
+      debugDocumentVersioning = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B342F790EE806CCC452C1533"
-            BuildableName = "TCCue.app"
-            BlueprintName = "TCCue"
+            BlueprintIdentifier = "3C1E41D9F8F6E0B41F1171D0"
+            BuildableName = "TCCueWidgetExtension.appex"
+            BlueprintName = "TCCueWidgetExtension"
             ReferencedContainer = "container:TCCue.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

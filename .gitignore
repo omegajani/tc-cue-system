@@ -3,6 +3,7 @@
 **/.DS_Store
 
 # Xcode
+.build/
 ios/build/
 ios/*.xcodeproj/xcuserdata/
 ios/*.xcworkspace/xcuserdata/

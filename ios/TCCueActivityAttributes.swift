@@ -8,7 +8,5 @@ struct TCCueActivityAttributes: ActivityAttributes {
         var currentCueTc: String
         var nextCueTitle: String?
         var nextCueTc: String?
-        var isWarning: Bool
-        var warningSecondsUntil: Int
     }
 }

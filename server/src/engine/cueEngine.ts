@@ -1,74 +1,78 @@
 import { EventEmitter } from "events";
-import { Cue, CueFireEvent, CueWarningEvent, Show } from "../types.js";
-import { parseTc, getFPS } from "../tc/tcUtils.js";
+import { Cue, CueFireEvent, Show, ShowPosition } from "../types.js";
+import { parseTc } from "../tc/tcUtils.js";
 
 export class CueEngine extends EventEmitter {
   private show: Show | null = null;
   private sortedCues: Cue[] = [];
+  private sortedPositions: ShowPosition[] = [];
   private firedCueIds = new Set<string>();
-  private warnedCueIds = new Set<string>();
   private previousCue: Cue | null = null;
   private currentCue: Cue | null = null;
   private nextCue: Cue | null = null;
+  private currentPosition: ShowPosition | null = null;
 
   loadShow(show: Show) {
     this.show = show;
-    this.sortedCues = [...show.cues].sort(
+    this.sortedCues = [...show.cues].filter(
+      (cue) => this.hasValidTc(cue.tc, `cue "${cue.title}"`)
+    ).sort(
       (a, b) => parseTc(a.tc).totalFrames - parseTc(b.tc).totalFrames
     );
+    this.sortedPositions = [...(show.positions ?? [])].filter(
+      (position) =>
+        this.hasValidTc(position.startTc, `position "${position.name}" start`) &&
+        this.hasValidTc(position.endTc, `position "${position.name}" end`)
+    ).sort(
+      (a, b) => parseTc(a.startTc).totalFrames - parseTc(b.startTc).totalFrames
+    );
     this.firedCueIds.clear();
-    this.warnedCueIds.clear();
     this.currentCue = null;
     this.nextCue = this.sortedCues[0] ?? null;
+    this.currentPosition = null;
     console.log(`[CueEngine] Loaded show "${show.name}" with ${this.sortedCues.length} cues`);
+  }
+
+  private hasValidTc(tc: string, label: string): boolean {
+    try {
+      parseTc(tc);
+      return true;
+    } catch {
+      console.warn(`[CueEngine] Ignoring ${label} with invalid TC "${tc}"`);
+      return false;
+    }
   }
 
   unload() {
     this.show = null;
     this.sortedCues = [];
+    this.sortedPositions = [];
     this.firedCueIds.clear();
-    this.warnedCueIds.clear();
     this.currentCue = null;
     this.nextCue = null;
+    this.currentPosition = null;
   }
 
   reset() {
     this.firedCueIds.clear();
-    this.warnedCueIds.clear();
     this.previousCue = null;
     this.currentCue = null;
     this.nextCue = this.sortedCues[0] ?? null;
+    this.currentPosition = null;
   }
 
   processTc(tc: string) {
-    if (!this.show || this.sortedCues.length === 0) return;
+    if (!this.show) return;
 
     const nowFrames = parseTc(tc).totalFrames;
+    this.currentPosition = this.sortedPositions.find((position) => {
+      const startFrames = parseTc(position.startTc).totalFrames;
+      const endFrames = parseTc(position.endTc).totalFrames;
+      return nowFrames >= startFrames && nowFrames <= endFrames;
+    }) ?? null;
 
     for (const cue of this.sortedCues) {
       const cueFrames = parseTc(cue.tc).totalFrames;
-
-      // Warning: warnOffsetSec seconds before cue.
-      // No upper-bound check — if setInterval skips frames we still want the warning
-      // as long as the cue hasn't fired yet.
-      if (
-        cue.warnOffsetSec > 0 &&
-        !this.warnedCueIds.has(cue.id) &&
-        !this.firedCueIds.has(cue.id)
-      ) {
-        const warnFrames = cueFrames - cue.warnOffsetSec * getFPS();
-        if (nowFrames >= warnFrames) {
-          this.warnedCueIds.add(cue.id);
-          const secondsUntil = Math.max(0, Math.round((cueFrames - nowFrames) / getFPS()));
-          const event: CueWarningEvent = {
-            type: "CUE_WARNING",
-            tc,
-            cue,
-            secondsUntil,
-          };
-          this.emit("cueWarning", event);
-        }
-      }
 
       // Fire cue
       if (!this.firedCueIds.has(cue.id) && nowFrames >= cueFrames) {
@@ -99,6 +103,10 @@ export class CueEngine extends EventEmitter {
 
   getNextCue(): Cue | null {
     return this.nextCue;
+  }
+
+  getCurrentPosition(): ShowPosition | null {
+    return this.currentPosition;
   }
 }
 

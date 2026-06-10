@@ -28,13 +28,10 @@ struct TCCueApp: App {
                 }
                 .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
                     guard client.connectionState == .connected else { return }
-                    let isWarning = client.warningCue != nil
                     LiveActivityManager.shared.update(
                         cue: client.currentCue,
-                        nextCue: isWarning ? client.warningCue : client.nextCue,
-                        currentTc: client.currentTc,
-                        isWarning: isWarning,
-                        warningSeconds: client.warningSecondsUntil
+                        nextCue: client.nextCue,
+                        currentTc: client.currentTc
                     )
                 }
         }
@@ -56,17 +53,7 @@ struct TCCueApp: App {
             WatchBridge.shared.send(cue: cue, nextCue: next, event: "fire")
             LiveActivityManager.shared.update(
                 cue: cue, nextCue: next,
-                currentTc: client?.currentTc ?? "--:--:--:--",
-                isWarning: false, warningSeconds: 0
-            )
-        }
-        client.onCueWarning = { [weak client] cue, sec in
-            HapticManager.alarm()
-            WatchBridge.shared.send(cue: cue, nextCue: nil, event: "warning", secondsUntil: sec)
-            LiveActivityManager.shared.update(
-                cue: client?.currentCue, nextCue: cue,
-                currentTc: client?.currentTc ?? "--:--:--:--",
-                isWarning: true, warningSeconds: sec
+                currentTc: client?.currentTc ?? "--:--:--:--"
             )
         }
     }

@@ -1,18 +1,127 @@
 [
   {
     "id": "show-demo-001",
-    "name": "Hamlet – Premiere",
+    "name": "Blinded by Delight",
     "date": "2026-05-01",
     "tcSource": "simulator",
     "fallbackMode": "stop",
     "audioChannel": "left",
+    "positions": [
+      {
+        "id": "position-001",
+        "name": "Einlass",
+        "startTc": "00:00:00:00",
+        "endTc": "00:00:30:00"
+      },
+      {
+        "id": "position-004",
+        "name": "Pos. 2 Einladung",
+        "startTc": "01:58:38:00",
+        "endTc": "01:59:59:00"
+      },
+      {
+        "name": "Pos. 3 Wovon träumst du",
+        "startTc": "01:59:59:00",
+        "endTc": "02:04:40:00",
+        "id": "9c9c5e0a-5a94-46d9-adf9-856d1d3f7c5b"
+      },
+      {
+        "name": "Pos. 4 Lift off",
+        "startTc": "02:30:00:00",
+        "endTc": "02:35:27:00",
+        "id": "baecee8c-20c9-4d83-befb-be6562deab04"
+      },
+      {
+        "name": "Pos. 5 Reprise Lift off",
+        "startTc": "02:59:47:00",
+        "endTc": "03:01:47:00",
+        "id": "bd70d24d-7da4-46ea-853c-2c4a680b4a14"
+      },
+      {
+        "name": "Pos.6 Noch eine Chance",
+        "startTc": "03:01:47:00",
+        "endTc": "03:04:12:00",
+        "id": "2e124ffc-04ff-43ba-8772-6e83907c5588"
+      },
+      {
+        "name": "Pos. 7 Running",
+        "startTc": "03:30:01:00",
+        "endTc": "03:34:00:00",
+        "id": "39a690e4-b1c8-4536-98e3-891d7ab29883"
+      },
+      {
+        "name": "Pos. 8 Eclipse of Delight",
+        "startTc": "04:00:01:00",
+        "endTc": "04:04:01:00",
+        "id": "65d0d5a6-6072-40c0-8de8-a13b68338449"
+      },
+      {
+        "name": "Pos. 9.1 Call from a Dream",
+        "startTc": "04:30:01:00",
+        "endTc": "04:31:33:00",
+        "id": "8541a2c7-f973-4b8f-b741-8ee06a837db5"
+      },
+      {
+        "name": "Pos. 9.2 Türen de Glücks 1",
+        "startTc": "04:31:33:00",
+        "endTc": "04:34:56:00",
+        "id": "8001653d-1b4e-4fae-8ca9-7e213547a376"
+      },
+      {
+        "name": "Pos. 10 Life's Delight",
+        "startTc": "04:59:59:15",
+        "endTc": "05:04:12:00",
+        "id": "f6ad2250-3d90-469b-bcca-d06f2f7303c9"
+      },
+      {
+        "name": "Pos. 11 Weightless",
+        "startTc": "05:29:59:00",
+        "endTc": "05:34:40:00",
+        "id": "94618955-a1d2-4183-b049-8ed8ea1e2883"
+      },
+      {
+        "name": "Pos. 12.1 Happy Hour 1 Part 1",
+        "startTc": "05:29:59:00",
+        "endTc": "06:01:29:00",
+        "id": "d13dfeb1-08a5-45b5-a0cb-1158e7b4bc7a"
+      },
+      {
+        "name": "Pos.12.2 Happy Hour 1 Part 2",
+        "startTc": "06:29:59:00",
+        "endTc": "06:30:51:00",
+        "id": "077fbae2-b69c-48a0-88d7-f6f3e08798b1"
+      },
+      {
+        "name": "Pos. 13 Love Supreme",
+        "startTc": "06:59:59:00",
+        "endTc": "07:04:17:00",
+        "id": "b7c9cc6e-d1fe-4b29-9ae6-db1a11e7b58d"
+      },
+      {
+        "name": "Pos. 14 Sunset",
+        "startTc": "07:29:59:00",
+        "endTc": "07:36:10:00",
+        "id": "11275968-5584-4c57-888d-6411dcb98cfb"
+      },
+      {
+        "name": "Pos. 14b From Dusk till Dawn",
+        "startTc": "07:59:06:00",
+        "endTc": "08:03:54:00",
+        "id": "26bb0353-5aa0-486a-ac14-4fdb0001bd64"
+      },
+      {
+        "name": "Pos. 15 Poison",
+        "startTc": "08:29:19:00",
+        "endTc": "08:35:31:00",
+        "id": "5dd73963-e43e-4023-b495-b8ebc7a13725"
+      }
+    ],
     "cues": [
       {
         "id": "cue-001",
         "tc": "00:00:10:00",
         "title": "Einlass beendet",
         "message": "Türen schließen! Einlass ist beendet.",
-        "warnOffsetSec": 5,
         "color": "#3b82f6"
       },
       {
@@ -20,7 +129,6 @@
         "tc": "00:00:20:00",
         "title": "Licht Blackout",
         "message": "Licht auf Blackout! Beginn Akt 1.",
-        "warnOffsetSec": 8,
         "color": "#ef4444"
       },
       {
@@ -28,7 +136,6 @@
         "tc": "00:00:35:00",
         "title": "Szene 1.1 – Wache",
         "message": "Umbau Wache bereit? → Bühne frei!",
-        "warnOffsetSec": 10,
         "color": "#f59e0b"
       },
       {
@@ -36,7 +143,6 @@
         "tc": "00:01:00:00",
         "title": "Pausenansage",
         "message": "Pausenansage in 60 Sekunden vorbereiten.",
-        "warnOffsetSec": 15,
         "color": "#10b981"
       },
       {
@@ -44,7 +150,6 @@
         "tc": "00:01:30:00",
         "title": "Akt 2 Beginn",
         "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
-        "warnOffsetSec": 20,
         "color": "#8b5cf6"
       }
     ]

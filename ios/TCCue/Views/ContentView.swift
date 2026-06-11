@@ -1,16 +1,23 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var client: TCWSClient
+    @State private var selection = 0
 
     var body: some View {
-        TabView {
+        TabView(selection: $selection) {
             LiveView()
-                .tabItem { Label("Live", systemImage: "dot.radiowaves.left.and.right") }
+                .tag(0)
+                .tabItem {
+                    Label("Live", systemImage: "dot.radiowaves.left.and.right")
+                }
+
             SettingsView()
-                .tabItem { Label("Einstellungen", systemImage: "gear") }
+                .tag(1)
+                .tabItem {
+                    Label("Einstellungen", systemImage: "gearshape")
+                }
         }
-        .tint(.green)
+        .tint(.orange)
         .font(.custom("Lexend", size: 17, relativeTo: .body))
     }
 }

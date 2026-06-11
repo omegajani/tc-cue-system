@@ -1,60 +1,59 @@
 import SwiftUI
-import WatchConnectivity
 
 @main
 struct TCCueApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var client = TCWSClient()
-    @StateObject private var watchBridge = WatchBridge.shared
+    @AppStorage("liveActivityEnabled") private var liveActivityEnabled = true
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(client)
-                .environmentObject(watchBridge)
                 .preferredColorScheme(.dark)
                 .onAppear {
-                    watchBridge.activate()
+                    configureCueFeedback()
                     autoConnect()
+                    reconcileLiveActivity()
                 }
                 .onChange(of: client.connectionState) { _, state in
-                    switch state {
-                    case .connected:
-                        LiveActivityManager.shared.start()
-                    case .disconnected:
-                        LiveActivityManager.shared.end()
-                    case .connecting:
-                        break
+                    reconcileLiveActivity()
+                }
+                .onChange(of: liveActivityEnabled) { _, enabled in
+                    reconcileLiveActivity()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        autoConnect()
+                        reconcileLiveActivity()
                     }
                 }
                 .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
                     guard client.connectionState == .connected else { return }
-                    LiveActivityManager.shared.update(
-                        cue: client.currentCue,
-                        nextCue: client.nextCue,
-                        currentTc: client.currentTc
-                    )
+                    reconcileLiveActivity()
                 }
         }
     }
 
     private func autoConnect() {
-        let url = TCWSClient.defaultServerURL
-        guard !url.isEmpty else { return }
-        UserDefaults.standard.set(url, forKey: "serverURL")
-        Task { @MainActor in
-            setupCallbacks()
-            client.connect(serverURL: url)
+        let serverURL = TCWSClient.defaultServerURL
+        guard !serverURL.isEmpty else { return }
+        client.connect(serverURL: serverURL)
+    }
+
+    private func configureCueFeedback() {
+        client.onCueFire = { _, _ in
+            guard UserDefaults.standard.object(forKey: "hapticsEnabled") as? Bool ?? true else { return }
+            HapticManager.alarm()
         }
     }
 
-    private func setupCallbacks() {
-        client.onCueFire = { [weak client] cue, next in
-            HapticManager.alarm()
-            WatchBridge.shared.send(cue: cue, nextCue: next, event: "fire")
-            LiveActivityManager.shared.update(
-                cue: cue, nextCue: next,
-                currentTc: client?.currentTc ?? "--:--:--:--"
-            )
-        }
+    private func reconcileLiveActivity() {
+        LiveActivityManager.shared.reconcile(
+            cue: client.currentCue,
+            nextCue: client.nextCue,
+            currentTc: client.currentTc,
+            enabled: liveActivityEnabled
+        )
     }
 }

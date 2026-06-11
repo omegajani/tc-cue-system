@@ -16,6 +16,7 @@ final class TCWSClient: ObservableObject {
     @Published var currentCue: CueModel?
     @Published var nextCue: CueModel?
     @Published var currentPosition: ShowPositionModel?
+    @Published var activeShow: ShowModel?
     @Published var currentTc: String = "--:--:--:--"
     @Published var lastError: String?
 
@@ -24,6 +25,7 @@ final class TCWSClient: ObservableObject {
     private var task: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
     private var displayTask: Task<Void, Never>?
+    private var heartbeatTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
     private var reconnectDelay: TimeInterval = 2
     private(set) var serverURL: String = ""
@@ -62,15 +64,16 @@ final class TCWSClient: ObservableObject {
         reconnectTask?.cancel()
         receiveTask?.cancel()
         displayTask?.cancel()
+        heartbeatTask?.cancel()
         task?.cancel(with: .goingAway, reason: nil)
         task = nil
         wsDelegate = nil
-        connectionState = .disconnected
         previousCue = nil
         currentCue = nil
         nextCue = nil
         currentPosition = nil
         currentTc = "--:--:--:--"
+        connectionState = .disconnected
     }
 
     // MARK: - Socket Lifecycle
@@ -89,6 +92,7 @@ final class TCWSClient: ObservableObject {
 
         receiveTask?.cancel()
         displayTask?.cancel()
+        heartbeatTask?.cancel()
         task?.cancel(with: .goingAway, reason: nil)
         connectionState = .connecting
 
@@ -99,6 +103,7 @@ final class TCWSClient: ObservableObject {
                 self.lastError = nil
                 self.reconnectDelay = 2
                 self.startDisplayTimer()
+                Task { await self.reloadShow() }
             }
         }
         wsDelegate = delegate
@@ -106,12 +111,73 @@ final class TCWSClient: ObservableObject {
         let newTask = session.webSocketTask(with: url)
         task = newTask
         newTask.resume()
+        startHeartbeat(for: newTask)
 
         // Receive on a background thread — not the main actor
         let snap = snapshot
         receiveTask = Task.detached { [weak self] in
             await TCWSClient.receiveLoop(task: newTask, snapshot: snap, client: self)
         }
+    }
+
+    func reloadShow() async {
+        guard let url = httpURL(path: "/api/shows") else { return }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
+            activeShow = try JSONDecoder().decode([ShowModel].self, from: data).first
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    func setChecklistItem(checklistId: String, itemId: String, checked: Bool) async {
+        guard var show = activeShow,
+              var checklists = show.checklists,
+              let checklistIndex = checklists.firstIndex(where: { $0.id == checklistId }),
+              let itemIndex = checklists[checklistIndex].items.firstIndex(where: { $0.id == itemId }),
+              let url = httpURL(path: "/api/shows/\(show.id)/checklists/\(checklistId)")
+        else { return }
+
+        checklists[checklistIndex].items[itemIndex].checked = checked
+        show.checklists = checklists
+        activeShow = show
+
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONEncoder().encode(checklists[checklistIndex])
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                await reloadShow()
+                return
+            }
+        } catch {
+            lastError = error.localizedDescription
+            await reloadShow()
+        }
+    }
+
+    func completeChecklist(_ checklistId: String) async {
+        guard let checklist = activeShow?.checklists?.first(where: { $0.id == checklistId }) else { return }
+        for item in checklist.items where !item.checked {
+            await setChecklistItem(checklistId: checklistId, itemId: item.id, checked: true)
+        }
+    }
+
+    private func httpURL(path: String) -> URL? {
+        var address = serverURL
+            .replacingOccurrences(of: "ws://", with: "http://")
+            .replacingOccurrences(of: "wss://", with: "https://")
+        if !address.hasPrefix("http://") && !address.hasPrefix("https://") {
+            address = "http://\(address)"
+        }
+        guard var components = URLComponents(string: address) else { return nil }
+        components.path = path
+        components.query = nil
+        components.fragment = nil
+        return components.url
     }
 
     // MARK: - Display Timer (25 fps, main actor)
@@ -122,6 +188,23 @@ final class TCWSClient: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 40_000_000) // 25 fps
                 self?.applySnapshot()
+            }
+        }
+    }
+
+    private func startHeartbeat(for socket: URLSessionWebSocketTask) {
+        heartbeatTask?.cancel()
+        heartbeatTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(10))
+                guard !Task.isCancelled, let self, self.task === socket else { return }
+                socket.sendPing { [weak self] error in
+                    guard let error else { return }
+                    Task { @MainActor [weak self] in
+                        guard let self, self.task === socket else { return }
+                        self.handleDisconnect(error: error.localizedDescription)
+                    }
+                }
             }
         }
     }
@@ -145,12 +228,15 @@ final class TCWSClient: ObservableObject {
     }
 
     func handleDisconnect(error: String? = nil) {
+        guard connectionState != .disconnected || task != nil else { return }
+        heartbeatTask?.cancel()
         displayTask?.cancel()
+        task?.cancel(with: .goingAway, reason: nil)
         task = nil
         wsDelegate = nil
-        connectionState = .disconnected
         lastError = error
         currentTc = "--:--:--:--"
+        connectionState = .disconnected
         let delay = reconnectDelay
         reconnectDelay = min(reconnectDelay * 1.5, 30)
         reconnectTask = Task {

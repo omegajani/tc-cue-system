@@ -130,9 +130,25 @@ oscTcInput.on("tc", (tc: string) => {
 cueEngine.on("cueFire", (event) => {
   console.log(`[Engine] CUE FIRE: ${event.cue.title} @ ${event.tc}`);
   broadcast(event);
+  if (event.cue.resetShow) {
+    const show = cueEngine.getShow();
+    if (show) {
+      const reset = {
+        ...show,
+        checklists: (show.checklists ?? []).map(cl => ({
+          ...cl,
+          items: cl.items.map(item => ({ ...item, checked: false })),
+        })),
+      };
+      upsertShow(reset);
+      cueEngine.updateShowData(reset);
+      console.log(`[Engine] SHOW RESET triggered by cue "${event.cue.title}"`);
+    }
+    broadcast({ type: "SHOW_RESET" });
+  }
 });
 
-import { getShows } from "./engine/store.js";
+import { getShows, upsertShow } from "./engine/store.js";
 
 function loadInitialShow() {
   const show = getShows()[0];

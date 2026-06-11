@@ -37,6 +37,11 @@ export class CueEngine extends EventEmitter {
     return this.show;
   }
 
+  /** Aktualisiert die Show-Daten (z.B. Checklisten) ohne fired-State zu löschen. */
+  updateShowData(show: Show) {
+    this.show = show;
+  }
+
   getSortedCues(): Cue[] {
     return this.sortedCues;
   }

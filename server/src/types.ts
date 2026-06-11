@@ -7,6 +7,7 @@ export interface Cue {
   title: string;
   message: string;
   color: string;
+  resetShow?: boolean;
 }
 
 export interface ShowPosition {
@@ -66,7 +67,11 @@ export interface CueFireEvent {
   nextCue: Cue | null;
 }
 
-export type WSEvent = TCUpdateEvent | CueFireEvent;
+export interface ShowResetEvent {
+  type: "SHOW_RESET";
+}
+
+export type WSEvent = TCUpdateEvent | CueFireEvent | ShowResetEvent;
 
 // TC as frame count for arithmetic
 export interface TCFrames {

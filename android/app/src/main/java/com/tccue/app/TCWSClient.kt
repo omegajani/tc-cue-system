@@ -197,6 +197,11 @@ class TCWSClient {
                     if (_show.value?.cues?.none { it.id == ev.cue.id } == true) refreshShow()
                 }
             }
+
+            "SHOW_RESET" -> {
+                // Server hat Checklisten zurückgesetzt — Show-Daten neu laden
+                scope.launch { refreshShow() }
+            }
         }
     }
 

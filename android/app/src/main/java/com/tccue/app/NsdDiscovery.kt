@@ -44,6 +44,14 @@ class NsdDiscovery(context: Context) {
 
     private var discoveryListener: NsdManager.DiscoveryListener? = null
 
+    // NsdManager kann nur einen Resolve gleichzeitig — parallele Aufrufe
+    // schlagen mit FAILURE_ALREADY_ACTIVE fehl und bei mehreren Servern
+    // würde nur der erste aufgelöst. Deshalb: Warteschlange, ein Resolve
+    // nach dem anderen.
+    private data class PendingResolve(val info: NsdServiceInfo, val attempts: Int)
+    private val resolveQueue = ArrayDeque<PendingResolve>()
+    private var resolving = false
+
     fun start() {
         if (discoveryListener != null) return
         val listener = object : NsdManager.DiscoveryListener {
@@ -56,28 +64,53 @@ class NsdDiscovery(context: Context) {
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                 android.util.Log.d("NsdDiscovery", "found: ${serviceInfo.serviceName}")
-                nsdManager.resolveService(serviceInfo, object : NsdManager.ResolveListener {
-                    override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
-                        android.util.Log.d("NsdDiscovery", "resolve failed: $errorCode")
-                    }
-                    override fun onServiceResolved(info: NsdServiceInfo) {
-                        android.util.Log.d(
-                            "NsdDiscovery",
-                            "resolved host=${info.host?.hostAddress} port=${info.port} txt=${info.attributes.mapValues { String(it.value ?: ByteArray(0)) }}"
-                        )
-                        handleResolved(info)
-                    }
-                })
+                synchronized(resolveQueue) {
+                    resolveQueue.add(PendingResolve(serviceInfo, attempts = 0))
+                }
+                resolveNext()
             }
 
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                // Liste leeren — reachable Server werden beim nächsten Fund
-                // wieder verifiziert und aufgenommen
-                _servers.value = emptyList()
+                // Nur den verlorenen Server entfernen, nicht die ganze Liste
+                _servers.value = _servers.value.filter { it.name != serviceInfo.serviceName }
             }
         }
         discoveryListener = listener
         nsdManager.discoverServices("_tccue._tcp.", NsdManager.PROTOCOL_DNS_SD, listener)
+    }
+
+    private fun resolveNext() {
+        val pending: PendingResolve
+        synchronized(resolveQueue) {
+            if (resolving) return
+            pending = resolveQueue.removeFirstOrNull() ?: return
+            resolving = true
+        }
+        nsdManager.resolveService(pending.info, object : NsdManager.ResolveListener {
+            override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
+                android.util.Log.d("NsdDiscovery", "resolve failed: ${info.serviceName} code=$errorCode")
+                if (pending.attempts < 3) {
+                    synchronized(resolveQueue) {
+                        resolveQueue.add(pending.copy(attempts = pending.attempts + 1))
+                    }
+                }
+                finishResolve()
+            }
+
+            override fun onServiceResolved(info: NsdServiceInfo) {
+                android.util.Log.d(
+                    "NsdDiscovery",
+                    "resolved ${info.serviceName} host=${info.host?.hostAddress} port=${info.port} txt=${info.attributes.mapValues { String(it.value ?: ByteArray(0)) }}"
+                )
+                handleResolved(info)
+                finishResolve()
+            }
+        })
+    }
+
+    private fun finishResolve() {
+        synchronized(resolveQueue) { resolving = false }
+        resolveNext()
     }
 
     private fun handleResolved(info: NsdServiceInfo) {
@@ -123,6 +156,7 @@ class NsdDiscovery(context: Context) {
     fun stop() {
         stopSafely()
         scope.coroutineContext.cancelChildren()
+        synchronized(resolveQueue) { resolveQueue.clear() }
         _servers.value = emptyList()
     }
 

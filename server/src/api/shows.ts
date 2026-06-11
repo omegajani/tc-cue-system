@@ -60,6 +60,7 @@ router.post("/:id/cues", (req, res) => {
     title: req.body.title,
     message: req.body.message ?? "",
     color: req.body.color ?? "#f59e0b",
+    resetShow: req.body.resetShow ?? false,
   };
   show.cues.push(cue);
   upsertShow(show);
@@ -78,6 +79,7 @@ router.put("/:id/cues/:cueId", (req, res) => {
     title: req.body.title ?? show.cues[idx].title,
     message: req.body.message ?? show.cues[idx].message,
     color: req.body.color ?? show.cues[idx].color,
+    resetShow: req.body.resetShow ?? show.cues[idx].resetShow ?? false,
   };
   upsertShow(show);
   cueEngine.loadShow(show);

@@ -88,6 +88,7 @@
     .live-cue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cue-color); }
     .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
     .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
+    .live-cue-reset-badge { display:inline-flex; align-items:center; gap:3px; margin-top:5px; padding:2px 7px; border-radius:99px; background:rgba(239,68,68,.13); border:1px solid rgba(239,68,68,.28); color:#fca5a5; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
     .live-cue-row:hover .live-cue-message { display:block; }
     .live-cue-row.preview-visible { min-height:82px; }
     .live-cue-row.preview-visible .live-cue-message { display:block; }
@@ -653,6 +654,13 @@
       <label>Nachricht</label>
       <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
     </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(239,68,68,.2);border-radius:9px;background:rgba(239,68,68,.045);">
+      <input type="checkbox" id="f-reset-show" style="width:16px;height:16px;accent-color:#ef4444;flex:0 0 auto;" />
+      <div>
+        <label for="f-reset-show" style="display:block;font-size:12px;font-weight:650;color:#fca5a5;cursor:pointer;">Show zurücksetzen</label>
+        <span style="font-size:10px;color:var(--muted);">Alle Checklisten zurücksetzen wenn dieser Cue feuert</span>
+      </div>
+    </div>
     <div class="modal-actions">
       <div style="flex:1"></div>
       <button class="btn" onclick="closeModal()">Abbrechen</button>
@@ -1092,6 +1100,16 @@ function handleEvent(evt) {
     triggerScreenFlash();
     focusFiredCue(evt);
   }
+  if (evt.type === 'SHOW_RESET') {
+    _triggeredChecklistIds = new Set();
+    const show = allShows.find(s => s.id === currentShowId);
+    if (show) {
+      const reset = { ...show, checklists: (show.checklists || []).map(cl => ({ ...cl, items: cl.items.map(item => ({ ...item, checked: false })) })) };
+      const idx = allShows.findIndex(s => s.id === currentShowId);
+      if (idx !== -1) allShows[idx] = reset;
+    }
+    renderLiveChecklists(_lastCurrentCue);
+  }
 }
 
 function renderCurrentPosition(position, tcString) {
@@ -1270,7 +1288,8 @@ function renderLiveCues(cur, next, tcString) {
         <div>
           ${position ? `<div class="live-cue-song">${esc(position.name)}</div>` : ''}
           <div class="live-cue-title">${esc(cue.title)}</div>
-          <div class="live-cue-message">${esc(cue.message)}</div>
+          ${cue.message ? `<div class="live-cue-message">${esc(cue.message)}</div>` : ''}
+          ${cue.resetShow ? '<div class="live-cue-reset-badge">↺ Show-Reset</div>' : ''}
         </div>
         ${isNext ? '<div class="live-cue-countdown" data-next-countdown></div>' : '<div></div>'}
       </div>`;
@@ -1687,7 +1706,7 @@ function renderCueTable(show) {
     <tr>
       <td>${i + 1}</td>
       <td><input class="inline-edit inline-edit-tc" value="${esc(c.tc)}" inputmode="numeric" aria-label="Timecode von ${esc(c.title)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','tc',this.value)" /></td>
-      <td><div class="inline-title-wrap"><input class="inline-color" type="color" value="${esc(c.color)}" aria-label="Farbe von ${esc(c.title)}" onchange="updateCueField('${c.id}','color',this.value)" /><input class="inline-edit inline-edit-title" value="${esc(c.title)}" aria-label="Titel von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','title',this.value)" /></div></td>
+      <td><div class="inline-title-wrap"><input class="inline-color" type="color" value="${esc(c.color)}" aria-label="Farbe von ${esc(c.title)}" onchange="updateCueField('${c.id}','color',this.value)" /><input class="inline-edit inline-edit-title" value="${esc(c.title)}" aria-label="Titel von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','title',this.value)" />${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;cursor:default">↺</span>' : ''}</div></td>
       <td><input class="inline-edit" value="${esc(c.message)}" aria-label="Nachricht von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','message',this.value)" /></td>
       <td class="actions">
         <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deleteCue('${c.id}')">✕</button>
@@ -1712,17 +1731,19 @@ async function openCueModal(cueId) {
     if (!cue) return;
     document.getElementById('modal-title').textContent = 'Cue bearbeiten';
     document.getElementById('f-cue-id').value    = cue.id;
-    document.getElementById('f-tc').value        = cue.tc;
-    document.getElementById('f-title').value     = cue.title;
-    document.getElementById('f-message').value   = cue.message;
-    document.getElementById('f-color').value     = cue.color;
+    document.getElementById('f-tc').value              = cue.tc;
+    document.getElementById('f-title').value           = cue.title;
+    document.getElementById('f-message').value         = cue.message;
+    document.getElementById('f-color').value           = cue.color;
+    document.getElementById('f-reset-show').checked   = !!cue.resetShow;
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
-    document.getElementById('f-cue-id').value    = '';
-    document.getElementById('f-tc').value        = '';
-    document.getElementById('f-title').value     = '';
-    document.getElementById('f-message').value   = '';
-    document.getElementById('f-color').value     = '#f59e0b';
+    document.getElementById('f-cue-id').value          = '';
+    document.getElementById('f-tc').value              = '';
+    document.getElementById('f-title').value           = '';
+    document.getElementById('f-message').value         = '';
+    document.getElementById('f-color').value           = '#f59e0b';
+    document.getElementById('f-reset-show').checked   = false;
   }
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
@@ -1739,6 +1760,7 @@ async function saveCue() {
     title:        document.getElementById('f-title').value.trim(),
     message:      document.getElementById('f-message').value.trim(),
     color:        document.getElementById('f-color').value,
+    resetShow:    document.getElementById('f-reset-show').checked,
   };
   if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
 

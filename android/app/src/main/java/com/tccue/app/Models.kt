@@ -9,7 +9,8 @@ data class CueModel(
     val tc: String,
     val title: String,
     val message: String = "",
-    val color: String = "#10b981"
+    val color: String = "#10b981",
+    val resetShow: Boolean = false
 ) {
     val composeColor: Color
         get() = parseHexColor(color) ?: Color(0xFF10B981)

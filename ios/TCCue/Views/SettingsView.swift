@@ -3,14 +3,10 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var client: TCWSClient
 
-    @State private var serverURL: String = UserDefaults.standard.string(forKey: "serverURL") ?? ""
-    @State private var role: String = UserDefaults.standard.string(forKey: "role") ?? "all"
+    @State private var serverURL: String = TCWSClient.defaultServerURL
     @State private var pingResult: String? = nil
     @State private var pinging = false
     @StateObject private var discovery = BonjourDiscovery()
-
-    private let roles = ["all", "buehne", "licht", "ton", "regie"]
-    private let roleLabels = ["all": "Alle", "buehne": "Bühne", "licht": "Licht", "ton": "Ton", "regie": "Regie"]
 
     var body: some View {
         NavigationStack {
@@ -22,7 +18,6 @@ struct SettingsView: View {
                         ForEach(discovery.servers) { server in
                             Button {
                                 serverURL = server.url
-                                saveAndConnect()
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -56,12 +51,6 @@ struct SettingsView: View {
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
                             .foregroundStyle(.secondary)
-                    }
-
-                    Picker("Rolle", selection: $role) {
-                        ForEach(roles, id: \.self) { r in
-                            Text(roleLabels[r] ?? r).tag(r)
-                        }
                     }
                 } header: {
                     Text("Verbindung")
@@ -111,9 +100,15 @@ struct SettingsView: View {
                         Text(client.serverURL.isEmpty ? "–" : client.serverURL)
                             .foregroundStyle(.secondary)
                     }
-                    LabeledContent("Rolle") {
-                        Text(roleLabels[client.role] ?? client.role)
-                            .foregroundStyle(.secondary)
+                    LabeledContent("Timecode") {
+                        Text(client.currentTc)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(client.connectionState == .connected ? .green : .secondary)
+                    }
+                    if let error = client.lastError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
                     }
                 } header: {
                     Text("Status")
@@ -130,6 +125,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .onAppear { discovery.start() }
             .onDisappear { discovery.stop() }
+            .onChange(of: serverURL) { _, _ in pingResult = nil }
         }
     }
 
@@ -152,52 +148,62 @@ struct SettingsView: View {
     private func pingServer() {
         pinging = true
         pingResult = nil
-        var base = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !base.hasPrefix("http") { base = "http://" + base }
-        guard let url = URL(string: base + "/api/health") else {
+        guard let url = healthURL else {
             pingResult = "✗ Ungültige URL"
             pinging = false
             return
         }
         var request = URLRequest(url: url, timeoutInterval: 5)
         request.timeoutInterval = 5
-        URLSession.shared.dataTask(with: request) { data, resp, err in
+        URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 pinging = false
-                if let err {
-                    pingResult = "✗ \(err.localizedDescription)"
-                } else if let data, let json = try? JSONDecoder().decode([String: Bool].self, from: data), json["ok"] == true {
-                    pingResult = "✓ Server erreichbar"
-                } else {
-                    pingResult = "✗ Unerwartete Antwort"
+                if let error {
+                    pingResult = "✗ Nicht erreichbar: \(error.localizedDescription)"
+                    return
                 }
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200...299).contains(httpResponse.statusCode),
+                      let data,
+                      let health = try? JSONDecoder().decode(HealthResponse.self, from: data),
+                      health.ok
+                else {
+                    pingResult = "✗ Kein TC-Cue-Server unter dieser Adresse"
+                    return
+                }
+                let state = health.state == "running" ? "Timecode läuft" : "Timecode gestoppt"
+                pingResult = "✓ Server erreichbar · \(state) · \(health.tc)"
             }
         }.resume()
     }
 
+    private var healthURL: URL? {
+        var address = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        address = address.replacingOccurrences(of: "ws://", with: "http://")
+        address = address.replacingOccurrences(of: "wss://", with: "https://")
+        if !address.hasPrefix("http://") && !address.hasPrefix("https://") {
+            address = "http://" + address
+        }
+        guard var components = URLComponents(string: address) else { return nil }
+        components.path = "/api/health"
+        components.query = nil
+        components.fragment = nil
+        return components.url
+    }
+
     private func saveAndConnect() {
         UserDefaults.standard.set(serverURL, forKey: "serverURL")
-        UserDefaults.standard.set(role, forKey: "role")
+        pingServer()
         Task { @MainActor in
             client.onCueFire = { [weak client] cue, next in
-                HapticManager.fireCue(alertType: cue.alertType)
+                HapticManager.alarm()
                 WatchBridge.shared.send(cue: cue, nextCue: next, event: "fire")
                 LiveActivityManager.shared.update(
                     cue: cue, nextCue: next,
-                    currentTc: client?.currentTc ?? "--:--:--:--",
-                    isWarning: false, warningSeconds: 0
+                    currentTc: client?.currentTc ?? "--:--:--:--"
                 )
             }
-            client.onCueWarning = { [weak client] cue, sec in
-                HapticManager.warnCue()
-                WatchBridge.shared.send(cue: cue, nextCue: nil, event: "warning", secondsUntil: sec)
-                LiveActivityManager.shared.update(
-                    cue: client?.currentCue, nextCue: cue,
-                    currentTc: client?.currentTc ?? "--:--:--:--",
-                    isWarning: true, warningSeconds: sec
-                )
-            }
-            client.connect(serverURL: serverURL, role: role)
+            client.connect(serverURL: serverURL)
         }
     }
 }
@@ -246,4 +252,11 @@ struct NetworkHintView: View {
     struct NetworkResponse: Codable {
         let urls: [String]
     }
+}
+
+private struct HealthResponse: Codable {
+    let ok: Bool
+    let tc: String
+    let state: String
+    let fps: Double
 }

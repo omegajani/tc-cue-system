@@ -6,7 +6,7 @@ final class LiveActivityManager {
     static let shared = LiveActivityManager()
     private var activity: Activity<TCCueActivityAttributes>?
 
-    func start(role: String) {
+    func start() {
         let info = ActivityAuthorizationInfo()
         print("[LiveActivity] areActivitiesEnabled=\(info.areActivitiesEnabled) frequentPushesEnabled=\(info.frequentPushesEnabled)")
         guard info.areActivitiesEnabled else {
@@ -19,16 +19,13 @@ final class LiveActivityManager {
             currentCueTitle: "Verbunden",
             currentCueColor: "#888888",
             currentCueTc: "--:--:--:--",
-            alertType: "info",
             nextCueTitle: nil,
-            nextCueTc: nil,
-            isWarning: false,
-            warningSecondsUntil: 0
+            nextCueTc: nil
         )
         let content = ActivityContent(state: state, staleDate: nil)
         do {
             activity = try Activity.request(
-                attributes: TCCueActivityAttributes(role: role),
+                attributes: TCCueActivityAttributes(),
                 content: content,
                 pushType: nil
             )
@@ -45,19 +42,14 @@ final class LiveActivityManager {
         }
     }
 
-    func update(cue: CueModel?, nextCue: CueModel?, currentTc: String, isWarning: Bool, warningSeconds: Int) {
+    func update(cue: CueModel?, nextCue: CueModel?, currentTc: String) {
         guard let activity else { return }
-        // When no cue is active (TC stopped or restarted), suppress any lingering alert
-        let effectiveIsWarning = cue != nil && isWarning
         let state = TCCueActivityAttributes.ContentState(
             currentCueTitle: cue?.title ?? "Kein Cue",
             currentCueColor: cue?.color ?? "#888888",
             currentCueTc: currentTc,
-            alertType: cue?.alertType ?? "info",
             nextCueTitle: nextCue?.title,
-            nextCueTc: nextCue?.tc,
-            isWarning: effectiveIsWarning,
-            warningSecondsUntil: effectiveIsWarning ? warningSeconds : 0
+            nextCueTc: nextCue?.tc
         )
         Task {
             await activity.update(ActivityContent(state: state, staleDate: nil))

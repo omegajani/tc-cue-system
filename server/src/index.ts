@@ -9,11 +9,8 @@ import { initWS, broadcast } from "./wsbroker.js";
 import { simulator } from "./tc/simulator.js";
 import { cueEngine } from "./engine/cueEngine.js";
 import { setFPS, getFPS, parseTc } from "./tc/tcUtils.js";
-import { getShow, getCuelist } from "./engine/store.js";
 import showsRouter from "./api/shows.js";
-import cuelistsRouter from "./api/cuelists.js";
 import simulatorRouter from "./api/simulator.js";
-import audioRouter, { ensureAudioDir } from "./api/audio.js";
 import importExportRouter from "./api/importExport.js";
 import midiRouter from "./api/midi.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
@@ -28,16 +25,9 @@ app.use(express.json());
 const WEB_UI = path.join(process.cwd(), "..", "web-ui");
 app.use(express.static(WEB_UI));
 
-// Serve uploaded audio files
-const AUDIO_DIR = path.join(process.cwd(), "audio");
-ensureAudioDir();
-app.use("/audio", express.static(AUDIO_DIR));
-
 // API routes
 app.use("/api/shows", showsRouter);
-app.use("/api/cuelists", cuelistsRouter);
 app.use("/api/simulator", simulatorRouter);
-app.use("/api/audio", audioRouter);
 app.use("/api/io", importExportRouter);
 app.use("/api/midi", midiRouter);
 
@@ -55,7 +45,7 @@ function ingestTc(tc: string, source: string) {
   lastBrowserTc = tc;
   lastBrowserFrames = nowFrames;
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 }
 
 // Browser LTC relay: browser decodes LTC, POSTs TC here → cue engine → broadcast
@@ -108,54 +98,47 @@ const server = http.createServer(app);
 initWS(server);
 
 // Wire TC events → CueEngine → WebSocket broadcast
+let lastSimulatorFrames = -1;
 simulator.on("stop", () => {
   cueEngine.reset();
+  lastSimulatorFrames = -1;
   lastBrowserTc = "";
   lastBrowserFrames = -1;
-  broadcast({ type: "TC_UPDATE", tc: "00:00:00:00", previousCue: null, currentCue: null, nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc: "00:00:00:00", previousCue: null, currentCue: null, nextCue: cueEngine.getNextCue(), currentPosition: null });
 });
 
 simulator.on("tc", (tc: string) => {
+  const nowFrames = parseTc(tc).totalFrames;
+  if (lastSimulatorFrames >= 0 && nowFrames < lastSimulatorFrames) cueEngine.reset();
+  lastSimulatorFrames = nowFrames;
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 // Wire rtpMIDI → cueEngine
 rtpMidiInput.on("tc", (tc: string) => {
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 // Wire OSC → cueEngine
 oscTcInput.on("tc", (tc: string) => {
   cueEngine.processTc(tc);
-  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue() });
+  broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
 cueEngine.on("cueFire", (event) => {
   console.log(`[Engine] CUE FIRE: ${event.cue.title} @ ${event.tc}`);
-  broadcast(event, event.cue.targetRoles);
+  broadcast(event);
 });
 
-cueEngine.on("cueWarning", (event) => {
-  console.log(`[Engine] CUE WARNING: ${event.cue.title} in ${event.secondsUntil}s`);
-  broadcast(event, event.cue.targetRoles);
-});
-
-// Auto-load active cuelist on startup
 import { getShows } from "./engine/store.js";
 
-function loadActiveCuelist() {
-  const shows = getShows();
-  for (const show of shows) {
-    if (show.activeCuelistId) {
-      const list = getCuelist(show.activeCuelistId);
-      if (list) {
-        cueEngine.loadCuelist(list);
-        console.log(`[Startup] Auto-loaded cuelist "${list.name}" for show "${show.name}"`);
-        return;
-      }
-    }
+function loadInitialShow() {
+  const show = getShows()[0];
+  if (show) {
+    cueEngine.loadShow(show);
+    console.log(`[Startup] Auto-loaded show "${show.name}"`);
   }
 }
 
@@ -163,7 +146,7 @@ server.listen(PORT, () => {
   console.log(`\n🎭 TC Cue Server running on http://localhost:${PORT}`);
   console.log(`   WebSocket: ws://localhost:${PORT}`);
   console.log(`   Web UI:    http://localhost:${PORT}\n`);
-  loadActiveCuelist();
+  loadInitialShow();
 
   // Advertise via Bonjour so iOS can discover without typing IP
   // Include IPv4 in TXT record so iOS can read it without NWConnection resolution

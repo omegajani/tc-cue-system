@@ -5,7 +5,6 @@ struct LiveView: View {
     @State private var elapsedSec: Int = 0
     @State private var firedAt: Date?
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    @State private var pulse = false
     @State private var flashOpacity: Double = 0
     @State private var flashColor: Color = .white
     @State private var panelScale: CGFloat = 1.0
@@ -13,12 +12,6 @@ struct LiveView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-
-            // ── Cue-Flash Overlay ────────────────────────────────────────
-            flashColor
-                .ignoresSafeArea()
-                .opacity(flashOpacity)
-                .allowsHitTesting(false)
 
             VStack(spacing: 0) {
                 // ── Status Bar ───────────────────────────────────────────
@@ -31,37 +24,16 @@ struct LiveView: View {
 
                 Divider().background(Color.white.opacity(0.1))
 
-                // ── Previous Cue Strip ───────────────────────────────────
-                previousCueStrip
+                currentPositionStrip
 
-                // ── Main Cue Panel ───────────────────────────────────────
-                Group {
-                    if let cue = client.currentCue {
-                        activeCuePanel(cue)
-                            .id(cue.id)
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal:   .move(edge: .leading).combined(with: .opacity)
-                            ))
-                    } else {
-                        noCuePanel
-                            .transition(.opacity)
-                    }
-                }
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: client.currentCue?.id)
-                .scaleEffect(panelScale)
+                cuePickerList
+                    .animation(.easeInOut(duration: 0.25), value: client.currentCue?.id)
 
                 Spacer()
-
-                // ── Next Cue Strip ───────────────────────────────────────
-                nextCueStrip
             }
         }
         .onReceive(timer) { _ in
             if let t = firedAt { elapsedSec = Int(Date().timeIntervalSince(t)) }
-        }
-        .onChange(of: client.currentCue?.id) {
-            triggerCueAnimation()
         }
     }
 
@@ -72,49 +44,101 @@ struct LiveView: View {
         elapsedSec = 0
 
         let cue = client.currentCue
-        let isUrgent = cue?.alertType == "urgent"
-
         // Flash: kurz in Cue-Farbe aufleuchten
         flashColor = cue.map { Color(hex: $0.color) ?? .white } ?? .white
-        flashOpacity = isUrgent ? 0.45 : 0.25
-        withAnimation(.easeOut(duration: isUrgent ? 0.9 : 0.55)) {
+        flashOpacity = 0.3
+        withAnimation(.easeOut(duration: 0.65)) {
             flashOpacity = 0
         }
 
         // Scale-Punch auf das Panel
         withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
-            panelScale = isUrgent ? 1.04 : 1.02
+            panelScale = 1.02
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 panelScale = 1.0
             }
         }
-
-        // Pulse für urgente Cues
-        if isUrgent {
-            withAnimation(.easeInOut(duration: 0.15)) { pulse = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.easeInOut(duration: 0.15)) { pulse = false }
-            }
-        }
     }
 
     // MARK: - Subviews
 
+    private var cuePickerList: some View {
+        VStack(spacing: 7) {
+            if client.previousCue == nil && client.currentCue == nil && client.nextCue == nil {
+                noCuePanel
+            } else {
+                if let cue = client.previousCue {
+                    cuePickerRow(cue, state: "Letzter Cue", isCurrent: false, opacity: 0.35)
+                }
+                if let cue = client.currentCue {
+                    cuePickerRow(cue, state: "Aktueller Cue", isCurrent: true, opacity: 1)
+                }
+                if let cue = client.nextCue {
+                    cuePickerRow(cue, state: "Als Nächstes", isCurrent: false, opacity: 0.75)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+    }
+
+    private func cuePickerRow(_ cue: CueModel, state: String, isCurrent: Bool, opacity: Double) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text(cue.tc)
+                .font(.system(size: isCurrent ? 13 : 11, weight: isCurrent ? .bold : .regular, design: .monospaced))
+                .foregroundStyle(isCurrent ? cue.swiftUIColor : .secondary)
+                .frame(width: 92, alignment: .leading)
+
+            Circle()
+                .fill(cue.swiftUIColor)
+                .frame(width: isCurrent ? 11 : 7, height: isCurrent ? 11 : 7)
+
+            VStack(alignment: .leading, spacing: isCurrent ? 6 : 2) {
+                Text(cue.title)
+                    .font(.custom("Lexend", size: isCurrent ? 27 : 13).weight(.bold))
+                    .foregroundStyle(isCurrent ? .white : .secondary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.65)
+
+                if isCurrent && !cue.message.isEmpty {
+                    Text(cue.message)
+                        .font(.custom("Lexend", size: 13))
+                        .foregroundStyle(.white.opacity(0.72))
+                        .lineLimit(2)
+                }
+
+                Text(state.uppercased())
+                    .font(.custom("Lexend", size: 8).weight(.semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(isCurrent ? cue.swiftUIColor : .secondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, isCurrent ? 16 : 12)
+        .padding(.vertical, isCurrent ? 18 : 9)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isCurrent ? Color.white.opacity(0.05) : Color.white.opacity(0.015))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isCurrent ? cue.swiftUIColor : Color.clear, lineWidth: 1)
+                )
+        )
+        .opacity(opacity)
+    }
+
     @ViewBuilder
     private func activeCuePanel(_ cue: CueModel) -> some View {
         let cueColor = cue.swiftUIColor
-        let isUrgent = cue.alertType == "urgent"
-
         VStack(alignment: .leading, spacing: 12) {
             // Header row
             HStack(spacing: 8) {
                 Circle()
                     .fill(cueColor)
                     .frame(width: 10, height: 10)
-                    .scaleEffect(isUrgent && pulse ? 1.4 : 1)
-                    .animation(isUrgent ? .easeInOut(duration: 0.6).repeatForever() : .default, value: pulse)
 
                 Text("AKTUELLER CUE")
                     .font(.system(size: 10, weight: .semibold))
@@ -122,8 +146,6 @@ struct LiveView: View {
                     .foregroundStyle(.secondary)
 
                 Spacer()
-
-                alertBadge(cue.alertType)
 
                 Text("+\(elapsedSec)s")
                     .font(.system(size: 11, design: .monospaced))
@@ -154,22 +176,6 @@ struct LiveView: View {
                     .foregroundStyle(.white.opacity(0.85))
                     .padding(.top, 2)
             }
-
-            // Roles
-            if !cue.targetRoles.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(cue.targetRoles, id: \.self) { role in
-                        Text(role.uppercased())
-                            .font(.system(size: 10, weight: .medium))
-                            .tracking(1)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(cueColor.opacity(0.2))
-                            .foregroundStyle(cueColor)
-                            .clipShape(Capsule())
-                    }
-                }
-            }
         }
         .padding(20)
         .background(
@@ -177,7 +183,7 @@ struct LiveView: View {
                 .fill(Color.white.opacity(0.04))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(cueColor, lineWidth: isUrgent ? 2 : 1)
+                        .stroke(cueColor, lineWidth: 1)
                 )
         )
         .padding(.horizontal, 16)
@@ -229,17 +235,75 @@ struct LiveView: View {
         }
     }
 
+    private var currentPositionStrip: some View {
+        Group {
+            if let position = client.currentPosition {
+                let progress = positionProgress(position)
+                let remaining = positionRemaining(position)
+
+                VStack(spacing: 7) {
+                    HStack(spacing: 10) {
+                        Text("POSITION")
+                            .font(.custom("Lexend", size: 9).weight(.semibold))
+                            .tracking(1.5)
+                            .foregroundStyle(.blue)
+
+                        Text(position.name)
+                            .font(.custom("Lexend", size: 15).weight(.bold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        Text("noch \(formatRemaining(remaining))")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.blue)
+                    }
+
+                    ProgressView(value: progress)
+                        .tint(.blue)
+                        .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.blue.opacity(0.1))
+            }
+        }
+    }
+
+    private func tcSeconds(_ tc: String) -> Double {
+        let parts = tc.split(separator: ":").compactMap { Double($0) }
+        guard parts.count == 4 else { return 0 }
+        return parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / 25
+    }
+
+    private func positionProgress(_ position: ShowPositionModel) -> Double {
+        let start = tcSeconds(position.startTc)
+        let duration = max(0.001, tcSeconds(position.endTc) - start)
+        return min(1, max(0, (tcSeconds(client.currentTc) - start) / duration))
+    }
+
+    private func positionRemaining(_ position: ShowPositionModel) -> Int {
+        max(0, Int(ceil(tcSeconds(position.endTc) - tcSeconds(client.currentTc))))
+    }
+
+    private func formatRemaining(_ seconds: Int) -> String {
+        guard seconds >= 60 else { return "\(seconds)s" }
+        let minutes = seconds / 60
+        let rest = seconds % 60
+        return rest == 0 ? "\(minutes)m" : "\(minutes)m \(rest)s"
+    }
+
     private var nextCueStrip: some View {
         Group {
             if let next = client.nextCue {
-                let isWarning = client.warningCue?.id == next.id
-                let warnColor: Color = isWarning ? .orange : .clear
+                let secondsUntil = max(0, Int(ceil(tcSeconds(next.tc) - tcSeconds(client.currentTc))))
 
                 HStack(spacing: 10) {
                     Text("NÄCHSTER CUE")
                         .font(.system(size: 9, weight: .semibold))
                         .tracking(1.5)
-                        .foregroundStyle(isWarning ? .orange : .secondary)
+                        .foregroundStyle(.secondary)
 
                     Circle()
                         .fill(next.swiftUIColor)
@@ -247,26 +311,19 @@ struct LiveView: View {
 
                     Text(next.title)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isWarning ? .white : .white.opacity(0.9))
+                        .foregroundStyle(.white.opacity(0.9))
                         .lineLimit(1)
 
                     Spacer()
 
-                    if isWarning {
-                        Text("in \(client.warningSecondsUntil)s")
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.orange)
-                            .contentTransition(.numericText())
-                    }
-
-                    Text(next.tc)
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(isWarning ? .orange.opacity(0.7) : .secondary)
+                    Text("in \(formatRemaining(secondsUntil))")
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(next.swiftUIColor)
+                        .contentTransition(.numericText())
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(isWarning ? warnColor.opacity(0.08) : Color.white.opacity(0.04))
-                .animation(.easeInOut(duration: 0.2), value: isWarning)
+                .background(Color.white.opacity(0.04))
             } else {
                 HStack {
                     Text("Kein weiterer Cue")
@@ -306,22 +363,5 @@ struct LiveView: View {
         case .connecting: return "Verbinde…"
         case .disconnected: return "Getrennt"
         }
-    }
-
-    @ViewBuilder
-    private func alertBadge(_ type: String) -> some View {
-        let (label, color): (String, Color) = switch type {
-            case "urgent":  ("DRINGEND", .red)
-            case "warning": ("WARNUNG",  .orange)
-            default:        ("INFO",     .blue)
-        }
-        Text(label)
-            .font(.system(size: 9, weight: .bold))
-            .tracking(1)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.2))
-            .foregroundStyle(color)
-            .clipShape(Capsule())
     }
 }

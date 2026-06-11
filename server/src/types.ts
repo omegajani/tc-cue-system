@@ -1,37 +1,46 @@
-export type AlertType = "info" | "warning" | "urgent";
 export type TCSource = "ltc" | "mtc" | "rtpmidi" | "osc" | "simulator";
 export type FallbackMode = "stop" | "continue" | "loop";
-export type AudioType = "none" | "beep" | "double-beep" | "chime" | "buzz" | "file";
 
 export interface Cue {
   id: string;
   tc: string; // HH:MM:SS:FF
   title: string;
   message: string;
-  targetRoles: string[];
-  alertType: AlertType;
-  warnOffsetSec: number;
   color: string;
-  audioType: AudioType;
-  audioFile?: string;  // filename in /api/audio/ – only used when audioType === "file"
-  audioVolume: number; // 0.0 – 1.0
 }
 
-export interface Cuelist {
+export interface ShowPosition {
   id: string;
-  showId: string;
   name: string;
-  cues: Cue[];
-  updatedAt: string;
-  isActive: boolean;
+  startTc: string;
+  endTc: string;
+}
+
+export type ChecklistTrigger =
+  | { type: "before-first-cue" }
+  | { type: "after-cue"; cueId: string }
+  | { type: "time"; time: string };
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  checked: boolean;
+}
+
+export interface Checklist {
+  id: string;
+  title: string;
+  trigger: ChecklistTrigger;
+  items: ChecklistItem[];
 }
 
 export interface Show {
   id: string;
   name: string;
   date: string;
-  activeCuelistId: string | null;
-  roles: string[];
+  cues: Cue[];
+  positions: ShowPosition[];
+  checklists?: Checklist[];
   tcSource: TCSource;
   fallbackMode: FallbackMode;
   fps?: 24 | 25 | 29.97 | 30;
@@ -46,6 +55,7 @@ export interface TCUpdateEvent {
   previousCue: Cue | null;
   currentCue: Cue | null;
   nextCue: Cue | null;
+  currentPosition: ShowPosition | null;
 }
 
 export interface CueFireEvent {
@@ -56,14 +66,7 @@ export interface CueFireEvent {
   nextCue: Cue | null;
 }
 
-export interface CueWarningEvent {
-  type: "CUE_WARNING";
-  tc: string;
-  cue: Cue;
-  secondsUntil: number;
-}
-
-export type WSEvent = TCUpdateEvent | CueFireEvent | CueWarningEvent;
+export type WSEvent = TCUpdateEvent | CueFireEvent;
 
 // TC as frame count for arithmetic
 export interface TCFrames {

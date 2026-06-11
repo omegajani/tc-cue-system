@@ -8,7 +8,6 @@ struct WatchCue: Equatable {
     let title: String
     let message: String
     let color: String
-    let alertType: String
     let tc: String
 
     var swiftUIColor: Color { Color(hex: color) ?? .green }
@@ -27,8 +26,7 @@ final class WatchState: NSObject, ObservableObject, WCSessionDelegate {
 
     @Published var currentCue: WatchCue?
     @Published var nextCue: WatchNextCue?
-    @Published var lastEvent: String = ""  // "fire" | "warning"
-    @Published var secondsUntilWarning: Int = 0
+    @Published var lastEvent: String = ""
 
     private override init() { super.init() }
 
@@ -60,7 +58,6 @@ final class WatchState: NSObject, ObservableObject, WCSessionDelegate {
             title:     msg["cueTitle"]  as? String ?? "",
             message:   msg["cueMessage"] as? String ?? "",
             color:     msg["cueColor"]  as? String ?? "#10b981",
-            alertType: msg["alertType"] as? String ?? "info",
             tc:        msg["cueTc"]     as? String ?? ""
         )
 
@@ -76,17 +73,11 @@ final class WatchState: NSObject, ObservableObject, WCSessionDelegate {
         currentCue = cue
         nextCue = next
         lastEvent = event
-        secondsUntilWarning = msg["secondsUntil"] as? Int ?? 0
 
         // Haptics
         switch event {
         case "fire":
             WKInterfaceDevice.current().play(.notification)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                WKInterfaceDevice.current().play(.click)
-            }
-        case "warning":
-            WKInterfaceDevice.current().play(.directionUp)
         default: break
         }
     }

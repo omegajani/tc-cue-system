@@ -2022,8 +2022,6 @@ function parseCSVLine(line) {
 // ════════════════════════════════════════════════════════════════════════════
 // ALARM
 // ════════════════════════════════════════════════════════════════════════════
-let _audioCtx = null;
-
 function triggerScreenFlash(force = false) {
   if (!force && !window._screenFlash) return;
   const flash = document.getElementById('screen-flash');
@@ -2039,20 +2037,23 @@ async function playAlarm(force = false) {
   if (volume === 0 && !force) return false;
   const peakVolume = Math.max(0.0001, volume * 0.8);
   try {
-    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume();
-    if (_audioCtx.state !== 'running') return false;
-    const gain = _audioCtx.createGain();
-    gain.connect(_audioCtx.destination);
-    const osc = _audioCtx.createOscillator();
+    // Frischen Context pro Ton — kein persistenter suspended Context, den
+    // der Browser bei beliebigen Klicks auto-resumed (würde Transient/Piep erzeugen)
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') await ctx.resume();
+    if (ctx.state !== 'running') { ctx.close(); return false; }
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    const osc = ctx.createOscillator();
     osc.frequency.value = 880;
     osc.connect(gain);
-    const now = _audioCtx.currentTime;
+    const now = ctx.currentTime;
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.linearRampToValueAtTime(peakVolume, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
     osc.start(now);
     osc.stop(now + 0.23);
+    osc.onended = () => ctx.close();
     return true;
   } catch (e) {
     console.warn('[Alarm] Playback failed:', e);

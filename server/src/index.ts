@@ -159,6 +159,8 @@ server.listen(PORT, () => {
     return "localhost";
   })();
   const bonjour = new Bonjour();
-  bonjour.publish({ name: "TC Cue System", type: "tccue", protocol: "tcp", port: PORT, txt: { ip: localIP, port: String(PORT) } });
+  // IP im Instanznamen: Bei Netzwerkwechsel entsteht ein neuer Name, sodass
+  // Clients nicht den (bis zu 75 min) gecachten TXT-Record der alten IP sehen
+  bonjour.publish({ name: `TC Cue System (${localIP})`, type: "tccue", protocol: "tcp", port: PORT, txt: { ip: localIP, port: String(PORT) } });
   console.log(`[Bonjour] Advertising _tccue._tcp on port ${PORT} (ip=${localIP})`);
 });

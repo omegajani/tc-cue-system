@@ -1,13 +1,14 @@
 package com.tccue.app
 
+import android.Manifest
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sensors
@@ -29,8 +30,12 @@ import com.tccue.app.ui.SettingsScreen
 import com.tccue.app.ui.TCCueTheme
 
 class MainActivity : ComponentActivity() {
-    private val client = TCWSClient()
+    private val client: TCWSClient get() = (application as TCApp).client
+    private val nowBar: NowBarManager get() = (application as TCApp).nowBar
     private lateinit var discovery: NsdDiscovery
+
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +44,17 @@ class MainActivity : ComponentActivity() {
         // Display soll während der Show anbleiben
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        client.onCueFire = { _, _ -> vibrateAlarm() }
+        if (Build.VERSION.SDK_INT >= 33) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        // Sobald verbunden: Foreground Service übernimmt Notification,
+        // Vibration und hält die Verbindung bei Display-aus am Leben
+        lifecycleScope.launch {
+            client.connectionState.collect { state ->
+                if (state == ConnectionState.CONNECTED) CueService.start(this@MainActivity)
+            }
+        }
 
         // Letzte Server-URL automatisch wiederverbinden
         val prefs = getSharedPreferences("tccue", MODE_PRIVATE)
@@ -78,6 +93,7 @@ class MainActivity : ComponentActivity() {
                             client = client,
                             discovery = discovery,
                             prefs = prefs,
+                            nowBar = nowBar,
                             modifier = Modifier.padding(padding)
                         )
                     }
@@ -95,21 +111,15 @@ class MainActivity : ComponentActivity() {
         indicatorColor = Color(0xFF10B981).copy(alpha = 0.15f)
     )
 
+    override fun onResume() {
+        super.onResume()
+        // Nicht aufs Backoff warten, wenn der Nutzer die App öffnet
+        client.reconnectNow()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         discovery.stop()
-        client.disconnect()
-    }
-
-    private fun vibrateAlarm() {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-        // Kräftiges Muster, damit es am Gürtel/in der Tasche spürbar ist
-        val pattern = longArrayOf(0, 300, 120, 300, 120, 500)
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        // Verbindung läuft im CueService weiter — hier nichts trennen
     }
 }

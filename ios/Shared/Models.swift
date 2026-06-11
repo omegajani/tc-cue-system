@@ -22,6 +22,37 @@ struct ShowPositionModel: Codable, Identifiable, Equatable {
     let endTc: String
 }
 
+struct ChecklistTriggerModel: Codable, Equatable {
+    let type: String
+    let cueId: String?
+    let time: String?
+}
+
+struct ChecklistItemModel: Codable, Identifiable, Equatable {
+    let id: String
+    let text: String
+    var checked: Bool
+}
+
+struct ChecklistModel: Codable, Identifiable, Equatable {
+    let id: String
+    let title: String
+    let trigger: ChecklistTriggerModel
+    var items: [ChecklistItemModel]
+
+    var isComplete: Bool {
+        !items.isEmpty && items.allSatisfy(\.checked)
+    }
+}
+
+struct ShowModel: Codable, Identifiable, Equatable {
+    let id: String
+    let name: String
+    let cues: [CueModel]
+    let positions: [ShowPositionModel]
+    var checklists: [ChecklistModel]?
+}
+
 struct TCUpdateEvent: Codable {
     let type: String
     let tc: String

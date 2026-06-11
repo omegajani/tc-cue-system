@@ -15,7 +15,6 @@
 		26748493431D0445AEC983C1 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F7AAD94E2EF014AC12FEAF /* LiveActivityManager.swift */; };
 		2891A0995F274D5574667946 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B4EEF496EB001B78164EAB /* Models.swift */; };
 		2A19A7D55F1D5AE08BAAFBD2 /* LiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AE3DCAD0EEAC41DD0F0D4B /* LiveView.swift */; };
-		2DEEEA5AA18788B957221F44 /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */; };
 		35D8D49C0136A60F212BA8DF /* TCCueActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1F97F12A2505A0FB5A805F /* TCCueActivityAttributes.swift */; };
 		479612DF3A908E5AC00DE900 /* TCCueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E846F0C000197BB109062F1D /* TCCueWidget.swift */; };
 		4FF2FE313F31D7BEC84B1127 /* TCCueWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D7BBBE030D2C089526A64A3 /* TCCueWatchApp.swift */; };
@@ -28,7 +27,6 @@
 		7F327732757E9D2239F1907D /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
 		83D030B5D9A275B8758E33FD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059C323D90EABF898B46DBD5 /* ContentView.swift */; };
 		8DBFDC3868B97393B9C14FA4 /* Lexend-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */; };
-		8E64E2EE62D05340BC4F28FC /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */; };
 		8F972476598A56DAACF75C37 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1316225AE829BB31A00E8FC8 /* BonjourDiscovery.swift */; };
 		90C7287B67D6E604EF19989A /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9EA79D4446C1BA07F81945 /* LiveActivityManager.swift */; };
 		9A0FCA8F230D8B8CEB17E387 /* TCWSClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4ED59FD8D7A00A5037D618 /* TCWSClient.swift */; };
@@ -45,7 +43,6 @@
 		E74853AA981BA64586DECABA /* WatchState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550077F1B2E0C7BF02B57B37 /* WatchState.swift */; };
 		E784414E25E00A66B5EA9FA9 /* TCCueApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94732B700E30F94021C41265 /* TCCueApp.swift */; };
 		F072AEC71E3BE0F8506DCA2E /* TCCueWidgetLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4756FC736280A0409FDDEA /* TCCueWidgetLiveActivity.swift */; };
-		F82844CE68AD4FD8038ABC0E /* TCCueWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B954E2D1DA122786C3804340 /* TCCueWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,13 +52,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3C1E41D9F8F6E0B41F1171D0;
 			remoteInfo = TCCueWidgetExtension;
-		};
-		F310982B0159D60F3956D540 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 9B9D7BF6120DAE39FA42ECD6 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = FDF9F223839E694DF5D9EF0C;
-			remoteInfo = TCCueWatch;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -77,17 +67,6 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CD3368929434CFB46D0ED3F8 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				F82844CE68AD4FD8038ABC0E /* TCCueWatch.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -95,7 +74,6 @@
 		0D7BBBE030D2C089526A64A3 /* TCCueWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCueWatchApp.swift; sourceTree = "<group>"; };
 		10F8C508F98F7023BBEF6A17 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1316225AE829BB31A00E8FC8 /* BonjourDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonjourDiscovery.swift; sourceTree = "<group>"; };
-		13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
 		39F7AAD94E2EF014AC12FEAF /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		40FE64C57D3219E94BA3E562 /* Lexend-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lexend-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		45AE3DCAD0EEAC41DD0F0D4B /* LiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveView.swift; sourceTree = "<group>"; };
@@ -140,7 +118,6 @@
 				E2E532DE8869E2770AC0E4CD /* Info.plist */,
 				39F7AAD94E2EF014AC12FEAF /* LiveActivityManager.swift */,
 				94732B700E30F94021C41265 /* TCCueApp.swift */,
-				13CE4DE60975C7DAB3CB9F07 /* WatchBridge.swift */,
 				3DEC447DEEFBE2EF87293C26 /* Views */,
 			);
 			name = TCCue;
@@ -261,12 +238,10 @@
 				24643333E73916903903CA5C /* Sources */,
 				862D7D8D547415345BAFD72E /* Resources */,
 				8858963B094A6899DB33C296 /* Embed Foundation Extensions */,
-				CD3368929434CFB46D0ED3F8 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				35EBC88498FF9B99DE4AF5AE /* PBXTargetDependency */,
 				4F4F12343E6F5BB7687AE523 /* PBXTargetDependency */,
 			);
 			name = TCCue;
@@ -321,6 +296,18 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					3C1E41D9F8F6E0B41F1171D0 = {
+						DevelopmentTeam = TJ5SF7QM2B;
+					};
+					B342F790EE806CCC452C1533 = {
+						DevelopmentTeam = TJ5SF7QM2B;
+					};
+					DE5B167FCAA2453E7D55E293 = {
+						DevelopmentTeam = TJ5SF7QM2B;
+					};
+					FDF9F223839E694DF5D9EF0C = {
+						DevelopmentTeam = TJ5SF7QM2B;
+					};
 				};
 			};
 			buildConfigurationList = C5916FCFE7370403445DD129 /* Build configuration list for PBXProject "TCCue" */;
@@ -409,7 +396,6 @@
 				D2FF321B5709EBA1373F350E /* TCCueActivityAttributes.swift in Sources */,
 				E784414E25E00A66B5EA9FA9 /* TCCueApp.swift in Sources */,
 				B3319816E4B1E2203689856A /* TCWSClient.swift in Sources */,
-				8E64E2EE62D05340BC4F28FC /* WatchBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -438,18 +424,12 @@
 				752CECC63340665C3A3ED533 /* SettingsView.swift in Sources */,
 				CFD3178B182A1D381D4C397A /* TCCueApp.swift in Sources */,
 				9A0FCA8F230D8B8CEB17E387 /* TCWSClient.swift in Sources */,
-				2DEEEA5AA18788B957221F44 /* WatchBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		35EBC88498FF9B99DE4AF5AE /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = FDF9F223839E694DF5D9EF0C /* TCCueWatch */;
-			targetProxy = F310982B0159D60F3956D540 /* PBXContainerItemProxy */;
-		};
 		4F4F12343E6F5BB7687AE523 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3C1E41D9F8F6E0B41F1171D0 /* TCCueWidgetExtension */;
@@ -566,6 +546,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -663,6 +644,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = TJ5SF7QM2B;
 				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

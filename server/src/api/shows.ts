@@ -35,7 +35,17 @@ router.put("/:id", (req, res) => {
   if (!existing) return res.status(404).json({ error: "Show not found" });
   const updated: Show = { ...existing, ...req.body, id: req.params.id };
   upsertShow(updated);
-  cueEngine.loadShow(updated);
+  // Use updateShowData to preserve fired-cue state.
+  // Only do a full loadShow (which resets firedCueIds) if cues or positions
+  // have structurally changed – detected by a change in serialised content.
+  const cuesChanged =
+    JSON.stringify(existing.cues) !== JSON.stringify(updated.cues) ||
+    JSON.stringify(existing.positions) !== JSON.stringify(updated.positions);
+  if (cuesChanged) {
+    cueEngine.loadShow(updated);
+  } else {
+    cueEngine.updateShowData(updated);
+  }
   res.json(updated);
 });
 

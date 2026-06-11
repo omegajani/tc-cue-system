@@ -10,6 +10,13 @@ router.get("/", (_req, res) => {
   res.json(getShows());
 });
 
+// Currently loaded show with cues pre-sorted by TC (must come before /:id)
+router.get("/active", (_req, res) => {
+  const show = cueEngine.getShow();
+  if (!show) return res.status(404).json({ error: "No show loaded" });
+  res.json({ ...show, cues: cueEngine.getSortedCues() });
+});
+
 router.get("/:id", (req, res) => {
   const show = getShow(req.params.id);
   if (!show) return res.status(404).json({ error: "Show not found" });

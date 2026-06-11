@@ -44,7 +44,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import com.tccue.app.ConnectionState
+import com.tccue.app.NowBarManager
 import com.tccue.app.NsdDiscovery
 import com.tccue.app.TCWSClient
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +72,7 @@ fun SettingsScreen(
     client: TCWSClient,
     discovery: NsdDiscovery,
     prefs: SharedPreferences,
+    nowBar: NowBarManager? = null,
     modifier: Modifier = Modifier
 ) {
     val connectionState by client.connectionState.collectAsState()
@@ -210,6 +214,46 @@ fun SettingsScreen(
                     color = if (result.startsWith("✓")) AccentGreen else AccentRed,
                     fontSize = 12.sp
                 )
+            }
+        }
+
+        // ── Now Bar (Live-Updates) ──
+        if (nowBar != null && NowBarManager.supported) {
+            val context = LocalContext.current
+            var canPromote by remember { mutableStateOf(nowBar.canPromote()) }
+            // Beim Zurückkommen aus den Systemeinstellungen neu prüfen
+            LaunchedEffect(Unit) {
+                while (true) {
+                    canPromote = nowBar.canPromote()
+                    kotlinx.coroutines.delay(2000)
+                }
+            }
+            SectionCard(title = "NOW BAR") {
+                if (canPromote) {
+                    Text(
+                        "✓ Live-Updates erlaubt — der aktuelle Cue erscheint in der Now Bar.",
+                        color = AccentGreen,
+                        fontSize = 13.sp
+                    )
+                } else {
+                    Text(
+                        "Damit der aktuelle Cue in der Now Bar erscheint, müssen Live-Updates für TC Cue erlaubt sein.",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 13.sp
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                context.startActivity(nowBar.promotionSettingsIntent())
+                            } catch (e: Exception) {
+                                // Settings-Seite existiert auf diesem Gerät nicht
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Live-Updates erlauben", color = Color.White)
+                    }
+                }
             }
         }
 

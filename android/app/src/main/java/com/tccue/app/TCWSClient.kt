@@ -51,6 +51,9 @@ class TCWSClient {
     private val _lastError = MutableStateFlow<String?>(null)
     val lastError: StateFlow<String?> = _lastError
 
+    private val _show = MutableStateFlow<ShowModel?>(null)
+    val show: StateFlow<ShowModel?> = _show
+
     var onCueFire: ((CueModel, CueModel?) -> Unit)? = null
 
     var serverURL: String = ""
@@ -69,6 +72,17 @@ class TCWSClient {
         reconnectDelayMs = 2000L
         shouldReconnect = true
         reconnectJob?.cancel()
+        openSocket()
+    }
+
+    /** Ob nach einem Verbindungsabriss automatisch reconnectet wird (false nach manuellem Trennen). */
+    val autoReconnect: Boolean get() = shouldReconnect
+
+    /** Sofortiger Reconnect-Versuch, z.B. wenn die App in den Vordergrund kommt. */
+    fun reconnectNow() {
+        if (!shouldReconnect || _connectionState.value != ConnectionState.DISCONNECTED) return
+        reconnectJob?.cancel()
+        reconnectDelayMs = 2000L
         openSocket()
     }
 
@@ -105,6 +119,7 @@ class TCWSClient {
                     _connectionState.value = ConnectionState.CONNECTED
                     _lastError.value = null
                     reconnectDelayMs = 2000L
+                    refreshShow()
                 }
             }
 
@@ -120,6 +135,28 @@ class TCWSClient {
                 scope.launch { handleDisconnect(null) }
             }
         })
+    }
+
+    /** Lädt die aktive Show mit allen Cues vom REST-Endpoint. */
+    fun refreshShow() {
+        val host = serverURL
+            .removePrefix("http://").removePrefix("https://")
+            .removePrefix("ws://").removePrefix("wss://")
+            .trim()
+        if (host.isEmpty()) return
+        scope.launch(Dispatchers.IO) {
+            try {
+                val request = Request.Builder().url("http://$host/api/shows/active").build()
+                http.newCall(request).execute().use { response ->
+                    val body = response.body?.string() ?: return@use
+                    if (!response.isSuccessful) return@use
+                    val show = json.decodeFromString<ShowModel>(body)
+                    _show.value = show
+                }
+            } catch (e: Exception) {
+                // Show-Liste ist optional — Live-Daten kommen weiter über WS
+            }
+        }
     }
 
     private fun handleMessage(text: String) {
@@ -156,6 +193,8 @@ class TCWSClient {
                     _currentCue.value = ev.cue
                     _nextCue.value = ev.nextCue
                     onCueFire?.invoke(ev.cue, ev.nextCue)
+                    // Unbekannter Cue → Show wurde geändert, Liste nachladen
+                    if (_show.value?.cues?.none { it.id == ev.cue.id } == true) refreshShow()
                 }
             }
         }

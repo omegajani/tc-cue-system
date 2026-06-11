@@ -5,11 +5,20 @@ Show-Position und Letzter/Aktueller/Nächster Cue live vom TC-Cue-Server.
 
 ## Features
 
-- **Live-Ansicht** – Timecode, Position mit Fortschrittsbalken, Cue-Liste
-  (letzter / aktueller / nächster Cue) im gleichen Look wie die iOS-App
-- **Vibrationsalarm** bei jedem Cue-Fire
-- **mDNS-Discovery** – findet Server im Netzwerk automatisch (`_tccue._tcp`)
-- **Auto-Reconnect** mit exponentiellem Backoff
+- **Live-Ansicht** – laufender Timecode im Header, Position mit
+  Fortschrittsbalken, komplette scrollbare Cue-Liste; bei Cue-Wechsel
+  scrollt die Liste automatisch zum aktuellen Cue; Cue gedrückt halten
+  zeigt Details (loslassen blendet sie wieder aus)
+- **Vibrationsalarm** bei jedem Cue-Fire — auch bei ausgeschaltetem
+  Display (Foreground Service hält die Verbindung)
+- **Live-Update-Notification** (Android 16+): aktueller Cue mit
+  Show-Fortschritt als promoted Notification; auf Samsung One UI 8.5
+  als Now-Bar-/Live-Karte
+- **mDNS-Discovery** – findet Server im Netzwerk automatisch
+  (`_tccue._tcp`); Kandidaten werden per `/api/health` verifiziert,
+  damit veraltete mDNS-Caches keine falschen IPs anzeigen
+- **Auto-Reconnect** mit exponentiellem Backoff; sofortiger Reconnect,
+  wenn die App in den Vordergrund kommt
 - Display bleibt während der Show an
 
 ## Build

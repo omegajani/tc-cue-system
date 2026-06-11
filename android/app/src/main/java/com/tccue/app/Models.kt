@@ -24,6 +24,14 @@ data class ShowPositionModel(
 )
 
 @Serializable
+data class ShowModel(
+    val id: String,
+    val name: String,
+    val cues: List<CueModel> = emptyList(),
+    val positions: List<ShowPositionModel> = emptyList()
+)
+
+@Serializable
 data class TCUpdateEvent(
     val type: String,
     val tc: String,

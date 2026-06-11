@@ -33,6 +33,14 @@ export class CueEngine extends EventEmitter {
     console.log(`[CueEngine] Loaded show "${show.name}" with ${this.sortedCues.length} cues`);
   }
 
+  getShow(): Show | null {
+    return this.show;
+  }
+
+  getSortedCues(): Cue[] {
+    return this.sortedCues;
+  }
+
   private hasValidTc(tc: string, label: string): boolean {
     try {
       parseTc(tc);

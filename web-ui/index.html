@@ -11,16 +11,35 @@
       --accent: #f59e0b; --green: #10b981; --red: #ef4444; --blue: #3b82f6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; min-height: 100vh; }
+    body {
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+      min-height:100vh;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    #screen-flash { position:fixed; inset:0; z-index:1000; pointer-events:none; opacity:0; background:#fff; }
+    #screen-flash.fire { animation:screen-flash .55s ease-out; }
+    @keyframes screen-flash {
+      0% { opacity:0; }
+      12% { opacity:.88; }
+      32% { opacity:.28; }
+      100% { opacity:0; }
+    }
+    #tc-display, #live-tc, .live-cue-tc, .live-cue-countdown, #ltc-decoded-tc, #mtc-decoded-tc {
+      font-family: 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums lining-nums;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      font-kerning: none;
+    }
 
     /* ── STATUS BAR ─────────────────────────────────────────────────── */
     #status-bar { display: flex; align-items: center; gap: 12px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
-    #tc-display { font-size: 17px; font-weight: bold; letter-spacing: 2px; color: var(--accent); margin-left: auto; }
-    #role-selector-bar { display: flex; align-items: center; gap: 6px; }
-    #role-selector-bar label { color: var(--muted); }
-    #role-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 2px 8px; border-radius: 4px; font-family: inherit; font-size: 12px; }
+    #tc-display { display:inline-block; width:13ch; flex:0 0 13ch; font-size:17px; font-weight:bold; letter-spacing:2px; color:var(--accent); margin-left:auto; text-align:right; white-space:nowrap; }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
     nav { display: flex; border-bottom: 1px solid var(--border); }
@@ -33,53 +52,97 @@
     .view.active { display: block; }
 
     /* ── LIVE VIEW ──────────────────────────────────────────────────── */
-    #live-tc { font-size: clamp(36px, 7vw, 72px); font-weight: bold; letter-spacing: 4px; color: var(--accent); text-align: center; margin: 20px 0 4px; }
-    #live-show-name { text-align: center; font-size: 11px; color: var(--muted); margin-bottom: 16px; letter-spacing: 1px; text-transform: uppercase; }
+    #view-live { padding-top: 0; overflow: hidden; }
+    #live-picker-shell { max-width:880px; height:calc(100vh - 94px); min-height:520px; margin:0 auto; display:flex; flex-direction:column; overflow:hidden; }
+    #live-glass-header { flex:0 0 auto; padding:12px 0 10px; }
+    #live-show-name { text-align: center; font-size: 10px; color: rgba(255,255,255,.42); margin-bottom: 7px; letter-spacing: 1.4px; text-transform: uppercase; }
+    #live-position { position: relative; min-height: 146px; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035)); box-shadow: 0 22px 55px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.26), inset 0 -1px rgba(255,255,255,.05); backdrop-filter: blur(34px) saturate(155%); -webkit-backdrop-filter: blur(34px) saturate(155%); }
+    #live-position:after { content:''; position:absolute; inset:1px 14% auto; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent); }
+    #live-position-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(110deg, rgba(37,99,235,.46), rgba(96,165,250,.14)); border-right: 1px solid rgba(191,219,254,.48); box-shadow: 12px 0 38px rgba(59,130,246,.2); transition: width .12s linear; }
+    #live-position-content { position:relative; z-index:1; min-height:146px; padding:17px 23px 21px; }
+    #live-position-header { position:relative; z-index:2; display:flex; align-items:baseline; gap:10px; }
+    #live-position-name { flex: 1; font-size: clamp(15px, 2.5vw, 20px); font-weight: 650; color:rgba(255,255,255,.9); }
+    #live-position-remaining { color: rgba(219,234,254,.8); font-size: 10px; white-space: nowrap; }
+    #live-tc { position:absolute; inset:50% 0 auto; width:100%; transform:translateY(-50%); font-size:clamp(42px,7vw,72px); font-weight:680; letter-spacing:4px; color:#fff; line-height:1; text-align:center; white-space:nowrap; text-shadow:0 3px 22px rgba(0,0,0,.42); }
+    #live-position:not(.show) #live-position-fill { width: 0 !important; }
+    #live-position:not(.show) #live-position-name, #live-position:not(.show) #live-position-remaining { color: var(--muted); }
+    #ltc-decoded-tc, #mtc-decoded-tc { display:inline-block; min-width:13ch; text-align:right; white-space:nowrap; }
 
-    /* Active alert panel */
-    #active-alert { border-radius: 10px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--border); transition: border-color .3s; }
-    #active-alert.has-cue { border-width: 2px; }
-    .alert-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
-    .alert-panel-body { padding: 16px 20px 18px; }
-    .alert-type-badge { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 3px; }
-    .alert-type-badge.info    { background: rgba(59,130,246,.2);  color: #93c5fd; }
-    .alert-type-badge.warning { background: rgba(245,158,11,.2);  color: #fcd34d; }
-    .alert-type-badge.urgent  { background: rgba(239,68,68,.2);   color: #fca5a5; }
-    .alert-elapsed { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .alert-title { font-size: clamp(20px, 4vw, 36px); font-weight: bold; line-height: 1.15; margin-bottom: 6px; }
-    .alert-message { font-size: 15px; color: #bbb; margin-bottom: 10px; }
-    .alert-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .alert-tc-badge { font-size: 11px; letter-spacing: 1px; color: var(--muted); background: var(--surface2); padding: 3px 8px; border-radius: 3px; }
-    .role-tag { background: var(--border); border-radius: 3px; padding: 2px 8px; font-size: 11px; }
-
-    /* Urgent pulse */
-    @keyframes urgent-pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
-    #active-alert.urgent { animation: urgent-pulse 1.2s ease-in-out infinite; }
-
-    /* Next cue strip */
-    #next-cue-strip { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-radius: 7px; border: 1px dashed var(--border); font-size: 13px; margin-bottom: 12px; }
-    #next-cue-strip.hidden { display: none; }
-    .next-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); flex-shrink: 0; }
-    .next-title { flex: 1; font-weight: bold; }
-    .next-tc { font-size: 11px; color: var(--muted); flex-shrink: 0; letter-spacing: 1px; }
-    .next-countdown { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: var(--surface2); color: var(--accent); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-
-    #warn-banner { display: none; background: rgba(245,158,11,.13); border: 1px solid var(--accent); border-radius: 6px; padding: 9px 16px; margin-bottom: 10px; text-align: center; font-size: 13px; }
-    #warn-banner.show { display: block; }
+    /* Cue picker list */
+    #live-cue-list { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.22) transparent; padding:0 2px; scroll-padding-top:0; display:flex; flex-direction:column; gap:9px; perspective:900px; scroll-snap-type:y mandatory; }
+    #live-cue-list:after { content:''; flex:0 0 calc(100% - 104px); }
+    #live-cue-list::-webkit-scrollbar { width:6px; }
+    #live-cue-list::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.2); }
+    .live-cue-row { position:relative; display:grid; grid-template-columns:96px 10px minmax(0,1fr) auto; gap:13px; align-items:center; min-height:58px; width:100%; padding:11px 16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); box-shadow:inset 0 1px rgba(255,255,255,.11),0 8px 24px rgba(0,0,0,.12); color:var(--muted); cursor:pointer; overflow:hidden; transform-origin:center top; scroll-snap-align:start; scroll-snap-stop:always; transition:transform .25s,opacity .25s,min-height .25s,padding .25s,border-color .25s,background .25s,box-shadow .25s; backdrop-filter:blur(20px) saturate(135%); -webkit-backdrop-filter:blur(20px) saturate(135%); }
+    .live-cue-row:hover { min-height:82px; opacity:1; transform:scale(1); border-color:rgba(255,255,255,.22); background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.04)); }
+    .live-cue-row.past { opacity:.28; transform:scale(.93); }
+    .live-cue-row.depth-3 { opacity:.38; transform:scale(.94); }
+    .live-cue-row.depth-2 { opacity:.52; transform:scale(.96); }
+    .live-cue-row.depth-1 { opacity:.72; transform:scale(.98); }
+    .live-cue-row.current { min-height:104px; padding:18px 19px; opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 68%,white 12%); background:linear-gradient(145deg,color-mix(in srgb,var(--cue-color) 20%,rgba(255,255,255,.1)),rgba(255,255,255,.035)); box-shadow:inset 0 1px rgba(255,255,255,.28),0 15px 40px color-mix(in srgb,var(--cue-color) 18%,transparent); }
+    .live-cue-row.next { opacity:.9; }
+    .live-cue-row.picker-selected { opacity:1; transform:scale(1); border-color:color-mix(in srgb,var(--cue-color) 52%,white 12%); box-shadow:inset 0 1px rgba(255,255,255,.22),0 12px 32px color-mix(in srgb,var(--cue-color) 14%,transparent); }
+    .live-cue-time { width:96px; min-width:96px; overflow:hidden; }
+    .live-cue-song { margin-bottom:4px; overflow:hidden; color:rgba(255,255,255,.42); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+    .live-cue-tc { width:96px; font-size:10px; letter-spacing:1px; white-space:nowrap; }
+    .live-cue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cue-color); }
+    .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
+    .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
+    .live-cue-row:hover .live-cue-message { display:block; }
+    .live-cue-row.preview-visible { min-height:82px; }
+    .live-cue-row.preview-visible .live-cue-message { display:block; }
+    .live-cue-row.current .live-cue-tc { color: var(--cue-color); font-size: 12px; font-weight: bold; }
+    .live-cue-row.current .live-cue-song { color:color-mix(in srgb,var(--cue-color) 70%,white 30%); font-size:10px; }
+    .live-cue-row.current .live-cue-dot { width: 11px; height: 11px; }
+    .live-cue-row.current .live-cue-title { color:#fff; font-size:clamp(20px,3.2vw,30px); line-height:1.1; }
+    .live-cue-row.current .live-cue-message { display:block; }
+    .live-cue-state { min-height:11px; margin-bottom:3px; overflow:hidden; color:var(--cue-color); font-size:8px; font-weight:700; letter-spacing:.75px; line-height:1.1; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+    .live-cue-countdown { min-width:52px; color:var(--cue-color); font-size:11px; font-weight:700; text-align:right; white-space:nowrap; }
+    .live-checklist-queue { --cue-color:#2dd4bf; border-color:rgba(45,212,191,.16); background:linear-gradient(145deg,rgba(45,212,191,.075),rgba(255,255,255,.02)); }
+    .live-checklist-queue.done { --cue-color:#10b981; border-color:rgba(16,185,129,.2); background:linear-gradient(145deg,rgba(16,185,129,.09),rgba(255,255,255,.02)); }
+    .live-checklist-queue:hover { min-height:82px; border-color:rgba(45,212,191,.3); background:linear-gradient(145deg,rgba(45,212,191,.11),rgba(255,255,255,.03)); }
+    .live-checklist-queue .live-cue-title { color:rgba(153,246,228,.78); }
+    .live-checklist-queue-trigger { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-transform:uppercase; }
+    .live-checklist-queue-count { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; white-space:nowrap; }
+    .live-checklist-queue-preview { display:none; margin-top:7px; color:rgba(255,255,255,.58); font-size:11px; line-height:1.4; }
+    .live-checklist-queue:hover .live-checklist-queue-preview { display:block; }
+    .live-checklist-queue-preview span { display:block; position:relative; padding-left:12px; }
+    .live-checklist-queue-preview span:before { content:'•'; position:absolute; left:0; color:rgba(94,234,212,.5); }
+    .live-checklist-queue.done .live-checklist-queue-preview span { color:rgba(255,255,255,.4); text-decoration:line-through; }
+    #live-checklists { display:none; flex:0 0 auto; margin-bottom:14px; gap:10px; }
+    #live-checklists.show { display:grid; }
+    .live-checklist { position:relative; overflow:hidden; border:1px solid rgba(45,212,191,.42); border-radius:22px; padding:16px; background:linear-gradient(135deg,rgba(13,148,136,.22),rgba(15,23,42,.72)); box-shadow:inset 0 1px rgba(255,255,255,.17),0 16px 38px rgba(0,0,0,.22); cursor:pointer; }
+    .live-checklist:before { content:''; position:absolute; width:180px; height:180px; right:-80px; top:-105px; border-radius:50%; background:rgba(45,212,191,.15); filter:blur(3px); pointer-events:none; }
+    .live-checklist-header { position:relative; display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
+    .live-checklist-heading { min-width:0; }
+    .live-checklist-kicker { margin-bottom:3px; color:#5eead4; font-size:9px; font-weight:750; letter-spacing:1.4px; text-transform:uppercase; }
+    .live-checklist-title { color:#fff; font-size:17px; font-weight:680; overflow-wrap:anywhere; }
+    .live-checklist-complete { border:1px solid rgba(94,234,212,.45); border-radius:99px; padding:7px 11px; background:rgba(15,118,110,.18); color:#99f6e4; font:600 10px inherit; cursor:pointer; white-space:nowrap; }
+    .live-checklist-complete:hover { background:rgba(15,118,110,.38); }
+    .live-checklist.done { padding:12px 16px; border-color:rgba(52,211,153,.3); background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(15,23,42,.55)); }
+    .live-checklist.done .live-checklist-header { margin-bottom:0; }
+    .live-checklist-done-state { display:flex; align-items:center; gap:7px; color:#6ee7b7; font-size:10px; font-weight:700; letter-spacing:.5px; white-space:nowrap; }
+    .live-checklist-done-state:before { content:'✓'; display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:rgba(16,185,129,.17); font-size:12px; }
+    .live-checklist-items { position:relative; display:grid; gap:7px; }
+    .live-checklist-item { display:flex; align-items:center; gap:10px; min-height:38px; padding:8px 10px; border:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(255,255,255,.045); color:rgba(255,255,255,.88); font-size:12px; cursor:pointer; transition:opacity .15s,background .15s; }
+    .live-checklist-item input { width:18px; height:18px; accent-color:#14b8a6; flex:0 0 auto; }
+    .live-checklist-item.checked { opacity:.45; background:rgba(255,255,255,.018); color:var(--muted); text-decoration:line-through; }
     #no-cue { text-align: center; color: var(--muted); padding: 40px; font-size: 13px; }
 
-    /* ── FLASH ──────────────────────────────────────────────────────── */
-    #flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; z-index: 200; display: flex; align-items: center; justify-content: center; }
-    #flash.show { opacity: 1; }
-    #flash-inner { background: rgba(0,0,0,.9); border-radius: 12px; padding: 30px 44px; text-align: center; border: 2px solid var(--accent); max-width: 580px; }
-    #flash-title { font-size: 30px; font-weight: bold; }
-    #flash-msg { margin-top: 8px; font-size: 17px; color: #ccc; }
-    #flash-roles { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-
     /* ── MODAL ──────────────────────────────────────────────────────── */
-    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
-    #modal-overlay.show { display: flex; }
+    #modal-overlay, #position-modal-overlay, #checklist-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
+    #modal-overlay.show, #position-modal-overlay.show, #checklist-modal-overlay.show { display: flex; }
     #modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+    #checklist-modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; width:580px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+    #checklist-modal h3 { margin-bottom:18px; color:var(--muted); font-size:14px; letter-spacing:1px; text-transform:uppercase; }
+    .checklist-item-editor { display:grid; gap:8px; }
+    .checklist-item-editor-row { display:grid; grid-template-columns:26px minmax(0,1fr) 30px; gap:8px; align-items:center; }
+    .checklist-item-editor-number { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:rgba(45,212,191,.12); color:#5eead4; font-size:10px; font-weight:700; }
+    .checklist-item-editor-row input { min-height:38px; border-radius:9px; }
+    .checklist-item-remove { width:30px; height:30px; border:0; border-radius:50%; background:transparent; color:var(--muted); cursor:pointer; font-size:17px; }
+    .checklist-item-remove:hover { background:rgba(239,68,68,.12); color:var(--red); }
+    .checklist-item-add { margin-top:9px; border:1px dashed rgba(45,212,191,.38); border-radius:9px; padding:9px 12px; background:rgba(45,212,191,.045); color:#5eead4; font:600 11px inherit; cursor:pointer; }
+    .checklist-item-add:hover { background:rgba(45,212,191,.1); }
     #modal h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 18px; }
     .form-row { margin-bottom: 13px; }
     .form-row label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
@@ -92,7 +155,61 @@
     .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
 
-    /* ── ADMIN ──────────────────────────────────────────────────────── */
+    /* ── EDIT / SETTINGS ────────────────────────────────────────────── */
+    .page-heading { max-width: 1180px; margin: 2px auto 24px; }
+    .page-heading h1 { font-size: 25px; letter-spacing: -.5px; margin-bottom: 5px; }
+    .page-heading p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .edit-layout, .settings-grid, .show-layout { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
+    .edit-layout { gap:18px; }
+    .edit-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; padding:18px 20px; border:1px solid rgba(245,158,11,.18); border-radius:16px; background:linear-gradient(135deg,rgba(245,158,11,.07),var(--surface)); }
+    .edit-overview-kicker { margin-bottom:4px; color:var(--accent); font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+    .edit-overview-name { font-size:18px; font-weight:680; }
+    .edit-overview-hint { margin-top:4px; color:var(--muted); font-size:10px; }
+    .edit-overview-counts { display:flex; gap:8px; }
+    .edit-overview-count { min-width:68px; padding:9px 10px; border:1px solid rgba(255,255,255,.06); border-radius:10px; background:rgba(255,255,255,.025); text-align:center; }
+    .edit-overview-count strong { display:block; font-size:17px; }
+    .edit-overview-count span { display:block; margin-top:2px; color:var(--muted); font-size:8px; letter-spacing:.5px; text-transform:uppercase; }
+    .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    .show-layout { grid-template-columns:minmax(280px,.72fr) minmax(420px,1.28fr); align-items:start; }
+    .show-main { display:grid; gap:16px; }
+    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin: 0; }
+    .edit-card .section-header { justify-content:space-between; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+    .edit-card .section-header h2 { color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.1px; text-transform:none; }
+    .edit-card-description { margin-top:4px; color:var(--muted); font-size:10px; line-height:1.45; }
+    .edit-section-title { min-width:0; }
+    .edit-section-toggle { display:flex; align-items:center; gap:10px; min-width:0; border:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+    .edit-section-chevron { display:grid; place-items:center; flex:0 0 auto; width:23px; height:23px; border:1px solid var(--border); border-radius:50%; color:var(--muted); font-size:11px; transition:transform .18s,color .18s,border-color .18s; }
+    .edit-card.collapsed .edit-section-chevron { transform:rotate(-90deg); }
+    .edit-section-toggle:hover .edit-section-chevron { border-color:var(--accent); color:var(--accent); }
+    .edit-card.collapsed .section-header { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+    .edit-card.collapsed .edit-section-body { display:none; }
+    .edit-tools { margin-bottom:14px; border:1px solid rgba(255,255,255,.06); border-radius:10px; background:rgba(255,255,255,.018); }
+    .edit-tools summary { padding:10px 12px; color:var(--muted); cursor:pointer; font-size:10px; font-weight:650; letter-spacing:.5px; text-transform:uppercase; user-select:none; }
+    .edit-tools-content { padding:0 12px 12px; }
+    .show-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; }
+    .show-card h2 { margin-bottom:4px; color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.15px; }
+    .show-card-description { margin-bottom:17px; color:var(--muted); font-size:11px; line-height:1.5; }
+    .show-library { position:sticky; top:20px; }
+    .show-card .admin-select { width:100%; min-height:40px; margin-bottom:12px; }
+    .show-card .form-row input, .show-card .form-row select { min-height:42px; border-radius:8px; }
+    .show-fields { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(160px,.65fr); gap:12px; }
+    .show-fields .show-field-wide { grid-column:1 / -1; }
+    .show-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+    .show-transfer-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .show-transfer-actions .btn { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:9px; }
+    .show-transfer-note { margin-top:12px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .show-save-note { display:flex; gap:9px; align-items:flex-start; margin-top:14px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
+    .show-save-note:before { content:'i'; display:grid; place-items:center; flex:0 0 auto; width:17px; height:17px; border-radius:50%; background:rgba(59,130,246,.14); color:#93c5fd; font-size:10px; font-weight:700; }
+    #show-active-state { display:inline-flex; align-items:center; gap:7px; min-height:26px; margin-top:14px; padding:5px 9px; border:1px solid var(--border); border-radius:99px; color:var(--muted); font-size:10px; }
+    #show-active-state:before { content:''; width:6px; height:6px; border-radius:50%; background:var(--muted); }
+    #show-active-state.active { border-color:rgba(16,185,129,.3); color:#6ee7b7; background:rgba(16,185,129,.06); }
+    #show-active-state.active:before { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,.6); }
+    .show-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+    .show-summary-item { padding:10px 8px; border:1px solid rgba(255,255,255,.05); border-radius:10px; background:rgba(255,255,255,.025); text-align:center; }
+    .show-summary-value { display:block; margin-bottom:3px; color:var(--text); font-size:18px; font-weight:680; }
+    .show-summary-label { display:block; color:var(--muted); font-size:8px; letter-spacing:.6px; text-transform:uppercase; }
+    .show-feedback { min-height:15px; margin-top:10px; font-size:10px; color:var(--green); }
+    .settings-wide { grid-column: 1 / -1; }
     .section { margin-bottom: 28px; }
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .section-header h2 { font-size: 13px; font-weight: normal; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0; flex-shrink: 0; }
@@ -105,12 +222,24 @@
     #sim-state { font-size: 11px; color: var(--muted); }
 
     /* Cue table */
-    .cue-table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: middle; }
-    th { background: var(--surface2); color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; white-space: nowrap; }
-    tr:hover td { background: rgba(255,255,255,.02); }
+    .cue-table-wrap { overflow-x:auto; border:1px solid rgba(255,255,255,.055); border-radius:11px; }
+    table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
+    th, td { border:0; border-bottom:1px solid rgba(255,255,255,.055); padding:7px 10px; text-align:left; vertical-align:middle; }
+    tr:last-child td { border-bottom:0; }
+    th { background:rgba(255,255,255,.025); color:var(--muted); font-weight:normal; text-transform:uppercase; font-size:9px; letter-spacing:.6px; white-space:nowrap; }
+    tr:hover td { background:rgba(255,255,255,.022); }
     td.actions { white-space: nowrap; }
+    .inline-edit { width:100%; min-width:90px; border:1px solid transparent; border-radius:6px; background:transparent; color:inherit; padding:6px 7px; font:inherit; transition:border-color .15s,background .15s; }
+    .inline-edit:hover { border-color:var(--border); background:rgba(255,255,255,.025); }
+    .inline-edit:focus { outline:none; border-color:var(--accent); background:var(--bg); }
+    .inline-edit-title { font-weight:650; }
+    .inline-edit-tc { font-family:'SFMono-Regular','SF Mono',Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; letter-spacing:1px; white-space:nowrap; }
+    .inline-color { width:30px; height:26px; margin-right:5px; padding:1px; border:1px solid var(--border); border-radius:6px; background:transparent; vertical-align:middle; cursor:pointer; }
+    .inline-title-wrap { display:flex; align-items:center; min-width:170px; }
+    .checklist-cards { display:grid; gap:10px; }
+    .checklist-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:14px 15px; border:1px solid rgba(45,212,191,.2); border-radius:12px; background:linear-gradient(135deg,rgba(45,212,191,.055),var(--surface2)); }
+    .checklist-card-title { margin-bottom:4px; font-size:13px; font-weight:650; }
+    .checklist-card-meta { color:var(--muted); font-size:10px; }
     .color-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 4px; }
     .badge { border-radius: 3px; padding: 2px 6px; font-size: 10px; }
     .badge-info { background: rgba(59,130,246,.2); color: #93c5fd; }
@@ -133,20 +262,7 @@
     .empty-hint { color: var(--muted); font-size: 12px; padding: 20px 0; }
     .csv-hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
 
-    /* ── SETTINGS PANEL ─────────────────────────────────────────────── */
-    #settings-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:400; }
-    #settings-backdrop.show { display:block; }
-    #settings-panel {
-      position:fixed; top:0; right:-420px; width:400px; max-width:95vw; height:100vh;
-      background:var(--surface); border-left:1px solid var(--border);
-      z-index:401; overflow-y:auto; transition:right .25s ease; padding:0;
-    }
-    #settings-panel.show { right:0; }
-    .sp-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
-    .sp-header h2 { font-size:14px; font-weight:normal; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0; }
-    .sp-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px 8px; }
-    .sp-close:hover { color:var(--text); }
-    .sp-section { padding:16px 20px; border-bottom:1px solid var(--border); }
+    /* ── SETTINGS ───────────────────────────────────────────────────── */
     .sp-section h3 { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 14px; }
     .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
     .sp-row:last-child { margin-bottom:0; }
@@ -168,58 +284,122 @@
     .url-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .url-item:last-child { margin-bottom:0; }
     .url-item code { flex:1; color:var(--accent); font-size:12px; }
-    /* Gear button in nav */
-    #btn-settings { margin-left:auto; }
+    @media (max-width: 760px) {
+      .view { padding: 16px 12px; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .show-layout { grid-template-columns:1fr; }
+      .show-library { position:static; }
+      .show-fields, .show-transfer-actions { grid-template-columns:1fr; }
+      .show-fields .show-field-wide { grid-column:auto; }
+      .edit-overview { grid-template-columns:1fr; }
+      .edit-overview-counts { display:grid; grid-template-columns:repeat(3,1fr); }
+      .settings-wide { grid-column: auto; }
+      #view-live { padding-top:0; }
+      #live-picker-shell { height:calc(100vh - 92px); min-height:460px; }
+      #live-position { border-radius:19px; }
+      #live-position-content { padding:14px 15px 18px; }
+      .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
+      .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
+    }
   </style>
 </head>
 <body>
+<div id="screen-flash" aria-hidden="true"></div>
 
 <!-- ── STATUS BAR ──────────────────────────────────────────────────────── -->
 <div id="status-bar">
   <span id="ws-dot"></span>
   <span id="ws-status">Verbinde...</span>
-  <div id="role-selector-bar">
-    <label for="role-select">Rolle:</label>
-    <select id="role-select" onchange="changeRole(this.value)">
-      <option value="all">Alle</option>
-    </select>
-  </div>
   <span id="tc-display">--:--:--:--</span>
 </div>
 
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <nav>
   <button class="active" data-view="live" onclick="showView('live',this)">Live</button>
-  <button data-view="admin" onclick="showView('admin',this)">Admin</button>
-  <button id="btn-settings" onclick="openSettings()" title="Einstellungen">⚙</button>
+  <button data-view="show" onclick="showView('show',this)">Show</button>
+  <button data-view="edit" onclick="showView('edit',this)">Edit</button>
+  <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
 </nav>
 
-<!-- ── SETTINGS BACKDROP ───────────────────────────────────────────────── -->
-<div id="settings-backdrop" onclick="closeSettings()"></div>
-
-<!-- ── SETTINGS PANEL ─────────────────────────────────────────────────── -->
-<div id="settings-panel">
-  <div class="sp-header">
-    <h2>Einstellungen</h2>
-    <button class="sp-close" onclick="closeSettings()">✕</button>
+<!-- ── SHOW VIEW ──────────────────────────────────────────────────────── -->
+<div id="view-show" class="view">
+  <div class="page-heading">
+    <h1>Show</h1>
+    <p>Shows verwalten, laden und ihre grundlegenden Eigenschaften bearbeiten.</p>
   </div>
+  <div class="show-layout">
+    <div class="show-card show-library">
+      <h2>Show auswählen</h2>
+      <p class="show-card-description">„Laden“ aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
+      <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
+        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
+      </div>
+      <div id="show-active-state"></div>
+      <div class="show-summary">
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-positions">0</span><span class="show-summary-label">Songs</span></div>
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-cues">0</span><span class="show-summary-label">Cues</span></div>
+        <div class="show-summary-item"><span class="show-summary-value" id="show-summary-checklists">0</span><span class="show-summary-label">Listen</span></div>
+      </div>
+    </div>
+
+    <div class="show-main">
+      <div class="show-card">
+        <h2>Basisdaten</h2>
+        <p class="show-card-description">Name, Aufführungsdatum und Verhalten beim Ausfall der Timecode-Quelle.</p>
+        <div class="show-fields">
+          <div class="form-row show-field-wide">
+            <label>Name der Show</label>
+            <input id="show-name-input" type="text" placeholder="Name der Show" />
+          </div>
+          <div class="form-row">
+            <label>Aufführungsdatum</label>
+            <input id="show-date-input" type="date" />
+          </div>
+          <div class="form-row">
+            <label>Bei Timecode-Ausfall</label>
+            <select id="s-fallback">
+              <option value="stop">Timecode stoppen</option>
+              <option value="continue">Weiterlaufen lassen</option>
+              <option value="loop">Als Schleife weiterlaufen</option>
+            </select>
+          </div>
+        </div>
+        <div class="show-actions">
+          <div id="show-save-feedback" class="show-feedback"></div>
+          <button class="btn btn-primary" onclick="saveSelectedShow()">Basisdaten speichern</button>
+        </div>
+        <div class="show-save-note">Songs, Cues und Aufgabenlisten werden auf der Edit-Seite automatisch gespeichert. Dieser Button speichert nur die Basisdaten oben.</div>
+      </div>
+
+      <div class="show-card">
+        <h2>Sicherung und Austausch</h2>
+        <p class="show-card-description">Optional: Show als Datei sichern oder auf ein anderes TC-Cue-System übertragen.</p>
+        <div class="show-transfer-actions">
+          <button class="btn" onclick="exportSelectedShow()" title="Show als JSON exportieren">Show exportieren ↓</button>
+          <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
+            Show importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+          </label>
+        </div>
+        <p class="show-transfer-note">Beim Import wird eine neue Show angelegt. Die aktuell geladene Show bleibt unverändert.</p>
+        <div id="import-feedback" class="show-feedback"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS VIEW ──────────────────────────────────────────────────── -->
+<div id="view-settings" class="view">
+  <div class="page-heading">
+    <h1>Einstellungen</h1>
+    <p>Technische Steuerung, Timecode-Quelle, Anzeige und Netzwerk.</p>
+  </div>
+  <div class="settings-grid">
 
   <!-- Anzeige -->
   <div class="sp-section">
     <h3>Live-Ansicht</h3>
-    <div class="sp-row">
-      <div class="sp-label">Flash-Dauer
-        <span class="sp-hint">Wie lange der Cue-Overlay sichtbar bleibt</span>
-      </div>
-      <span id="flash-dur-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
-      <input type="range" min="1000" max="8000" step="500" id="s-flash-dur" oninput="onSettingChange()" />
-    </div>
-    <div class="sp-row">
-      <div class="sp-label">Nächsten Cue anzeigen
-        <span class="sp-hint">Teaser für den folgenden Cue in der Live-Ansicht</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="s-show-next" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
-    </div>
     <div class="sp-row">
       <div class="sp-label">Frames anzeigen
         <span class="sp-hint">TC-Format: HH:MM:SS:FF statt HH:MM:SS</span>
@@ -234,30 +414,27 @@
         <option value="large">Groß</option>
       </select>
     </div>
-  </div>
-
-  <!-- Audio -->
-  <div class="sp-section">
-    <h3>Audio</h3>
     <div class="sp-row">
-      <div class="sp-label">Master-Lautstärke</div>
-      <span id="master-vol-val" style="font-size:11px;color:var(--muted);min-width:28px;text-align:right;"></span>
-      <input type="range" min="0" max="1" step="0.05" id="s-master-vol" oninput="onSettingChange()" />
+      <div class="sp-label">Vorschau für die nächsten Cues
+        <span class="sp-hint">Zeigt die Nachrichten der nächsten Cues dauerhaft an</span>
+      </div>
+      <select id="s-next-cue-previews" onchange="onSettingChange()">
+        <option value="0">Keine</option>
+        <option value="1">1 Cue</option>
+        <option value="2">2 Cues</option>
+        <option value="3">3 Cues</option>
+        <option value="4">4 Cues</option>
+        <option value="5">5 Cues</option>
+      </select>
     </div>
     <div class="sp-row">
-      <div class="sp-label">Vorwarnung-Sound
-        <span class="sp-hint">Leiser Beep vor jedem Cue</span>
+      <div class="sp-label">Bildschirmflash
+        <span class="sp-hint">Lässt den Bildschirm bei einem ausgelösten Cue kurz aufleuchten</span>
       </div>
-      <label class="toggle"><input type="checkbox" id="s-warn-sound" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+      <label class="toggle"><input type="checkbox" id="s-screen-flash" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
     <div class="sp-row">
-      <div class="sp-label">Sounds testen</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-small" onclick="playSynth('beep', masterVolume())">Beep</button>
-        <button class="btn btn-small" onclick="playSynth('double-beep', masterVolume())">2×</button>
-        <button class="btn btn-small" onclick="playSynth('chime', masterVolume())">Chime</button>
-        <button class="btn btn-small" onclick="playSynth('buzz', masterVolume())">Buzz</button>
-      </div>
+      <button class="btn btn-primary btn-small" onclick="triggerScreenFlash(true)">Flash testen</button>
     </div>
   </div>
 
@@ -283,24 +460,36 @@
     </div>
   </div>
 
-  <!-- Show-Einstellungen -->
+  <!-- Audio -->
   <div class="sp-section">
-    <h3>Show-Einstellungen</h3>
-    <div class="sp-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-      <div class="sp-label">Rollen
-        <span class="sp-hint">Eine Rolle pro Zeile oder kommagetrennt</span>
+    <h3>Audio</h3>
+    <div class="sp-row">
+      <div class="sp-label">Alarmton
+        <span class="sp-hint">Spielt bei jedem ausgelösten Cue denselben Alarmton</span>
       </div>
-      <textarea id="s-roles" rows="3" placeholder="buehne&#10;licht&#10;ton&#10;regie" onblur="saveShowSettings()"></textarea>
+      <label class="toggle"><input type="checkbox" id="s-alarm-enabled" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
     <div class="sp-row">
-      <div class="sp-label">Fallback-Modus
-        <span class="sp-hint">Was passiert wenn das TC-Signal aussetzt</span>
+      <div class="sp-label">Lautstärke
+        <span class="sp-hint" id="alarm-volume-value">80 %</span>
       </div>
-      <select id="s-fallback" onchange="saveShowSettings()">
-        <option value="stop">Stop</option>
-        <option value="continue">Weiterlaufen</option>
-        <option value="loop">Loop</option>
-      </select>
+      <input type="range" id="s-alarm-volume" min="0" max="100" step="5" oninput="onAlarmVolumeInput()" onchange="onSettingChange()" />
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary btn-small" onclick="testAlarm()">Alarm testen</button>
+      <span id="alarm-test-feedback" style="font-size:10px;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- Simulator -->
+  <div class="sp-section" id="simulator-section">
+    <h3>Simulator <span id="sim-state" style="margin-left:6px;"></span></h3>
+    <div class="sim-controls">
+      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
+      <button class="btn" onclick="simPause()">⏸ Pause</button>
+      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
+      <input type="text" id="seek-input" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
+      <button class="btn" onclick="simSeek()">Seek →</button>
     </div>
   </div>
 
@@ -428,39 +617,16 @@
     </div>
   </div>
 
-  <!-- Audio-Dateien -->
-  <div class="sp-section">
-    <h3>Audio-Dateien</h3>
-    <div class="sp-row" style="flex-wrap:wrap;gap:8px;">
-      <input type="file" id="audio-upload-file" accept=".mp3,.wav,.ogg,.m4a,.aac" style="font-size:11px;color:var(--muted);flex:1;min-width:0;" />
-      <button class="btn btn-small btn-accent" onclick="uploadAudioFile()">Hochladen</button>
-    </div>
-    <pre id="audio-upload-feedback" style="font-size:11px;color:var(--green);margin-top:4px;min-height:14px;"></pre>
-    <div id="audio-file-list" style="font-size:12px;color:var(--muted);margin-top:4px;">Lade…</div>
-  </div>
-
   <!-- Netzwerk -->
-  <div class="sp-section">
+  <div class="sp-section settings-wide">
     <h3>Netzwerk</h3>
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Server-URLs für Geräte im gleichen WLAN:</p>
     <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
-    <div style="margin-top:10px;">
-      <p style="font-size:11px;color:var(--muted);">Live-View mit Rollenfilter direkt aufrufen:</p>
-      <div id="network-role-urls" style="margin-top:6px;"></div>
-    </div>
   </div>
 
-  <div style="padding:16px 20px;">
+  <div class="settings-wide">
     <button class="btn btn-small" onclick="resetAllSettings()" style="color:var(--red);border-color:var(--red);">Einstellungen zurücksetzen</button>
   </div>
-</div>
-
-<!-- ── FLASH ───────────────────────────────────────────────────────────── -->
-<div id="flash">
-  <div id="flash-inner">
-    <div id="flash-title"></div>
-    <div id="flash-msg"></div>
-    <div id="flash-roles"></div>
   </div>
 </div>
 
@@ -472,7 +638,7 @@
     <div class="form-2col">
       <div class="form-row">
         <label>TC (HH:MM:SS:FF)</label>
-        <input id="f-tc" type="text" placeholder="00:01:23:12" />
+        <input id="f-tc" type="text" inputmode="numeric" placeholder="00:01:23:12" oninput="formatTimecodeInput(this)" />
       </div>
       <div class="form-row">
         <label>Farbe</label>
@@ -487,52 +653,7 @@
       <label>Nachricht</label>
       <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
     </div>
-    <div class="form-2col">
-      <div class="form-row">
-        <label>Alert-Typ</label>
-        <select id="f-alert">
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="urgent">Urgent</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Vorwarnung (Sekunden)</label>
-        <input id="f-warn" type="number" min="0" max="120" value="10" />
-      </div>
-    </div>
-    <div class="form-row">
-      <label>Zielrollen (kommagetrennt)</label>
-      <input id="f-roles" type="text" placeholder="buehne, licht, ton" />
-    </div>
-    <div class="form-2col">
-      <div class="form-row">
-        <label>Audio</label>
-        <select id="f-audio-type" onchange="onAudioTypeChange(this.value)">
-          <option value="none">Kein Sound</option>
-          <option value="beep">Beep</option>
-          <option value="double-beep">Double-Beep</option>
-          <option value="chime">Chime</option>
-          <option value="buzz">Buzz (Urgent)</option>
-          <option value="file">Datei…</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Lautstärke</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="f-audio-vol" type="range" min="0" max="1" step="0.05" value="0.8" style="flex:1;" />
-          <span id="f-audio-vol-val" style="font-size:11px;color:var(--muted);width:28px;">80%</span>
-        </div>
-      </div>
-    </div>
-    <div id="f-audio-file-row" class="form-row" style="display:none;">
-      <label>Audio-Datei</label>
-      <select id="f-audio-file" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;">
-        <option value="">– Laden… –</option>
-      </select>
-    </div>
     <div class="modal-actions">
-      <button class="btn btn-small" onclick="previewAudio()" title="Sound testen">▶ Test</button>
       <div style="flex:1"></div>
       <button class="btn" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveCue()">Speichern</button>
@@ -540,98 +661,193 @@
   </div>
 </div>
 
-<!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
-<div id="view-live" class="view active">
-  <div id="live-tc">--:--:--:--</div>
-  <div id="live-show-name">–</div>
-  <div id="warn-banner"></div>
-
-  <!-- Persistent active alert -->
-  <div id="active-alert">
-    <div id="no-cue">Warte auf Timecode…</div>
-  </div>
-
-  <!-- Next cue strip -->
-  <div id="next-cue-strip" class="hidden">
-    <span class="next-label">Nächster</span>
-    <span class="next-title" id="next-title">–</span>
-    <span class="next-tc" id="next-tc-val"></span>
-    <span class="next-countdown" id="next-countdown"></span>
+<!-- ── MODAL: Position bearbeiten ───────────────────────────────────────── -->
+<div id="position-modal-overlay" onclick="if(event.target===this)closePositionModal()">
+  <div id="modal">
+    <h3 id="position-modal-title">Position</h3>
+    <input type="hidden" id="f-position-id" />
+    <div class="form-row">
+      <label>Name / Song</label>
+      <input id="f-position-name" type="text" placeholder="Song 1 / Eröffnung" />
+    </div>
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Start-TC</label>
+        <input id="f-position-start" type="text" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
+      </div>
+      <div class="form-row">
+        <label>End-TC</label>
+        <input id="f-position-end" type="text" inputmode="numeric" placeholder="00:03:30:00" oninput="formatTimecodeInput(this)" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closePositionModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="savePosition()">Speichern</button>
+    </div>
   </div>
 </div>
 
-<!-- ── ADMIN VIEW ──────────────────────────────────────────────────────── -->
-<div id="view-admin" class="view">
+<!-- ── MODAL: Checklist bearbeiten ─────────────────────────────────────── -->
+<div id="checklist-modal-overlay" onclick="if(event.target===this)closeChecklistModal()">
+  <div id="checklist-modal">
+    <h3 id="checklist-modal-title">Checklist</h3>
+    <input type="hidden" id="f-checklist-id" />
+    <div class="form-row">
+      <label>Name</label>
+      <input id="f-checklist-title" type="text" placeholder="Vorbereitung Bühne" />
+    </div>
+    <div class="form-row">
+      <label>Einblenden</label>
+      <select id="f-checklist-trigger" onchange="updateChecklistTriggerFields()">
+        <option value="before-first-cue">Vor dem ersten Cue</option>
+        <option value="after-cue">Nach einem Cue</option>
+        <option value="time">Zu einer Uhrzeit</option>
+      </select>
+    </div>
+    <div class="form-row" id="checklist-trigger-cue-row" style="display:none;">
+      <label>Nach Cue</label>
+      <select id="f-checklist-cue"></select>
+    </div>
+    <div class="form-row" id="checklist-trigger-time-row" style="display:none;">
+      <label>Uhrzeit</label>
+      <input id="f-checklist-time" type="time" value="19:00" />
+    </div>
+    <div class="form-row">
+      <label>Listenpunkte</label>
+      <div id="f-checklist-items" class="checklist-item-editor"></div>
+      <button class="checklist-item-add" type="button" onclick="addChecklistItemField()">+ Listenpunkt hinzufügen</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeChecklistModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveChecklist()">Speichern</button>
+    </div>
+  </div>
+</div>
 
-  <!-- Shows -->
-  <div class="section">
-    <div class="section-header">
-      <h2>Show</h2>
-      <select class="admin-select" id="show-select" onchange="selectShow(this.value)"></select>
-      <div class="toolbar">
-        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
-        <button class="btn" onclick="exportCurrentShow()" title="Show als JSON exportieren">Exportieren ↓</button>
-        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
-          Importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
-        </label>
+<!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
+<div id="view-live" class="view active">
+  <div id="live-picker-shell">
+    <div id="live-glass-header">
+      <div id="live-show-name">–</div>
+      <div id="live-position">
+        <div id="live-position-fill"></div>
+        <div id="live-position-content">
+          <div id="live-position-header">
+            <div id="live-position-name">Keine Position aktiv</div>
+            <div id="live-position-remaining"></div>
+          </div>
+          <div id="live-tc">--:--:--:--</div>
+        </div>
       </div>
     </div>
-    <div id="import-feedback" style="font-size:11px;margin-top:6px;"></div>
+    <div id="live-checklists"></div>
+    <div id="live-cue-list" onscroll="onLivePickerScroll()" onmouseenter="onLivePickerEnter()" onmousemove="onLivePickerEnter()" onmouseleave="onLivePickerLeave()"><div id="no-cue">Warte auf Timecode…</div></div>
   </div>
+</div>
 
-  <hr class="divider" />
+<!-- ── EDIT VIEW ───────────────────────────────────────────────────────── -->
+<div id="view-edit" class="view">
+  <div class="page-heading">
+    <h1>Show bearbeiten</h1>
+    <p>Songs, Cues und Aufgabenlisten der geladenen Show direkt bearbeiten.</p>
+  </div>
+  <div class="edit-layout">
 
-  <!-- Simulator -->
-  <div class="section" id="simulator-section">
-    <div class="section-header"><h2>Simulator</h2><span id="sim-state"></span></div>
-    <div class="sim-controls">
-      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
-      <button class="btn" onclick="simPause()">⏸ Pause</button>
-      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
-      <input type="text" id="seek-input" placeholder="00:00:00:00" />
-      <button class="btn" onclick="simSeek()">Seek →</button>
+  <div class="edit-overview">
+    <div>
+      <div class="edit-overview-kicker">Geladene Show</div>
+      <div class="edit-overview-name" id="edit-show-name">Keine Show geladen</div>
+      <div class="edit-overview-hint">Änderungen in Tabellenfeldern werden beim Verlassen des Feldes gespeichert.</div>
+    </div>
+    <div class="edit-overview-counts">
+      <div class="edit-overview-count"><strong id="edit-count-positions">0</strong><span>Songs</span></div>
+      <div class="edit-overview-count"><strong id="edit-count-cues">0</strong><span>Cues</span></div>
+      <div class="edit-overview-count"><strong id="edit-count-checklists">0</strong><span>Listen</span></div>
     </div>
   </div>
 
-  <hr class="divider" />
-
-  <!-- Cuelisten -->
-  <div class="section">
+  <!-- Positions / Songs -->
+  <div class="section edit-card" data-edit-section="positions">
     <div class="section-header">
-      <h2>Cuelist</h2>
-      <select class="admin-select" id="cuelist-select" onchange="selectCuelist(this.value)"></select>
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('positions')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Songs und Positionen</h2>
+          <span class="edit-card-description">Zeitbereiche definieren, in denen Songs oder Showpositionen aktiv sind.</span>
+        </span>
+      </button>
       <div class="toolbar">
-        <button class="btn btn-primary" id="btn-activate" onclick="activateCuelist()">Aktivieren</button>
-        <button class="btn btn-accent" onclick="openNewCuelistDialog()">+ Neue Liste</button>
+        <button class="btn btn-primary" onclick="openPositionModal(null)">+ Song / Position</button>
+      </div>
+    </div>
+    <div class="edit-section-body">
+      <div class="cue-table-wrap" id="position-table-wrap">
+        <p class="empty-hint">Keine Show ausgewählt.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cues -->
+  <div class="section edit-card" data-edit-section="cues">
+    <div class="section-header">
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('cues')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Cues</h2>
+          <span class="edit-card-description">Timecode, Farbe, Titel und Nachricht direkt in der Tabelle bearbeiten.</span>
+        </span>
+      </button>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="openCueModal(null)">+ Cue</button>
       </div>
     </div>
 
+    <div class="edit-section-body">
     <!-- CSV Import -->
-    <details style="margin-bottom:14px;">
-      <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none; padding:4px 0;">CSV Import</summary>
-      <div style="margin-top:10px;">
+    <details class="edit-tools">
+      <summary>CSV-Werkzeuge</summary>
+      <div class="edit-tools-content">
         <div class="toolbar" style="margin-bottom:6px;">
           <input type="file" id="csv-file" accept=".csv,.txt" style="font-size:12px;color:var(--muted);" />
           <button class="btn btn-accent" onclick="importCSV()">Importieren</button>
           <button class="btn" onclick="downloadCSVTemplate()">Vorlage ↓</button>
         </div>
         <p class="csv-hint">
-          Format: <code>tc,title,message,targetRoles,alertType,warnOffsetSec,color</code><br>
-          Rollen mit Semikolon trennen: <code>buehne;licht</code> · Farbe optional (Standard: #f59e0b)
+          Format: <code>tc,title,message,color</code><br>
+          Farbe optional (Standard: #f59e0b)
         </p>
         <pre id="csv-feedback" style="font-size:11px;color:var(--green);margin-top:6px;"></pre>
       </div>
     </details>
 
     <!-- Cue-Tabelle -->
-    <div style="margin-bottom:10px;">
-      <button class="btn btn-primary btn-small" onclick="openCueModal(null)">+ Cue hinzufügen</button>
-    </div>
     <div class="cue-table-wrap" id="cue-table-wrap">
-      <p class="empty-hint">Keine Cuelist ausgewählt.</p>
+      <p class="empty-hint">Keine Show ausgewählt.</p>
+    </div>
     </div>
   </div>
 
+  <!-- Checklists -->
+  <div class="section edit-card" data-edit-section="checklists">
+    <div class="section-header">
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('checklists')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Aufgabenlisten</h2>
+          <span class="edit-card-description">Vorbereitungen und Aufgaben zu einem Cue oder einer Uhrzeit einblenden.</span>
+        </span>
+      </button>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="openChecklistModal(null)">+ Aufgabenliste</button>
+      </div>
+    </div>
+    <div class="edit-section-body">
+      <div id="checklist-wrap"><p class="empty-hint">Keine Show ausgewählt.</p></div>
+    </div>
+  </div>
+
+  </div>
 </div>
 
 
@@ -640,24 +856,23 @@
 // STATE
 // ════════════════════════════════════════════════════════════════════════════
 let ws, reconnectTimer;
-let currentRole = new URLSearchParams(location.search).get('role') || 'all';
 let currentShowId = null;
-let currentCuelistId = null;
 let allShows = [];
-let allCuelists = [];
+let _triggeredChecklistIds = new Set();
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ════════════════════════════════════════════════════════════════════════════
 const SETTINGS_KEY = 'tc-cue-settings';
+const EDIT_SECTIONS_KEY = 'tc-cue-edit-sections';
 const SETTING_DEFAULTS = {
-  flashDuration:   3500,
-  showNextCue:     true,
   showFrames:      true,
   liveFontSize:    'normal',
-  masterVol:       1.0,
-  warnSoundEnabled: true,
+  nextCuePreviews: 0,
+  screenFlash:     false,
   autoResetOnStop: true,
+  alarmEnabled:    true,
+  alarmVolume:     80,
 };
 
 function loadSettings() {
@@ -673,24 +888,24 @@ function saveSettings() {
 
 function getCurrentSettingsFromUI() {
   return {
-    flashDuration:    parseInt(document.getElementById('s-flash-dur').value),
-    showNextCue:      document.getElementById('s-show-next').checked,
     showFrames:       document.getElementById('s-show-frames').checked,
     liveFontSize:     document.getElementById('s-live-font').value,
-    masterVol:        parseFloat(document.getElementById('s-master-vol').value),
-    warnSoundEnabled: document.getElementById('s-warn-sound').checked,
+    nextCuePreviews:  Number(document.getElementById('s-next-cue-previews').value),
+    screenFlash:      document.getElementById('s-screen-flash').checked,
     autoResetOnStop:  document.getElementById('s-auto-reset').checked,
+    alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
+    alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
   };
 }
 
 function applySettings(s) {
-  // Flash duration is read at fire-time from flashTimer
-  // Next cue visibility
-  const strip = document.getElementById('next-cue-strip');
-  if (strip && !s.showNextCue) strip.className = 'hidden';
   // Live TC font size
   const liveTc = document.getElementById('live-tc');
-  liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(24px,4vw,40px)' : s.liveFontSize === 'large' ? 'clamp(56px,12vw,120px)' : '';
+  liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(30px,5vw,48px)' : s.liveFontSize === 'large' ? 'clamp(48px,9vw,84px)' : '';
+  window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
+  window._screenFlash = !!s.screenFlash;
+  _liveCueRenderSignature = '';
+  if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   // TC format label update for current display
   updateTcDisplayFormat(s.showFrames);
 }
@@ -700,52 +915,35 @@ function updateTcDisplayFormat(showFrames) {
   window._showFrames = showFrames;
 }
 
-function masterVolume() {
-  return parseFloat(document.getElementById('s-master-vol')?.value ?? '1');
-}
-
 function openSettings() {
   const s = loadSettings();
   // Populate UI
-  document.getElementById('s-flash-dur').value  = s.flashDuration;
-  document.getElementById('flash-dur-val').textContent = (s.flashDuration / 1000).toFixed(1) + 's';
-  document.getElementById('s-show-next').checked   = s.showNextCue;
   document.getElementById('s-show-frames').checked = s.showFrames;
   document.getElementById('s-live-font').value     = s.liveFontSize;
-  document.getElementById('s-master-vol').value    = s.masterVol;
-  document.getElementById('master-vol-val').textContent = Math.round(s.masterVol * 100) + '%';
-  document.getElementById('s-warn-sound').checked  = s.warnSoundEnabled;
+  document.getElementById('s-next-cue-previews').value = String(s.nextCuePreviews);
+  document.getElementById('s-screen-flash').checked = s.screenFlash;
   document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
+  document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
+  document.getElementById('s-alarm-volume').value = s.alarmVolume;
+  document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
 
-  // Show settings
+  // Engine settings
   const show = allShows.find(s => s.id === currentShowId);
   if (show) {
-    document.getElementById('s-roles').value    = (show.roles || []).join('\n');
-    document.getElementById('s-fallback').value = show.fallbackMode || 'stop';
-    document.getElementById('s-fps').value      = String(show.fps || 25);
+    document.getElementById('s-fps').value = String(show.fps || 25);
   }
 
-  // TC source + audio files
+  // TC source
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
-  refreshAudioFileList();
   loadNetworkInfo();
-
-  document.getElementById('settings-panel').classList.add('show');
-  document.getElementById('settings-backdrop').classList.add('show');
-}
-
-function closeSettings() {
-  document.getElementById('settings-panel').classList.remove('show');
-  document.getElementById('settings-backdrop').classList.remove('show');
 }
 
 function onSettingChange() {
-  // Update live labels
-  const dur = parseInt(document.getElementById('s-flash-dur').value);
-  document.getElementById('flash-dur-val').textContent = (dur / 1000).toFixed(1) + 's';
-  const vol = parseFloat(document.getElementById('s-master-vol').value);
-  document.getElementById('master-vol-val').textContent = Math.round(vol * 100) + '%';
   saveSettings();
+}
+
+function onAlarmVolumeInput() {
+  document.getElementById('alarm-volume-value').textContent = `${document.getElementById('s-alarm-volume').value} %`;
 }
 
 async function onFpsChange(val) {
@@ -759,21 +957,33 @@ async function onFpsChange(val) {
 async function saveShowSettings() {
   const show = allShows.find(s => s.id === currentShowId);
   if (!show) return;
-  const rolesRaw = document.getElementById('s-roles').value;
-  const roles = rolesRaw.split(/[\n,]+/).map(r => r.trim()).filter(Boolean);
   const fallbackMode = document.getElementById('s-fallback').value;
-  const updated = { ...show, roles, fallbackMode };
+  const updated = { ...show, fallbackMode };
   await api('PUT', `/api/shows/${currentShowId}`, updated).catch(() => {});
   const idx = allShows.findIndex(s => s.id === currentShowId);
   if (idx !== -1) allShows[idx] = updated;
 }
 
 async function loadNetworkInfo() {
-  const data = await api('GET', '/api/network').catch(() => ({ urls: [], ips: [] }));
-  const show = allShows.find(s => s.id === currentShowId);
-  const roles = show?.roles || [];
-
   const urlsEl = document.getElementById('network-urls');
+  urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Lade…</span>';
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  let data;
+  try {
+    const response = await fetch('/api/network', { signal: controller.signal });
+    if (!response.ok) throw new Error(`GET /api/network → ${response.status}`);
+    data = await response.json();
+  } catch {
+    urlsEl.innerHTML = `
+      <span style="color:var(--muted);font-size:12px;">Server-Adressen konnten nicht geladen werden.</span>
+      <button class="btn btn-small" onclick="loadNetworkInfo()" style="margin-left:8px;">Erneut laden</button>`;
+    return;
+  } finally {
+    clearTimeout(timeout);
+  }
+
   if (!data.urls.length) {
     urlsEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Keine externen IPs gefunden</span>';
   } else {
@@ -782,19 +992,6 @@ async function loadNetworkInfo() {
         <code>${url}</code>
         <button class="btn btn-small" onclick="copyToClipboard('${url}')">Kopieren</button>
       </div>`).join('');
-  }
-
-  const rolesEl = document.getElementById('network-role-urls');
-  if (data.urls.length && roles.length) {
-    rolesEl.innerHTML = roles.flatMap(role =>
-      data.urls.map(url => `
-        <div class="url-item" style="margin-bottom:4px;">
-          <code style="font-size:10px;">${url}?role=${role}</code>
-          <button class="btn btn-small" onclick="copyToClipboard('${url}?role=${role}')">↗</button>
-        </div>`)
-    ).join('');
-  } else {
-    rolesEl.innerHTML = '<span style="color:var(--muted);font-size:11px;">Rollen in Show-Einstellungen definieren</span>';
   }
 }
 
@@ -821,15 +1018,52 @@ function showView(name, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin') loadAdmin();
+  if (name === 'show') loadAdmin();
+  if (name === 'edit') {
+    loadAdmin();
+    applyEditSectionState();
+  }
+  if (name === 'settings') openSettings();
+  if (name === 'live') {
+    _pickerBrowsing = false;
+    requestAnimationFrame(() => followLiveCurrentCue(false));
+  }
+}
+
+function toggleEditSection(section) {
+  const card = document.querySelector(`[data-edit-section="${section}"]`);
+  if (!card) return;
+  card.classList.toggle('collapsed');
+  const state = loadEditSectionState();
+  state[section] = card.classList.contains('collapsed');
+  localStorage.setItem(EDIT_SECTIONS_KEY, JSON.stringify(state));
+}
+
+function loadEditSectionState() {
+  try {
+    return JSON.parse(localStorage.getItem(EDIT_SECTIONS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function applyEditSectionState() {
+  const state = loadEditSectionState();
+  document.querySelectorAll('[data-edit-section]').forEach(card => {
+    card.classList.toggle('collapsed', !!state[card.dataset.editSection]);
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // WEBSOCKET
 // ════════════════════════════════════════════════════════════════════════════
 function connect() {
-  ws = new WebSocket(`ws://${location.host}?role=${currentRole}`);
-  ws.onopen  = () => { setWsStatus(true);  clearTimeout(reconnectTimer); };
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen  = () => {
+    setWsStatus(true);
+    clearTimeout(reconnectTimer);
+    if (document.getElementById('view-settings').classList.contains('active')) loadNetworkInfo();
+  };
   ws.onclose = () => { setWsStatus(false); reconnectTimer = setTimeout(connect, 2000); };
   ws.onerror = () => ws.close();
   ws.onmessage = e => handleEvent(JSON.parse(e.data));
@@ -837,24 +1071,12 @@ function connect() {
 
 function setWsStatus(ok) {
   document.getElementById('ws-dot').className = ok ? 'connected' : '';
-  document.getElementById('ws-status').textContent = ok ? `Verbunden (${currentRole})` : 'Getrennt – verbinde…';
-}
-
-function changeRole(role) {
-  currentRole = role;
-  if (ws) ws.close();
-  // url param update (no reload)
-  const u = new URL(location);
-  if (role === 'all') u.searchParams.delete('role');
-  else u.searchParams.set('role', role);
-  history.replaceState(null, '', u);
+  document.getElementById('ws-status').textContent = ok ? 'Verbunden' : 'Getrennt – verbinde…';
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════════════════════
-let flashTimer;
-
 function handleEvent(evt) {
   const tc = evt.tc;
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
@@ -862,91 +1084,313 @@ function handleEvent(evt) {
     document.getElementById('tc-display').textContent = displayTc;
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
-    if (document.getElementById('show-tc-log').checked) logAppend('tc', tc, null);
+    renderCurrentPosition(evt.currentPosition, tc);
+    renderLiveChecklists(evt.currentCue);
   }
   if (evt.type === 'CUE_FIRE') {
-    playCueAudio(evt.cue);
-    showActiveAlert(evt.cue);
-    showFlash(evt.cue);
-    hideWarning();
-    logAppend('fire', tc, evt.cue);
+    playAlarm();
+    triggerScreenFlash();
+    focusFiredCue(evt);
   }
-  if (evt.type === 'CUE_WARNING') {
-    const s = loadSettings();
-    if (s.warnSoundEnabled) playCueWarningAudio(evt.cue);
-    showWarning(evt.cue, evt.secondsUntil);
-    logAppend('warn', tc, evt.cue, evt.secondsUntil);
+}
+
+function renderCurrentPosition(position, tcString) {
+  const panel = document.getElementById('live-position');
+  if (!position) {
+    panel.classList.remove('show');
+    document.getElementById('live-position-name').textContent = 'Keine Position aktiv';
+    document.getElementById('live-position-remaining').textContent = '';
+    document.getElementById('live-position-fill').style.width = '0';
+    return;
   }
+  const start = tcStringToSeconds(position.startTc);
+  const end = tcStringToSeconds(position.endTc);
+  const now = tcStringToSeconds(tcString);
+  const duration = Math.max(0.001, end - start);
+  const progress = Math.max(0, Math.min(1, (now - start) / duration));
+  const remaining = Math.max(0, Math.ceil(end - now));
+  document.getElementById('live-position-name').textContent = position.name;
+  document.getElementById('live-position-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
+  document.getElementById('live-position-fill').style.width = `${progress * 100}%`;
+  panel.classList.add('show');
+}
+
+function formatRemainingTime(seconds) {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // LIVE VIEW
 // ════════════════════════════════════════════════════════════════════════════
-let _alertFiredAt = null;
-let _elapsedInterval = null;
 let _lastCurrentCue = null;
 let _lastNextCue = null;
-let _lastTcFrames = 0;   // updated on TC_UPDATE for next-cue countdown
+let _lastTcString = '00:00:00:00';
+let _liveCueRenderSignature = '';
+let _liveChecklistRenderSignature = '';
+let _pickerBrowsing = false;
+let _pickerScrollTimer = null;
+let _pickerHovered = false;
+let _suppressPickerScroll = false;
+let _pickerSelectionFrame = null;
+
+function renderLiveChecklists(currentCue = _lastCurrentCue) {
+  const wrap = document.getElementById('live-checklists');
+  const show = allShows.find(show => show.id === currentShowId);
+  if (!show) return;
+  const cues = [...(show.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  const firstCue = cues[0];
+  const now = new Date().toTimeString().slice(0, 5);
+  const triggeredBefore = [..._triggeredChecklistIds].sort().join(',');
+  for (const checklist of show.checklists || []) {
+    const trigger = checklist.trigger || { type: 'before-first-cue' };
+    const due = trigger.type === 'before-first-cue'
+      ? !currentCue || currentCue.id === firstCue?.id
+      : trigger.type === 'after-cue'
+        ? !!currentCue && tcStringToSeconds(currentCue.tc) >= tcStringToSeconds(cues.find(cue => cue.id === trigger.cueId)?.tc || '99:00:00:00')
+        : now >= trigger.time;
+    if (due) _triggeredChecklistIds.add(checklist.id);
+  }
+  if (triggeredBefore !== [..._triggeredChecklistIds].sort().join(',')) _liveCueRenderSignature = '';
+  const visible = (show.checklists || []).filter(checklist =>
+    _triggeredChecklistIds.has(checklist.id) && checklist.items.some(item => !item.checked)
+  );
+  wrap.classList.toggle('show', visible.length > 0);
+  const signature = JSON.stringify(visible.map(checklist => [
+    checklist.id,
+    checklist.title,
+    checklist.items.map(item => [item.id, item.text, item.checked]),
+  ]));
+  if (signature === _liveChecklistRenderSignature) return;
+  _liveChecklistRenderSignature = signature;
+  wrap.innerHTML = visible.map(checklist => {
+    const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
+    return `
+    <div class="live-checklist ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+      <div class="live-checklist-header">
+        <div class="live-checklist-heading">
+          <div class="live-checklist-kicker">${done ? 'Aufgabenliste erledigt' : 'Aufgabenliste'}</div>
+          <div class="live-checklist-title">${esc(checklist.title)}</div>
+        </div>
+        ${done
+          ? '<div class="live-checklist-done-state">Erledigt</div>'
+          : `<button class="live-checklist-complete" onclick="event.stopPropagation();completeChecklist('${checklist.id}')">Alle abhaken</button>`}
+      </div>
+      ${done ? '' : `<div class="live-checklist-items">
+        ${checklist.items.map(item => `
+          <label class="live-checklist-item ${item.checked ? 'checked' : ''}" onclick="event.stopPropagation()">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem('${checklist.id}','${item.id}',this.checked)" />
+            <span>${esc(item.text)}</span>
+          </label>`).join('')}
+      </div>`}
+    </div>`;
+  }).join('');
+}
 
 function renderLiveCues(cur, next, tcString) {
   _lastCurrentCue = cur;
   _lastNextCue = next;
-
-  const panel = document.getElementById('active-alert');
-
-  if (!cur) {
-    panel.className = '';
-    panel.innerHTML = '<div id="no-cue">Warte auf Timecode…</div>';
-    document.getElementById('next-cue-strip').className = 'hidden';
+  _lastTcString = tcString;
+  const list = document.getElementById('live-cue-list');
+  const show = allShows.find(show => show.id === currentShowId);
+  const cues = [...(show?.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  if (!cues.length) {
+    list.innerHTML = '<div id="no-cue">Keine Cues in dieser Show.</div>';
+    _liveCueRenderSignature = '';
     return;
   }
 
-  panel.className = 'has-cue' + (cur.alertType === 'urgent' ? ' urgent' : '');
-  panel.style.borderColor = cur.color;
-  panel.style.background  = cur.color + '10';
+  const focusId = cur?.id || next?.id;
+  const focusIndex = Math.max(0, cues.findIndex(cue => cue.id === focusId));
+  const previewCount = window._nextCuePreviews || 0;
+  const currentIndex = cues.findIndex(cue => cue.id === cur?.id);
+  const nextIndex = cues.findIndex(cue => cue.id === next?.id);
+  const previewStart = currentIndex >= 0 ? currentIndex + 1 : nextIndex >= 0 ? nextIndex : 0;
+  const previewCueIds = new Set(cues.slice(previewStart, previewStart + previewCount).map(cue => cue.id));
+  const signature = JSON.stringify([
+    cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
+    (show?.positions || []).map(position => [position.id, position.name, position.startTc, position.endTc]),
+    (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.items.map(item => [item.id, item.text, item.checked])]),
+    [..._triggeredChecklistIds].sort(),
+    previewCount,
+    cur?.id,
+    next?.id,
+  ]);
 
-  const roles = (cur.targetRoles || []).map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
-  panel.innerHTML = `
-    <div class="alert-panel-header" style="background:${cur.color}18;">
-      <span style="color:${cur.color};font-weight:bold;letter-spacing:1px;">● AKTUELLER CUE</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="alert-type-badge ${cur.alertType}">${cur.alertType.toUpperCase()}</span>
-        <span class="alert-elapsed" id="alert-elapsed"></span>
-      </div>
-    </div>
-    <div class="alert-panel-body">
-      <div class="alert-title" style="color:${cur.color}">${esc(cur.title)}</div>
-      <div class="alert-message">${esc(cur.message)}</div>
-      <div class="alert-meta">
-        <span class="alert-tc-badge">@ ${cur.tc}</span>
-        ${roles}
-      </div>
-    </div>`;
-
-  // Start elapsed counter if this is a new cue
-  if (!_alertFiredAt || _lastCurrentCue?.id !== cur.id) {
-    // firedAt set by showActiveAlert; here we just keep it running
+  if (signature === _liveCueRenderSignature) {
+    updateLiveCueCountdown(next, tcString);
+    return;
   }
-  updateElapsed();
 
-  // Next cue strip
-  renderNextStrip(next, tcString);
+  const previousScrollTop = list.scrollTop;
+  const shouldFollow = !_pickerBrowsing;
+  const queuedChecklists = (show?.checklists || []).filter(checklist =>
+    !_triggeredChecklistIds.has(checklist.id) || checklist.items.every(item => item.checked)
+  );
+  const entries = [
+    ...cues.map((cue, index) => ({ type: 'cue', cue, cueIndex: index, sort: tcStringToSeconds(cue.tc) })),
+    ...queuedChecklists.map(checklist => ({ type: 'checklist', checklist, sort: checklistSortPosition(checklist, cues) })),
+  ].sort((a, b) => a.sort - b.sort || (a.type === 'cue' ? -1 : 1));
+  list.innerHTML = entries.map(entry => {
+    if (entry.type === 'checklist') {
+      const checklist = entry.checklist;
+      const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
+      return `
+        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+          <div class="live-cue-time">
+            <div class="live-cue-song">Aufgabenliste</div>
+            <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
+          </div>
+          <div class="live-cue-dot"></div>
+          <div>
+            <div class="live-cue-title">${esc(checklist.title)}</div>
+            <div class="live-checklist-queue-preview">${checklist.items.map(item => `<span>${esc(item.text)}</span>`).join('')}</div>
+          </div>
+          <div class="live-checklist-queue-count">${done ? '✓ Erledigt' : `${checklist.items.length} Punkte`}</div>
+        </div>`;
+    }
+    const cue = entry.cue;
+    const index = entry.cueIndex;
+    const position = findPositionForCue(cue, show);
+    const isCurrent = cue.id === cur?.id;
+    const isNext = cue.id === next?.id;
+    const isPast = tcStringToSeconds(cue.tc) < tcStringToSeconds(tcString) && !isCurrent;
+    const state = isCurrent ? 'Aktueller Cue' : isNext ? 'Als Nächstes' : '';
+    const depth = Math.min(3, Math.abs(index - focusIndex));
+    const classes = ['live-cue-row', isCurrent ? 'current' : '', isNext ? 'next' : '', previewCueIds.has(cue.id) ? 'preview-visible' : '', isPast ? 'past' : '', depth ? `depth-${depth}` : ''].filter(Boolean).join(' ');
+    return `
+      <div class="${classes}" data-cue-id="${cue.id}" style="--cue-color:${cue.color}" onclick="openCueModal('${cue.id}')">
+        <div class="live-cue-time">
+          ${state ? `<div class="live-cue-state">${state}</div>` : '<div class="live-cue-state">&nbsp;</div>'}
+          <div class="live-cue-tc">${cue.tc}</div>
+        </div>
+        <div class="live-cue-dot"></div>
+        <div>
+          ${position ? `<div class="live-cue-song">${esc(position.name)}</div>` : ''}
+          <div class="live-cue-title">${esc(cue.title)}</div>
+          <div class="live-cue-message">${esc(cue.message)}</div>
+        </div>
+        ${isNext ? '<div class="live-cue-countdown" data-next-countdown></div>' : '<div></div>'}
+      </div>`;
+  }).join('');
+  _liveCueRenderSignature = signature;
+  updateLiveCueCountdown(next, tcString);
+
+  requestAnimationFrame(() => {
+    if (shouldFollow) followLiveCurrentCue(false);
+    else list.scrollTop = previousScrollTop;
+    updateLivePickerSelection();
+  });
 }
 
-function renderNextStrip(next, tcString) {
-  const strip = document.getElementById('next-cue-strip');
-  if (!next) { strip.className = 'hidden'; return; }
-  strip.className = '';
-  strip.style.borderColor = next.color + '80';
-  document.getElementById('next-title').textContent = next.title;
-  document.getElementById('next-tc-val').textContent = '@ ' + next.tc;
-  // Countdown calculated from current TC
-  if (tcString) {
-    const nowSec  = tcStringToSeconds(tcString);
-    const cueSec  = tcStringToSeconds(next.tc);
-    const diff    = Math.max(0, Math.round(cueSec - nowSec));
-    document.getElementById('next-countdown').textContent = diff > 0 ? `in ${diff}s` : 'jetzt';
+function checklistSortPosition(checklist, cues) {
+  const trigger = checklist.trigger || { type: 'before-first-cue' };
+  if (trigger.type === 'before-first-cue') return -2;
+  if (trigger.type === 'time') return -1;
+  const cue = cues.find(item => item.id === trigger.cueId);
+  return cue ? tcStringToSeconds(cue.tc) + 0.0001 : Number.MAX_SAFE_INTEGER;
+}
+
+function findPositionForCue(cue, show) {
+  const cueSeconds = tcStringToSeconds(cue.tc);
+  return [...(show?.positions || [])]
+    .filter(position => cueSeconds >= tcStringToSeconds(position.startTc) && cueSeconds <= tcStringToSeconds(position.endTc))
+    .sort((a, b) => tcStringToSeconds(b.startTc) - tcStringToSeconds(a.startTc))[0] || null;
+}
+
+function updateLiveCueCountdown(nextCue, tcString) {
+  const countdown = document.querySelector('[data-next-countdown]');
+  if (!countdown || !nextCue) return;
+  const secondsUntil = Math.max(0, Math.ceil(tcStringToSeconds(nextCue.tc) - tcStringToSeconds(tcString)));
+  countdown.textContent = `in ${formatRemainingTime(secondsUntil)}`;
+}
+
+function followLiveCurrentCue(smooth = true) {
+  const cueId = _lastCurrentCue?.id || _lastNextCue?.id;
+  if (!cueId) return;
+  const list = document.getElementById('live-cue-list');
+  const row = list.querySelector(`[data-cue-id="${cueId}"]`);
+  if (!row) return;
+  const listTop = list.getBoundingClientRect().top;
+  const rowTop = row.getBoundingClientRect().top;
+  const targetTop = Math.max(0, list.scrollTop + rowTop - listTop);
+  _suppressPickerScroll = true;
+  list.scrollTo({ top: targetTop, behavior: smooth ? 'smooth' : 'auto' });
+  updateLivePickerSelection();
+  setTimeout(() => {
+    _suppressPickerScroll = false;
+    updateLivePickerSelection();
+  }, smooth ? 450 : 50);
+}
+
+function onLivePickerScroll() {
+  updateLivePickerSelection();
+  if (_suppressPickerScroll) return;
+  _pickerBrowsing = true;
+  if (_pickerHovered) {
+    clearTimeout(_pickerScrollTimer);
+    return;
   }
+  scheduleLivePickerReset();
+}
+
+function onLivePickerEnter() {
+  _pickerHovered = true;
+  clearTimeout(_pickerScrollTimer);
+  _pickerScrollTimer = null;
+}
+
+function onLivePickerLeave() {
+  _pickerHovered = false;
+  if (_pickerBrowsing) scheduleLivePickerReset();
+}
+
+function scheduleLivePickerReset() {
+  clearTimeout(_pickerScrollTimer);
+  _pickerScrollTimer = setTimeout(() => {
+    const list = document.getElementById('live-cue-list');
+    if (_pickerHovered || list.matches(':hover')) {
+      _pickerHovered = true;
+      _pickerScrollTimer = null;
+      return;
+    }
+    _pickerBrowsing = false;
+    _pickerScrollTimer = null;
+    followLiveCurrentCue(true);
+  }, 4000);
+}
+
+function focusFiredCue(evt) {
+  clearTimeout(_pickerScrollTimer);
+  _pickerBrowsing = false;
+  _lastCurrentCue = evt.cue;
+  _lastNextCue = evt.nextCue;
+  _lastTcString = evt.tc;
+  renderLiveCues(evt.cue, evt.nextCue, evt.tc);
+  requestAnimationFrame(() => followLiveCurrentCue(true));
+}
+
+function updateLivePickerSelection() {
+  if (_pickerSelectionFrame) return;
+  _pickerSelectionFrame = requestAnimationFrame(() => {
+    _pickerSelectionFrame = null;
+    const list = document.getElementById('live-cue-list');
+    const rows = [...list.querySelectorAll('.live-cue-row')];
+    if (!rows.length) return;
+    const listTop = list.getBoundingClientRect().top;
+    let selected = rows[0];
+    let smallestDistance = Infinity;
+    rows.forEach(row => {
+      const distance = Math.abs(row.getBoundingClientRect().top - listTop);
+      if (distance < smallestDistance) {
+        smallestDistance = distance;
+        selected = row;
+      }
+    });
+    rows.forEach(row => row.classList.toggle('picker-selected', row === selected));
+  });
 }
 
 function tcStringToSeconds(tc) {
@@ -954,39 +1398,23 @@ function tcStringToSeconds(tc) {
   return p[0]*3600 + p[1]*60 + p[2] + p[3]/25;
 }
 
-function showActiveAlert(cue) {
-  _alertFiredAt = Date.now();
-  clearInterval(_elapsedInterval);
-  _elapsedInterval = setInterval(updateElapsed, 1000);
+function formatTimecodeValue(value) {
+  const trimmed = String(value).trim();
+  const digits = trimmed.replace(/\D/g, '');
+  return digits.length === 8 ? digits.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1:$2:$3:$4') : trimmed;
 }
 
-function updateElapsed() {
-  const el = document.getElementById('alert-elapsed');
-  if (!el || !_alertFiredAt) return;
-  const sec = Math.floor((Date.now() - _alertFiredAt) / 1000);
-  el.textContent = sec < 60 ? `vor ${sec}s` : `vor ${Math.floor(sec/60)}m ${sec%60}s`;
+function formatTimecodeInput(input) {
+  const formatted = formatTimecodeValue(input.value);
+  if (formatted !== input.value && formatted.includes(':')) input.value = formatted;
 }
 
-function showFlash(cue) {
-  document.getElementById('flash-title').textContent = cue.title;
-  document.getElementById('flash-title').style.color = cue.color;
-  document.getElementById('flash-msg').textContent   = cue.message;
-  document.getElementById('flash-roles').innerHTML   = cue.targetRoles.map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
-  document.getElementById('flash').style.setProperty('--flash-color', cue.color);
-  document.getElementById('flash-inner').style.borderColor = cue.color;
-  document.getElementById('flash').classList.add('show');
-  clearTimeout(flashTimer);
-  flashTimer = setTimeout(() => document.getElementById('flash').classList.remove('show'), loadSettings().flashDuration);
+function inlineEditKeydown(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.currentTarget.blur();
+  }
 }
-
-function showWarning(cue, sec) {
-  const b = document.getElementById('warn-banner');
-  b.textContent = `⚠  In ${sec}s: ${cue.title}`;
-  b.style.borderColor = cue.color;
-  b.classList.add('show');
-}
-function hideWarning() { document.getElementById('warn-banner').classList.remove('show'); }
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // SIMULATOR
@@ -1005,117 +1433,269 @@ async function simStop() {
   if (loadSettings().autoResetOnStop) await api('POST', '/api/engine/reset').catch(() => {});
 }
 async function simSeek() {
-  const tc = document.getElementById('seek-input').value.trim() || '00:00:00:00';
+  const tc = formatTimecodeValue(document.getElementById('seek-input').value) || '00:00:00:00';
   const d  = await api('POST', '/api/simulator/seek', { tc });
   document.getElementById('sim-state').textContent = 'Seek → ' + d.tc;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// ADMIN – SHOWS
+// EDIT – SHOWS
 // ════════════════════════════════════════════════════════════════════════════
 async function loadAdmin() {
   allShows = await api('GET', '/api/shows');
   const sel = document.getElementById('show-select');
+  const selectedId = allShows.some(show => show.id === sel.value) ? sel.value : currentShowId;
   sel.innerHTML = allShows.length
-    ? allShows.map(s => `<option value="${s.id}" ${s.id===currentShowId?'selected':''}>${esc(s.name)} (${s.date})</option>`).join('')
+    ? allShows.map(s => `<option value="${s.id}" ${s.id===selectedId?'selected':''}>${esc(s.name)} (${s.date})</option>`).join('')
     : '<option value="">– Keine Shows –</option>';
   if (!currentShowId && allShows.length) currentShowId = allShows[0].id;
+  if (!sel.value && currentShowId) sel.value = currentShowId;
 
-  // Update role selector
-  const roles = [...new Set(allShows.flatMap(s => s.roles))];
-  const roleSel = document.getElementById('role-select');
-  roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r => `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
-  // Also update live-show-name
   const activeShow = allShows.find(s => s.id === currentShowId);
   document.getElementById('live-show-name').textContent = activeShow ? activeShow.name : '–';
 
-  if (currentShowId) await loadCuelists(currentShowId);
+  if (activeShow) {
+    document.getElementById('s-fallback').value = activeShow.fallbackMode || 'stop';
+    renderEditOverview(activeShow);
+    renderPositionTable(activeShow);
+    renderCueTable(activeShow);
+    renderChecklistAdmin(activeShow);
+  } else {
+    renderEditOverview(null);
+    document.getElementById('position-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+    document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+    document.getElementById('checklist-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
+  }
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
+  previewSelectedShow();
 }
 
-function selectShow(id) {
+function renderEditOverview(show) {
+  document.getElementById('edit-show-name').textContent = show?.name || 'Keine Show geladen';
+  document.getElementById('edit-count-positions').textContent = show?.positions?.length || 0;
+  document.getElementById('edit-count-cues').textContent = show?.cues?.length || 0;
+  document.getElementById('edit-count-checklists').textContent = show?.checklists?.length || 0;
+}
+
+function previewSelectedShow() {
+  const selectedId = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === selectedId);
+  const activeState = document.getElementById('show-active-state');
+  document.getElementById('show-name-input').value = show?.name || '';
+  document.getElementById('show-date-input').value = show?.date || '';
+  document.getElementById('s-fallback').value = show?.fallbackMode || 'stop';
+  activeState.textContent = show
+    ? show.id === currentShowId ? 'Diese Show ist geladen.' : 'Ausgewählt, aber noch nicht geladen.'
+    : 'Keine Show vorhanden.';
+  activeState.classList.toggle('active', !!show && show.id === currentShowId);
+  document.getElementById('show-summary-positions').textContent = show?.positions?.length || 0;
+  document.getElementById('show-summary-cues').textContent = show?.cues?.length || 0;
+  document.getElementById('show-summary-checklists').textContent = show?.checklists?.length || 0;
+  document.getElementById('show-save-feedback').textContent = '';
+}
+
+async function loadSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  if (!id) return;
   currentShowId = id;
-  const s = allShows.find(x => x.id === id);
+  _triggeredChecklistIds = new Set();
+  let s = allShows.find(x => x.id === id);
+  if (s) s = await resetChecklistsForShow(s);
   document.getElementById('live-show-name').textContent = s ? s.name : '–';
-  loadCuelists(id);
+  if (s) {
+    document.getElementById('s-fallback').value = s.fallbackMode || 'stop';
+    renderEditOverview(s);
+    renderPositionTable(s);
+    renderCueTable(s);
+    renderChecklistAdmin(s);
+    restoreTcSourceUI(s);
+  }
+  await api('POST', `/api/shows/${id}/activate`).catch(() => {});
+  _liveCueRenderSignature = '';
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  renderLiveChecklists(_lastCurrentCue);
+  previewSelectedShow();
 }
 
-function openNewShowDialog() {
+async function resetChecklistsForShow(show) {
+  const changed = (show.checklists || []).filter(checklist => checklist.items.some(item => item.checked));
+  if (!changed.length) return show;
+  await Promise.all(changed.map(checklist =>
+    api('PUT', `/api/shows/${show.id}/checklists/${checklist.id}`, {
+      ...checklist,
+      items: checklist.items.map(item => ({ ...item, checked: false })),
+    })
+  ));
+  const updated = await api('GET', `/api/shows/${show.id}`);
+  const index = allShows.findIndex(item => item.id === show.id);
+  if (index !== -1) allShows[index] = updated;
+  return updated;
+}
+
+async function selectShow(id) {
+  document.getElementById('show-select').value = id;
+  await loadSelectedShow();
+}
+
+async function saveSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === id);
+  const feedback = document.getElementById('show-save-feedback');
+  if (!show) return;
+  const name = document.getElementById('show-name-input').value.trim();
+  const date = document.getElementById('show-date-input').value;
+  if (!name) {
+    feedback.style.color = 'var(--red)';
+    feedback.textContent = 'Bitte einen Namen eingeben.';
+    return;
+  }
+  const updated = await api('PUT', `/api/shows/${id}`, {
+    ...show,
+    name,
+    date,
+    fallbackMode: document.getElementById('s-fallback').value,
+  });
+  if (currentShowId && id !== currentShowId) {
+    await api('POST', `/api/shows/${currentShowId}/activate`).catch(() => {});
+  }
+  const idx = allShows.findIndex(item => item.id === id);
+  if (idx !== -1) allShows[idx] = updated;
+  if (id === currentShowId) document.getElementById('live-show-name').textContent = updated.name;
+  feedback.style.color = 'var(--green)';
+  feedback.textContent = 'Show gespeichert.';
+  const sel = document.getElementById('show-select');
+  sel.innerHTML = allShows.map(item => `<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.name)} (${item.date})</option>`).join('');
+  if (id === currentShowId) {
+    renderPositionTable(updated);
+    renderCueTable(updated);
+    renderChecklistAdmin(updated);
+  }
+}
+
+async function openNewShowDialog() {
   const name = prompt('Show-Name:');
   if (!name) return;
   const date = prompt('Datum (JJJJ-MM-TT):', new Date().toISOString().slice(0,10));
   if (!date) return;
-  const rolesRaw = prompt('Rollen (kommagetrennt):', 'buehne,licht,ton,regie');
-  const roles = (rolesRaw || '').split(',').map(r => r.trim()).filter(Boolean);
-  api('POST', '/api/shows', { name, date, roles, tcSource: 'simulator', fallbackMode: 'stop', activeCuelistId: null })
-    .then(() => loadAdmin());
+  const created = await api('POST', '/api/shows', { name, date, cues: [], positions: [], tcSource: 'simulator', fallbackMode: 'stop' });
+  currentShowId = created.id;
+  await loadAdmin();
+  document.getElementById('show-select').value = created.id;
+  await loadSelectedShow();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// ADMIN – CUELISTS
+// POSITIONEN / SONGS
 // ════════════════════════════════════════════════════════════════════════════
-async function loadCuelists(showId) {
-  allCuelists = await api('GET', `/api/shows/${showId}/cuelists`);
-  const sel = document.getElementById('cuelist-select');
-  sel.innerHTML = allCuelists.length
-    ? allCuelists.map(l => `<option value="${l.id}" ${l.id===currentCuelistId?'selected':''}>${esc(l.name)}${l.isActive?' ✓':''}</option>`).join('')
-    : '<option value="">– Keine Listen –</option>';
-  if (!currentCuelistId && allCuelists.length) currentCuelistId = allCuelists[0].id;
-  else if (!allCuelists.find(l => l.id === currentCuelistId) && allCuelists.length) currentCuelistId = allCuelists[0].id;
-  if (currentCuelistId) {
-    const l = allCuelists.find(x => x.id === currentCuelistId);
-    if (l) renderCueTable(l);
-  } else {
-    document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Cuelist vorhanden.</p>';
+function renderPositionTable(show) {
+  const wrap = document.getElementById('position-table-wrap');
+  const positions = [...(show.positions || [])].sort((a, b) => a.startTc.localeCompare(b.startTc));
+  if (!positions.length) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Positionen oder Songs angelegt.</p>';
+    return;
   }
+  const rows = positions.map((position, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><input class="inline-edit inline-edit-title" value="${esc(position.name)}" aria-label="Name von ${esc(position.name)}" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','name',this.value)" /></td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(position.startTc)}" inputmode="numeric" aria-label="Start-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','startTc',this.value)" /></td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(position.endTc)}" inputmode="numeric" aria-label="End-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','endTc',this.value)" /></td>
+      <td class="actions">
+        <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deletePosition('${position.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>Position / Song</th><th>Start-TC</th><th>End-TC</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
-function selectCuelist(id) {
-  currentCuelistId = id;
-  const l = allCuelists.find(x => x.id === id);
-  if (l) renderCueTable(l);
-}
-
-function openNewCuelistDialog() {
+function openPositionModal(positionId) {
   if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
-  const name = prompt('Name der Cuelist:');
-  if (!name) return;
-  api('POST', '/api/cuelists', { showId: currentShowId, name })
-    .then(l => { currentCuelistId = l.id; loadCuelists(currentShowId); });
+  const show = allShows.find(show => show.id === currentShowId);
+  const position = show?.positions?.find(item => item.id === positionId);
+  document.getElementById('position-modal-title').textContent = position ? 'Position bearbeiten' : 'Neue Position';
+  document.getElementById('f-position-id').value = position?.id || '';
+  document.getElementById('f-position-name').value = position?.name || '';
+  document.getElementById('f-position-start').value = position?.startTc || '';
+  document.getElementById('f-position-end').value = position?.endTc || '';
+  document.getElementById('position-modal-overlay').classList.add('show');
+  document.getElementById('f-position-name').focus();
 }
 
-async function activateCuelist() {
-  if (!currentCuelistId) return;
-  await api('POST', `/api/cuelists/${currentCuelistId}/activate`);
-  await loadCuelists(currentShowId);
+function closePositionModal() {
+  document.getElementById('position-modal-overlay').classList.remove('show');
+}
+
+async function savePosition() {
+  const id = document.getElementById('f-position-id').value;
+  const body = {
+    name: document.getElementById('f-position-name').value.trim(),
+    startTc: formatTimecodeValue(document.getElementById('f-position-start').value),
+    endTc: formatTimecodeValue(document.getElementById('f-position-end').value),
+  };
+  if (!body.name || !body.startTc || !body.endTc) {
+    alert('Name, Start-TC und End-TC sind Pflichtfelder.');
+    return;
+  }
+  if (tcStringToSeconds(body.endTc) <= tcStringToSeconds(body.startTc)) {
+    alert('Der End-TC muss nach dem Start-TC liegen.');
+    return;
+  }
+  if (id) await api('PUT', `/api/shows/${currentShowId}/positions/${id}`, body);
+  else await api('POST', `/api/shows/${currentShowId}/positions`, body);
+  closePositionModal();
+  await reloadCurrentShow();
+}
+
+async function updatePositionField(positionId, field, rawValue) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const position = show?.positions?.find(item => item.id === positionId);
+  if (!position) return;
+  const value = field === 'startTc' || field === 'endTc' ? formatTimecodeValue(rawValue) : rawValue.trim();
+  if (!value || value === position[field]) {
+    renderPositionTable(show);
+    return;
+  }
+  const updated = { ...position, [field]: value };
+  if (tcStringToSeconds(updated.endTc) <= tcStringToSeconds(updated.startTc)) {
+    alert('Der End-TC muss nach dem Start-TC liegen.');
+    renderPositionTable(show);
+    return;
+  }
+  await api('PUT', `/api/shows/${currentShowId}/positions/${positionId}`, updated);
+  await reloadCurrentShow();
+}
+
+async function deletePosition(positionId) {
+  if (!confirm('Position wirklich löschen?')) return;
+  await api('DELETE', `/api/shows/${currentShowId}/positions/${positionId}`);
+  await reloadCurrentShow();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // CUE TABLE
 // ════════════════════════════════════════════════════════════════════════════
-function renderCueTable(list) {
+function renderCueTable(show) {
   const wrap = document.getElementById('cue-table-wrap');
-  if (!list.cues || list.cues.length === 0) {
+  if (!show.cues || show.cues.length === 0) {
     wrap.innerHTML = '<p class="empty-hint">Noch keine Cues. Klicke "+ Cue hinzufügen".</p>';
     return;
   }
-  const rows = list.cues.map((c, i) => `
+  const rows = show.cues.map((c, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td style="font-weight:bold;letter-spacing:1px">${c.tc}</td>
-      <td><span class="color-swatch" style="background:${c.color}"></span>${esc(c.title)}</td>
-      <td style="color:#aaa;max-width:200px">${esc(c.message)}</td>
-      <td>${c.targetRoles.map(r=>`<span class="role-tag">${esc(r)}</span>`).join(' ')}</td>
-      <td><span class="badge badge-${c.alertType}">${c.alertType}</span></td>
-      <td>${c.warnOffsetSec}s</td>
+      <td><input class="inline-edit inline-edit-tc" value="${esc(c.tc)}" inputmode="numeric" aria-label="Timecode von ${esc(c.title)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','tc',this.value)" /></td>
+      <td><div class="inline-title-wrap"><input class="inline-color" type="color" value="${esc(c.color)}" aria-label="Farbe von ${esc(c.title)}" onchange="updateCueField('${c.id}','color',this.value)" /><input class="inline-edit inline-edit-title" value="${esc(c.title)}" aria-label="Titel von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','title',this.value)" /></div></td>
+      <td><input class="inline-edit" value="${esc(c.message)}" aria-label="Nachricht von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','message',this.value)" /></td>
       <td class="actions">
-        <button class="btn btn-small btn-icon" title="Bearbeiten" onclick="openCueModal('${c.id}')">✎</button>
         <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deleteCue('${c.id}')">✕</button>
       </td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Rollen</th><th>Alert</th><th>Warn</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -1124,44 +1704,25 @@ function renderCueTable(list) {
 // CUE MODAL
 // ════════════════════════════════════════════════════════════════════════════
 async function openCueModal(cueId) {
-  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
   const overlay = document.getElementById('modal-overlay');
   if (cueId) {
-    const list = allCuelists.find(l => l.id === currentCuelistId);
-    const cue  = list?.cues.find(c => c.id === cueId);
+    const show = allShows.find(show => show.id === currentShowId);
+    const cue  = show?.cues.find(c => c.id === cueId);
     if (!cue) return;
     document.getElementById('modal-title').textContent = 'Cue bearbeiten';
     document.getElementById('f-cue-id').value    = cue.id;
     document.getElementById('f-tc').value        = cue.tc;
     document.getElementById('f-title').value     = cue.title;
     document.getElementById('f-message').value   = cue.message;
-    document.getElementById('f-alert').value     = cue.alertType;
-    document.getElementById('f-warn').value      = cue.warnOffsetSec;
     document.getElementById('f-color').value     = cue.color;
-    document.getElementById('f-roles').value     = cue.targetRoles.join(', ');
-    const at = cue.audioType || 'none';
-    document.getElementById('f-audio-type').value = at;
-    document.getElementById('f-audio-vol').value  = cue.audioVolume ?? 0.8;
-    document.getElementById('f-audio-vol-val').textContent = Math.round((cue.audioVolume ?? 0.8) * 100) + '%';
-    onAudioTypeChange(at);
-    if (at === 'file') {
-      await loadAudioFilesIntoSelect();
-      if (cue.audioFile) document.getElementById('f-audio-file').value = cue.audioFile;
-    }
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
     document.getElementById('f-cue-id').value    = '';
     document.getElementById('f-tc').value        = '';
     document.getElementById('f-title').value     = '';
     document.getElementById('f-message').value   = '';
-    document.getElementById('f-alert').value     = 'info';
-    document.getElementById('f-warn').value      = '10';
     document.getElementById('f-color').value     = '#f59e0b';
-    document.getElementById('f-roles').value     = '';
-    document.getElementById('f-audio-type').value = 'none';
-    document.getElementById('f-audio-vol').value  = '0.8';
-    document.getElementById('f-audio-vol-val').textContent = '80%';
-    onAudioTypeChange('none');
   }
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
@@ -1173,50 +1734,217 @@ function closeModal() {
 
 async function saveCue() {
   const id    = document.getElementById('f-cue-id').value;
-  const roles = document.getElementById('f-roles').value.split(',').map(r => r.trim()).filter(Boolean);
-  const audioType = document.getElementById('f-audio-type').value;
   const body  = {
-    tc:           document.getElementById('f-tc').value.trim(),
+    tc:           formatTimecodeValue(document.getElementById('f-tc').value),
     title:        document.getElementById('f-title').value.trim(),
     message:      document.getElementById('f-message').value.trim(),
-    alertType:    document.getElementById('f-alert').value,
-    warnOffsetSec: parseInt(document.getElementById('f-warn').value) || 0,
     color:        document.getElementById('f-color').value,
-    targetRoles:  roles,
-    audioType,
-    audioFile:    audioType === 'file' ? document.getElementById('f-audio-file').value : undefined,
-    audioVolume:  parseFloat(document.getElementById('f-audio-vol').value),
   };
   if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
 
   if (id) {
-    await api('PUT', `/api/cuelists/${currentCuelistId}/cues/${id}`, body);
+    await api('PUT', `/api/shows/${currentShowId}/cues/${id}`, body);
   } else {
-    await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body);
+    await api('POST', `/api/shows/${currentShowId}/cues`, body);
   }
   closeModal();
-  await reloadCurrentCuelist();
+  await reloadCurrentShow();
+}
+
+async function updateCueField(cueId, field, rawValue) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const cue = show?.cues.find(item => item.id === cueId);
+  if (!cue) return;
+  const value = field === 'tc' ? formatTimecodeValue(rawValue) : rawValue.trim();
+  if ((field === 'tc' || field === 'title') && !value) {
+    alert('TC und Titel sind Pflichtfelder.');
+    renderCueTable(show);
+    return;
+  }
+  if (value === cue[field]) {
+    renderCueTable(show);
+    return;
+  }
+  await api('PUT', `/api/shows/${currentShowId}/cues/${cueId}`, { ...cue, [field]: value });
+  await reloadCurrentShow();
 }
 
 async function deleteCue(cueId) {
   if (!confirm('Cue wirklich löschen?')) return;
-  await api('DELETE', `/api/cuelists/${currentCuelistId}/cues/${cueId}`);
-  await reloadCurrentCuelist();
+  await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
+  await reloadCurrentShow();
 }
 
-async function reloadCurrentCuelist() {
-  const updated = await api('GET', `/api/cuelists/${currentCuelistId}`);
-  const idx = allCuelists.findIndex(l => l.id === currentCuelistId);
-  if (idx !== -1) allCuelists[idx] = updated;
+// ════════════════════════════════════════════════════════════════════════════
+// CHECKLISTS
+// ════════════════════════════════════════════════════════════════════════════
+function checklistTriggerLabel(checklist, show) {
+  const trigger = checklist.trigger || { type: 'before-first-cue' };
+  if (trigger.type === 'before-first-cue') return 'Vor dem ersten Cue';
+  if (trigger.type === 'time') return `Um ${trigger.time} Uhr`;
+  const cue = show.cues.find(cue => cue.id === trigger.cueId);
+  return `Nach Cue „${cue?.title || 'Gelöschter Cue'}“`;
+}
+
+function renderChecklistAdmin(show) {
+  const wrap = document.getElementById('checklist-wrap');
+  const checklists = show.checklists || [];
+  if (!checklists.length) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Checklists angelegt.</p>';
+    return;
+  }
+  wrap.innerHTML = `<div class="checklist-cards">${checklists.map(checklist => {
+    return `
+      <div class="checklist-card">
+        <div>
+          <div class="checklist-card-title">${esc(checklist.title)}</div>
+          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))} · ${checklist.items.length} Punkte</div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-small" onclick="openChecklistModal('${checklist.id}')">Bearbeiten</button>
+          <button class="btn btn-small btn-danger" onclick="deleteChecklist('${checklist.id}')">Löschen</button>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+function openChecklistModal(checklistId) {
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  document.getElementById('checklist-modal-title').textContent = checklist ? 'Checklist bearbeiten' : 'Neue Checklist';
+  document.getElementById('f-checklist-id').value = checklist?.id || '';
+  document.getElementById('f-checklist-title').value = checklist?.title || '';
+  document.getElementById('f-checklist-trigger').value = checklist?.trigger?.type || 'before-first-cue';
+  document.getElementById('f-checklist-cue').innerHTML = (show?.cues || []).map(cue =>
+    `<option value="${cue.id}">${esc(cue.title)} (${cue.tc})</option>`
+  ).join('');
+  document.getElementById('f-checklist-cue').value = checklist?.trigger?.cueId || show?.cues?.[0]?.id || '';
+  document.getElementById('f-checklist-time').value = checklist?.trigger?.time || '19:00';
+  renderChecklistItemEditor(checklist?.items?.length ? checklist.items : [{ text: '', checked: false }]);
+  updateChecklistTriggerFields();
+  document.getElementById('checklist-modal-overlay').classList.add('show');
+  document.getElementById('f-checklist-title').focus();
+}
+
+function closeChecklistModal() {
+  document.getElementById('checklist-modal-overlay').classList.remove('show');
+}
+
+function updateChecklistTriggerFields() {
+  const type = document.getElementById('f-checklist-trigger').value;
+  document.getElementById('checklist-trigger-cue-row').style.display = type === 'after-cue' ? '' : 'none';
+  document.getElementById('checklist-trigger-time-row').style.display = type === 'time' ? '' : 'none';
+}
+
+function renderChecklistItemEditor(items) {
+  document.getElementById('f-checklist-items').innerHTML = items.map(item => `
+    <div class="checklist-item-editor-row" data-id="${item.id || ''}" data-checked="${item.checked ? 'true' : 'false'}">
+      <span class="checklist-item-editor-number"></span>
+      <input type="text" value="${esc(item.text)}" placeholder="Was muss erledigt werden?" />
+      <button class="checklist-item-remove" type="button" onclick="removeChecklistItemField(this)" title="Listenpunkt entfernen">×</button>
+    </div>`).join('');
+  numberChecklistItemFields();
+}
+
+function addChecklistItemField() {
+  const wrap = document.getElementById('f-checklist-items');
+  wrap.insertAdjacentHTML('beforeend', `
+    <div class="checklist-item-editor-row" data-id="" data-checked="false">
+      <span class="checklist-item-editor-number"></span>
+      <input type="text" placeholder="Was muss erledigt werden?" />
+      <button class="checklist-item-remove" type="button" onclick="removeChecklistItemField(this)" title="Listenpunkt entfernen">×</button>
+    </div>`);
+  numberChecklistItemFields();
+  wrap.lastElementChild.querySelector('input').focus();
+}
+
+function removeChecklistItemField(button) {
+  button.closest('.checklist-item-editor-row').remove();
+  numberChecklistItemFields();
+}
+
+function numberChecklistItemFields() {
+  document.querySelectorAll('#f-checklist-items .checklist-item-editor-number').forEach((number, index) => {
+    number.textContent = index + 1;
+  });
+}
+
+async function saveChecklist() {
+  const id = document.getElementById('f-checklist-id').value;
+  const title = document.getElementById('f-checklist-title').value.trim();
+  const items = [...document.querySelectorAll('#f-checklist-items .checklist-item-editor-row')].map(row => ({
+    id: row.dataset.id || undefined,
+    text: row.querySelector('input').value.trim(),
+    checked: row.dataset.checked === 'true',
+  })).filter(item => item.text);
+  const type = document.getElementById('f-checklist-trigger').value;
+  if (!title || !items.length) {
+    alert('Name und mindestens ein Punkt sind erforderlich.');
+    return;
+  }
+  const trigger = type === 'after-cue'
+    ? { type, cueId: document.getElementById('f-checklist-cue').value }
+    : type === 'time'
+      ? { type, time: document.getElementById('f-checklist-time').value }
+      : { type };
+  if (id) await api('PUT', `/api/shows/${currentShowId}/checklists/${id}`, { title, trigger, items });
+  else await api('POST', `/api/shows/${currentShowId}/checklists`, { title, trigger, items });
+  closeChecklistModal();
+  await reloadCurrentShow();
+}
+
+async function toggleChecklistItem(checklistId, itemId, checked) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  if (!checklist) return;
+  checklist.items = checklist.items.map(item => item.id === itemId ? { ...item, checked } : item);
+  const updated = { ...checklist, items: checklist.items.map(item => ({ ...item })) };
+  renderLiveChecklists(_lastCurrentCue);
+  await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, updated);
+  await reloadCurrentShow();
+}
+
+async function completeChecklist(checklistId) {
+  const show = allShows.find(show => show.id === currentShowId);
+  const checklist = show?.checklists?.find(item => item.id === checklistId);
+  if (!checklist) return;
+  checklist.items = checklist.items.map(item => ({ ...item, checked: true }));
+  renderLiveChecklists(_lastCurrentCue);
+  await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, {
+    ...checklist,
+    items: checklist.items,
+  });
+  await reloadCurrentShow();
+}
+
+async function deleteChecklist(checklistId) {
+  if (!confirm('Checklist wirklich löschen?')) return;
+  await api('DELETE', `/api/shows/${currentShowId}/checklists/${checklistId}`);
+  _triggeredChecklistIds.delete(checklistId);
+  await reloadCurrentShow();
+}
+
+async function reloadCurrentShow() {
+  const updated = await api('GET', `/api/shows/${currentShowId}`);
+  const idx = allShows.findIndex(show => show.id === currentShowId);
+  if (idx !== -1) allShows[idx] = updated;
+  renderEditOverview(updated);
+  renderPositionTable(updated);
   renderCueTable(updated);
+  renderChecklistAdmin(updated);
+  if (document.getElementById('show-select').value === currentShowId) previewSelectedShow();
+  _liveCueRenderSignature = '';
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  renderLiveChecklists(_lastCurrentCue);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // CSV IMPORT
 // ════════════════════════════════════════════════════════════════════════════
 function downloadCSVTemplate() {
-  const header = 'tc,title,message,targetRoles,alertType,warnOffsetSec,color';
-  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,buehne;licht,warning,10,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,ton;regie,info,15,#3b82f6';
+  const header = 'tc,title,message,color';
+  const example = '00:01:00:00,Szene 1 Beginn,Umbau Bühne links bereit?,#f59e0b\n00:02:30:00,Pausenansage,Bitte Ansage vorbereiten,#3b82f6';
   const blob = new Blob([header + '\n' + example], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1227,7 +1955,7 @@ function downloadCSVTemplate() {
 async function importCSV() {
   const file = document.getElementById('csv-file').files[0];
   if (!file) { alert('Keine Datei ausgewählt.'); return; }
-  if (!currentCuelistId) { alert('Zuerst eine Cuelist auswählen.'); return; }
+  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
   const fb = document.getElementById('csv-feedback');
 
   const text  = await file.text();
@@ -1239,23 +1967,20 @@ async function importCSV() {
   let ok = 0, fail = 0;
   for (const line of dataLines) {
     const cols = parseCSVLine(line);
-    const [tc, title, message, rolesRaw, alertType, warnRaw, color] = cols;
+    const [tc, title, message, color] = cols;
     if (!tc || !title) { fail++; continue; }
     const body = {
       tc: tc.trim(),
       title: title.trim(),
       message: (message || '').trim(),
-      targetRoles: (rolesRaw || '').split(';').map(r => r.trim()).filter(Boolean),
-      alertType: ['info','warning','urgent'].includes(alertType) ? alertType : 'info',
-      warnOffsetSec: parseInt(warnRaw) || 0,
       color: (color || '#f59e0b').trim(),
     };
-    try { await api('POST', `/api/cuelists/${currentCuelistId}/cues`, body); ok++; }
+    try { await api('POST', `/api/shows/${currentShowId}/cues`, body); ok++; }
     catch { fail++; }
   }
   fb.style.color = fail ? 'var(--accent)' : 'var(--green)';
   fb.textContent = `Import abgeschlossen: ${ok} Cues importiert${fail ? `, ${fail} Fehler` : ''}.`;
-  await reloadCurrentCuelist();
+  await reloadCurrentShow();
 }
 
 // Simple CSV line parser (handles quoted fields)
@@ -1273,157 +1998,51 @@ function parseCSVLine(line) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// AUDIO ENGINE
+// ALARM
 // ════════════════════════════════════════════════════════════════════════════
 let _audioCtx = null;
 
-async function getAudioCtx() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (_audioCtx.state === 'suspended') await _audioCtx.resume();
-  return _audioCtx;
+function triggerScreenFlash(force = false) {
+  if (!force && !window._screenFlash) return;
+  const flash = document.getElementById('screen-flash');
+  flash.classList.remove('fire');
+  void flash.offsetWidth;
+  flash.classList.add('fire');
 }
 
-async function playSynth(type, volume = 0.8) {
+async function playAlarm(force = false) {
+  const settings = loadSettings();
+  if (!force && !settings.alarmEnabled) return false;
+  const volume = Math.max(0, Math.min(1, settings.alarmVolume / 100));
+  if (volume === 0 && !force) return false;
+  const peakVolume = Math.max(0.0001, volume * 0.8);
   try {
-    const ctx = await getAudioCtx();
-
-    const play = (freq, startOffset, duration, shape = 'sine') => {
-      const gain = ctx.createGain();
-      gain.connect(ctx.destination);
-      const osc = ctx.createOscillator();
-      osc.type = shape;
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      const t0 = ctx.currentTime + startOffset;
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(volume, t0 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
-      osc.start(t0);
-      osc.stop(t0 + duration + 0.05);
-    };
-
-    switch (type) {
-      case 'beep':
-        play(880, 0, 0.18);
-        break;
-      case 'double-beep':
-        play(880, 0,    0.12);
-        play(880, 0.18, 0.12);
-        break;
-      case 'chime':
-        [[523, 0], [659, 0.15], [784, 0.30]].forEach(([f, t]) => play(f, t, 0.5));
-        break;
-      case 'buzz':
-        play(120, 0,    0.15, 'sawtooth');
-        play(120, 0.20, 0.15, 'sawtooth');
-        play(120, 0.40, 0.15, 'sawtooth');
-        break;
-    }
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') await _audioCtx.resume();
+    const gain = _audioCtx.createGain();
+    gain.connect(_audioCtx.destination);
+    const osc = _audioCtx.createOscillator();
+    osc.frequency.value = 880;
+    osc.connect(gain);
+    const now = _audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peakVolume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.start(now);
+    osc.stop(now + 0.23);
+    return true;
   } catch (e) {
-    console.warn('[Audio] Synth failed:', e);
+    console.warn('[Alarm] Playback failed:', e);
+    return false;
   }
 }
 
-async function playAudioFile(url, volume = 0.8) {
-  try {
-    const audio = new Audio(url);
-    audio.volume = Math.max(0, Math.min(1, volume));
-    await audio.play();
-  } catch (e) {
-    console.warn('[Audio] File playback failed:', e);
-  }
-}
-
-async function playCueAudio(cue) {
-  if (!cue.audioType || cue.audioType === 'none') return;
-  const vol = (cue.audioVolume ?? 0.8) * masterVolume();
-  if (cue.audioType === 'file') {
-    if (cue.audioFile) await playAudioFile(`/audio/${cue.audioFile}`, vol);
-  } else {
-    await playSynth(cue.audioType, vol);
-  }
-}
-
-async function playCueWarningAudio(cue) {
-  if (!cue.audioType || cue.audioType === 'none') return;
-  await playSynth('beep', (cue.audioVolume ?? 0.8) * masterVolume() * 0.5);
-}
-
-// ── Modal: audio type toggle ────────────────────────────────────────────────
-function onAudioTypeChange(val) {
-  document.getElementById('f-audio-file-row').style.display = val === 'file' ? '' : 'none';
-  if (val === 'file') loadAudioFilesIntoSelect();
-}
-
-async function loadAudioFilesIntoSelect() {
-  const files = await api('GET', '/api/audio').catch(() => []);
-  const sel = document.getElementById('f-audio-file');
-  sel.innerHTML = files.length
-    ? files.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${(f.size/1024).toFixed(1)} KB)</option>`).join('')
-    : '<option value="">– Keine Dateien vorhanden –</option>';
-}
-
-function previewAudio() {
-  const type = document.getElementById('f-audio-type').value;
-  const vol  = parseFloat(document.getElementById('f-audio-vol').value);
-  if (type === 'none') return;
-  if (type === 'file') {
-    const file = document.getElementById('f-audio-file').value;
-    if (file) playAudioFile(`/audio/${file}`, vol);
-  } else {
-    playSynth(type, vol);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const volInput = document.getElementById('f-audio-vol');
-  const volLabel = document.getElementById('f-audio-vol-val');
-  if (volInput) volInput.addEventListener('input', () => {
-    volLabel.textContent = Math.round(parseFloat(volInput.value) * 100) + '%';
-  });
-});
-
-// ── Audio file upload ────────────────────────────────────────────────────────
-async function uploadAudioFile() {
-  const fileInput = document.getElementById('audio-upload-file');
-  const fb = document.getElementById('audio-upload-feedback');
-  const file = fileInput.files[0];
-  if (!file) { alert('Keine Datei ausgewählt.'); return; }
-  fb.textContent = 'Lade hoch…';
-  fb.style.color = 'var(--muted)';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result.split(',')[1];
-    try {
-      const result = await api('POST', '/api/audio', { filename: file.name, data: base64 });
-      fb.style.color = 'var(--green)';
-      fb.textContent = `Hochgeladen: ${result.name}`;
-      fileInput.value = '';
-      refreshAudioFileList();
-    } catch (err) {
-      fb.style.color = 'var(--red)';
-      fb.textContent = 'Fehler beim Hochladen.';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function refreshAudioFileList() {
-  const files = await api('GET', '/api/audio').catch(() => []);
-  const el = document.getElementById('audio-file-list');
-  if (!files.length) { el.textContent = 'Keine Audio-Dateien vorhanden.'; return; }
-  el.innerHTML = files.map(f => `
-    <span style="display:inline-flex;gap:6px;align-items:center;margin-right:12px;margin-bottom:4px;">
-      <button onclick="playAudioFile('/audio/${esc(f.name)}',0.8)" class="btn btn-small btn-icon" title="Abspielen">▶</button>
-      <span>${esc(f.name)} <span style="color:#444">(${(f.size/1024).toFixed(1)} KB)</span></span>
-      <button onclick="deleteAudioFile('${esc(f.name)}')" class="btn btn-small btn-icon btn-danger" title="Löschen">✕</button>
-    </span>`).join('');
-}
-
-async function deleteAudioFile(name) {
-  if (!confirm(`"${name}" löschen?`)) return;
-  await api('DELETE', `/api/audio/${encodeURIComponent(name)}`);
-  refreshAudioFileList();
+async function testAlarm() {
+  const feedback = document.getElementById('alarm-test-feedback');
+  const played = await playAlarm(true);
+  feedback.style.color = played ? 'var(--green)' : 'var(--red)';
+  feedback.textContent = played ? 'Alarm abgespielt' : 'Audio konnte nicht abgespielt werden';
+  setTimeout(() => { feedback.textContent = ''; }, 1600);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1431,10 +2050,20 @@ async function deleteAudioFile(name) {
 // ════════════════════════════════════════════════════════════════════════════
 async function exportCurrentShow() {
   if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
-  const res = await fetch(`/api/io/show/${currentShowId}`);
+  await exportShow(currentShowId);
+}
+
+async function exportSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  if (!id) { alert('Zuerst eine Show auswählen.'); return; }
+  await exportShow(id);
+}
+
+async function exportShow(id) {
+  const res = await fetch(`/api/io/show/${id}`);
   if (!res.ok) { alert('Export fehlgeschlagen.'); return; }
   const blob = await res.blob();
-  const show = allShows.find(s => s.id === currentShowId);
+  const show = allShows.find(s => s.id === id);
   const name = (show?.name || 'show').replace(/[^a-z0-9]/gi, '_');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1454,7 +2083,7 @@ async function importShow(input) {
     if (!bundle.show) throw new Error('Ungültiges Format – "show" fehlt.');
     const result = await api('POST', '/api/io/show', bundle);
     fb.style.color = 'var(--green)';
-    fb.textContent = `Importiert: "${result.show.name}" mit ${result.cuelists.length} Cuelist(en).`;
+    fb.textContent = `Importiert: "${result.show.name}" mit ${result.show.cues.length} Cue(s).`;
     input.value = '';
     await loadAdmin();
   } catch (e) {
@@ -1936,19 +2565,22 @@ function esc(str) {
 // ════════════════════════════════════════════════════════════════════════════
 // Apply saved settings on startup
 applySettings(loadSettings());
+applyEditSectionState();
 connect();
+setInterval(() => {
+  renderLiveChecklists(_lastCurrentCue);
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+}, 30000);
 
-// Pre-fill role selector on load
 (async () => {
   const shows = await api('GET', '/api/shows').catch(() => []);
+  allShows = shows;
   if (shows.length) {
     currentShowId = shows[0].id;
     const s = shows[0];
     document.getElementById('live-show-name').textContent = s.name;
-    const roles = s.roles || [];
-    const roleSel = document.getElementById('role-select');
-    roleSel.innerHTML = '<option value="all">Alle</option>' + roles.map(r =>
-      `<option value="${r}" ${r===currentRole?'selected':''}>${r}</option>`).join('');
+    renderLiveChecklists(null);
+    renderLiveCues(null, null, '00:00:00:00');
   }
 })();
 </script>

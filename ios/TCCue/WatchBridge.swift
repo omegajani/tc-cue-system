@@ -13,7 +13,7 @@ final class WatchBridge: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.activate()
     }
 
-    func send(cue: CueModel, nextCue: CueModel?, event: String, secondsUntil: Int = 0) {
+    func send(cue: CueModel, nextCue: CueModel?, event: String) {
         guard WCSession.isSupported(),
               WCSession.default.activationState == .activated,
               WCSession.default.isReachable
@@ -25,9 +25,7 @@ final class WatchBridge: NSObject, ObservableObject, WCSessionDelegate {
             "cueTitle": cue.title,
             "cueMessage": cue.message,
             "cueColor": cue.color,
-            "alertType": cue.alertType,
             "cueTc": cue.tc,
-            "secondsUntil": secondsUntil,
         ]
         if let n = nextCue {
             payload["nextTitle"] = n.title

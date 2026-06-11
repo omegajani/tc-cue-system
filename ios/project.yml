@@ -28,11 +28,16 @@ targets:
     sources:
       - path: Shared
         name: Shared
+        excludes:
+          - Resources
       - path: TCCue
         name: TCCue
       - path: TCCueActivityAttributes.swift
         type: file
         name: TCCueActivityAttributes.swift
+      - path: Shared/Resources/Lexend-VariableFont_wght.ttf
+        type: file
+        buildPhase: resources
     resources:
       - path: TCCue/Assets.xcassets
     settings:
@@ -44,6 +49,36 @@ targets:
       - target: TCCueWatch
         embed: true
         buildPhase: embed
+      - target: TCCueWidgetExtension
+        embed: true
+
+  # ── Fast Mac Catalyst debug app ──────────────────────────────────────────
+  TCCueCatalyst:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Shared
+        name: Shared
+        excludes:
+          - Resources
+      - path: TCCue
+        name: TCCue
+        excludes:
+          - Assets.xcassets
+          - LiveActivityManager.swift
+      - path: TCCueCatalyst
+        name: TCCueCatalyst
+      - path: Shared/Resources/Lexend-VariableFont_wght.ttf
+        type: file
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tccue.ios.catalyst
+        INFOPLIST_FILE: TCCue/Info.plist
+        PRODUCT_NAME: TCCueCatalyst
+        SUPPORTS_MACCATALYST: YES
+        CODE_SIGNING_ALLOWED: NO
 
   # ── watchOS App ──────────────────────────────────────────────────────────
   TCCueWatch:
@@ -53,8 +88,13 @@ targets:
     sources:
       - path: Shared
         name: Shared
+        excludes:
+          - Resources
       - path: TCCueWatch
         name: TCCueWatch
+      - path: Shared/Resources/Lexend-VariableFont_wght.ttf
+        type: file
+        buildPhase: resources
     resources:
       - path: TCCueWatch/Assets.xcassets
     settings:
@@ -63,3 +103,64 @@ targets:
         INFOPLIST_FILE: TCCueWatch/Info.plist
         PRODUCT_NAME: TCCueWatch
         WK_COMPANION_APP_BUNDLE_IDENTIFIER: com.tccue.ios
+
+  # ── Live Activity / Widget extension ─────────────────────────────────────
+  TCCueWidgetExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: TCCueWidget
+        name: TCCueWidget
+        excludes:
+          - Assets.xcassets
+      - path: TCCueActivityAttributes.swift
+        type: file
+        name: TCCueActivityAttributes.swift
+      - path: Shared/Resources/Lexend-VariableFont_wght.ttf
+        type: file
+        buildPhase: resources
+    resources:
+      - path: TCCueWidget/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tccue.ios.widget
+        INFOPLIST_FILE: TCCueWidgetInfo.plist
+        PRODUCT_NAME: TCCueWidgetExtension
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: WidgetBackground
+
+schemes:
+  TCCue:
+    build:
+      targets:
+        TCCue: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  TCCueCatalyst:
+    build:
+      targets:
+        TCCueCatalyst: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  TCCueWatch:
+    build:
+      targets:
+        TCCueWatch: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  TCCueWidgetExtension:
+    build:
+      targets:
+        TCCueWidgetExtension: all
+    run:
+      config: Debug
+    archive:
+      config: Release

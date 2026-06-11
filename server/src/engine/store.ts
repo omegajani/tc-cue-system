@@ -1,15 +1,34 @@
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { Show, Cuelist } from "../types.js";
+import { Show } from "../types.js";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const SEED_DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.TC_CUE_DATA_DIR
+  ? path.resolve(process.env.TC_CUE_DATA_DIR)
+  : process.platform === "darwin"
+    ? path.join(os.homedir(), "Library", "Application Support", "TC Cue System")
+    : path.join(os.homedir(), ".tc-cue-system");
 
 function filePath(name: string) {
   return path.join(DATA_DIR, `${name}.json`);
 }
 
+function seedFilePath(name: string) {
+  return path.join(SEED_DATA_DIR, `${name}.json`);
+}
+
+function ensureDataFile(name: string): void {
+  const target = filePath(name);
+  if (fs.existsSync(target)) return;
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  const seed = seedFilePath(name);
+  if (fs.existsSync(seed)) fs.copyFileSync(seed, target);
+}
+
 function readJson<T>(name: string): T[] {
   try {
+    ensureDataFile(name);
     const raw = fs.readFileSync(filePath(name), "utf-8");
     return JSON.parse(raw) as T[];
   } catch {
@@ -37,25 +56,4 @@ export function upsertShow(show: Show): void {
 
 export function deleteShow(id: string): void {
   saveShows(getShows().filter((s) => s.id !== id));
-}
-
-// Cuelists
-export function getCuelists(): Cuelist[] { return readJson<Cuelist>("cuelists"); }
-export function saveCuelists(lists: Cuelist[]): void { writeJson("cuelists", lists); }
-
-export function getCuelist(id: string): Cuelist | undefined {
-  return getCuelists().find((c) => c.id === id);
-}
-
-export function getCuelistsForShow(showId: string): Cuelist[] {
-  return getCuelists().filter((c) => c.showId === showId);
-}
-
-export function upsertCuelist(list: Cuelist): void {
-  const all = getCuelists().filter((c) => c.id !== list.id);
-  saveCuelists([...all, list]);
-}
-
-export function deleteCuelist(id: string): void {
-  saveCuelists(getCuelists().filter((c) => c.id !== id));
 }

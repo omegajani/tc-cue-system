@@ -14,6 +14,10 @@
     <string>1</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
+    <key>UIAppFonts</key>
+    <array>
+        <string>Lexend-VariableFont_wght.ttf</string>
+    </array>
     <key>WKApplication</key>
     <true/>
     <key>WKCompanionAppBundleIdentifier</key>

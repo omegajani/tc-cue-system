@@ -13,13 +13,13 @@ struct WatchLiveView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                // Alert type indicator
+                // Cue indicator
                 HStack(spacing: 5) {
                     Circle()
                         .fill(currentColor)
                         .frame(width: 8, height: 8)
-                    Text(alertLabel)
-                        .font(.system(size: 10, weight: .semibold))
+                    Text(state.currentCue != nil ? "CUE" : "BEREIT")
+                        .font(.custom("Lexend", size: 10).weight(.semibold))
                         .tracking(1)
                         .foregroundStyle(currentColor)
                     Spacer()
@@ -33,20 +33,20 @@ struct WatchLiveView: View {
                 // Main title
                 if let cue = state.currentCue {
                     Text(cue.title)
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.custom("Lexend", size: 17).weight(.bold))
                         .foregroundStyle(.white)
                         .lineLimit(3)
                         .minimumScaleFactor(0.7)
 
                     if !cue.message.isEmpty {
                         Text(cue.message)
-                            .font(.system(size: 12))
+                            .font(.custom("Lexend", size: 12))
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
                     }
                 } else {
                     Text("Warte auf Cue…")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.custom("Lexend", size: 15).weight(.medium))
                         .foregroundStyle(.secondary)
                 }
 
@@ -60,11 +60,11 @@ struct WatchLiveView: View {
                             .fill(next.swiftUIColor)
                             .frame(width: 5, height: 5)
                         Text("NEXT")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.custom("Lexend", size: 9).weight(.semibold))
                             .tracking(1)
                             .foregroundStyle(.secondary)
                         Text(next.title)
-                            .font(.system(size: 11))
+                            .font(.custom("Lexend", size: 11))
                             .foregroundStyle(.white.opacity(0.8))
                             .lineLimit(1)
                     }
@@ -72,6 +72,7 @@ struct WatchLiveView: View {
             }
             .padding(8)
         }
+        .font(.custom("Lexend", size: 15, relativeTo: .body))
         .containerBackground(Color.black, for: .navigation)
         .onChange(of: state.lastEvent) { _, event in
             guard event == "fire" else { return }
@@ -85,14 +86,6 @@ struct WatchLiveView: View {
     private var currentColor: Color {
         guard let cue = state.currentCue else { return .gray }
         return cue.swiftUIColor
-    }
-
-    private var alertLabel: String {
-        switch state.currentCue?.alertType {
-        case "urgent":  return "DRINGEND"
-        case "warning": return "WARNUNG"
-        default:        return state.currentCue != nil ? "CUE" : "BEREIT"
-        }
     }
 }
 

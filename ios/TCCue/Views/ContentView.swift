@@ -11,5 +11,6 @@ struct ContentView: View {
                 .tabItem { Label("Einstellungen", systemImage: "gear") }
         }
         .tint(.green)
+        .font(.custom("Lexend", size: 17, relativeTo: .body))
     }
 }

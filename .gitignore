@@ -16,6 +16,16 @@ ios/**/*.xcarchive
 server/node_modules/
 server/dist/
 
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+*.apk
+*.aab
+
 # Audio uploads (runtime data)
 server/audio/
 

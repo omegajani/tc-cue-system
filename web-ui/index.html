@@ -90,8 +90,8 @@
     .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
     .live-cue-reset-badge { display:inline-flex; align-items:center; gap:3px; margin-top:5px; padding:2px 7px; border-radius:99px; background:rgba(239,68,68,.13); border:1px solid rgba(239,68,68,.28); color:#fca5a5; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
     .live-cue-row:hover .live-cue-message { display:block; }
-    .live-cue-row.preview-visible { min-height:82px; }
-    .live-cue-row.preview-visible .live-cue-message { display:block; }
+    .live-cue-row.preview-visible, .live-cue-row.picker-selected { min-height:82px; }
+    .live-cue-row.preview-visible .live-cue-message, .live-cue-row.picker-selected .live-cue-message { display:block; }
     .live-cue-row.current .live-cue-tc { color: var(--cue-color); font-size: 12px; font-weight: bold; }
     .live-cue-row.current .live-cue-song { color:color-mix(in srgb,var(--cue-color) 70%,white 30%); font-size:10px; }
     .live-cue-row.current .live-cue-dot { width: 11px; height: 11px; }

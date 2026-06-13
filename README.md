@@ -4,6 +4,13 @@ Browserbasiertes Timecode- und Cue-System für Bühnenproduktionen. Die Web-App
 verwaltet Shows, Songs, Cues und Aufgabenlisten und zeigt den laufenden
 Timecode im lokalen Netzwerk an.
 
+## Handbuch
+
+Ein ausführliches Benutzerhandbuch mit Schritt-für-Schritt-Anleitung und
+Screenshot befindet sich hier:
+
+- [Handbuch: TC Cue System](./HANDBUCH.md)
+
 ## Auf einem neuen Mac installieren
 
 Benötigt werden:

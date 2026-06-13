@@ -1,6 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 "$ROOT_DIR/scripts/update.sh"
-echo
-read -k 1 "?Zum Schließen eine Taste drücken..."

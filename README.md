@@ -59,8 +59,8 @@ Lokale Shows liegen nicht im Git-Ordner und werden daher durch Updates nicht
 überschrieben:
 
 ```text
-~/Library/Application Support/TC Cue System/shows.json
-~/.tc-cue-system/shows.json
+macOS: ~/Library/Application Support/TC Cue System/shows.json
+Linux: ~/.tc-cue-system/shows.json
 ```
 
 Automatische Sicherungen vor Updates liegen im Unterordner `backups`.

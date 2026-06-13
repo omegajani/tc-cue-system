@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,7 +10,7 @@ HEALTH_URL="http://127.0.0.1:3000/api/health"
 mkdir -p "$BUILD_DIR"
 
 if [[ ! -d "$ROOT_DIR/server/node_modules" ]]; then
-  "$ROOT_DIR/scripts/install-macos.sh"
+  "$ROOT_DIR/scripts/install.sh"
 fi
 
 if curl --silent --fail "$HEALTH_URL" >/dev/null 2>&1; then
@@ -37,5 +37,11 @@ fi
 
 echo "Web-App: http://localhost:3000"
 if [[ "${TC_CUE_NO_OPEN:-}" != "1" ]]; then
-  open "http://localhost:3000"
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    open "http://localhost:3000"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "http://localhost:3000"
+  else
+    echo "Bitte öffne http://localhost:3000 in deinem Browser."
+  fi
 fi

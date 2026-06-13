@@ -4,11 +4,11 @@ Browserbasiertes Timecode- und Cue-System für Bühnenproduktionen. Die Web-App
 verwaltet Shows, Songs, Cues und Aufgabenlisten und zeigt den laufenden
 Timecode im lokalen Netzwerk an.
 
-## Auf einem neuen Mac installieren
+## Auf einem neuen Mac oder Linux installieren
 
 Benötigt werden:
 
-- macOS
+- macOS oder Linux
 - [Git](https://git-scm.com/) (ist mit den Xcode Command Line Tools verfügbar)
 - [Node.js 18 oder neuer](https://nodejs.org/)
 - Zugriff auf dieses GitHub-Repository
@@ -21,7 +21,7 @@ cd tc-cue-system
 ./Install.command
 ```
 
-Danach kann die App direkt im Finder bedient werden:
+Danach kann die App über die Start-Skripte bedient werden:
 
 | Datei | Funktion |
 | --- | --- |
@@ -33,9 +33,19 @@ Danach kann die App direkt im Finder bedient werden:
 Falls macOS eine `.command`-Datei beim ersten Mal blockiert: Rechtsklick auf die
 Datei, **Öffnen** wählen und bestätigen.
 
+Unter Linux stehen dafür die entsprechenden `.sh`-Skripte zur Verfügung:
+
+| Datei | Funktion |
+| --- | --- |
+| `Install.sh` | Installiert alle benötigten Pakete |
+| `Start.sh` | Startet den Server und öffnet die Web-App |
+| `Stop.sh` | Stoppt den Server |
+| `Update.sh` | Sichert Shows, lädt Updates von GitHub und installiert sie |
+
 ## Updates
 
-Für normale Updates genügt ein Doppelklick auf `Update.command`.
+Für normale Updates genügt ein Doppelklick auf `Update.command` (macOS) oder
+`./Update.sh` (Linux).
 
 Das Update:
 
@@ -50,6 +60,7 @@ Lokale Shows liegen nicht im Git-Ordner und werden daher durch Updates nicht
 
 ```text
 ~/Library/Application Support/TC Cue System/shows.json
+~/.tc-cue-system/shows.json
 ```
 
 Automatische Sicherungen vor Updates liegen im Unterordner `backups`.

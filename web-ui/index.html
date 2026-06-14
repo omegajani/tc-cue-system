@@ -1835,8 +1835,10 @@ function renderCueTable(show) {
     wrap.innerHTML = '<p class="empty-hint">Noch keine Cues. Klicke "+ Cue hinzufügen".</p>';
     return;
   }
-  const rows = show.cues.map((c, i) => `
-    <tr onclick="openCueModal('${c.id}')">
+  const rows = [...show.cues]
+    .sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc))
+    .map((c, i) => `
+    <tr onclick="openCueModal('${c.id}')">`
       <td>${i + 1}</td>
       <td class="cell-tc">${esc(c.tc)}</td>
       <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}</td>
@@ -1953,10 +1955,11 @@ function openChecklistModal(checklistId) {
   document.getElementById('f-checklist-id').value = checklist?.id || '';
   document.getElementById('f-checklist-title').value = checklist?.title || '';
   document.getElementById('f-checklist-trigger').value = checklist?.trigger?.type || 'before-first-cue';
-  document.getElementById('f-checklist-cue').innerHTML = (show?.cues || []).map(cue =>
-    `<option value="${cue.id}">${esc(cue.title)} (${cue.tc})</option>`
-  ).join('');
-  document.getElementById('f-checklist-cue').value = checklist?.trigger?.cueId || show?.cues?.[0]?.id || '';
+  const sortedCues = [...(show?.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  document.getElementById('f-checklist-cue').innerHTML = sortedCues
+    .map(cue => `<option value="${cue.id}">${esc(cue.title)} (${cue.tc})</option>`)
+    .join('');
+  document.getElementById('f-checklist-cue').value = checklist?.trigger?.cueId || sortedCues[0]?.id || '';
   document.getElementById('f-checklist-time').value = checklist?.trigger?.time || '19:00';
   renderChecklistItemEditor(checklist?.items?.length ? checklist.items : [{ text: '', checked: false }]);
   updateChecklistTriggerFields();

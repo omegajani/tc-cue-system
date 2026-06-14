@@ -105,11 +105,22 @@ npm run dev
 npm run typecheck
 ```
 
+## Demo auf GitHub Pages
+
+Für eine reine Demo ohne laufenden Server liegt eine eigenständige, statische
+Seite in `docs/index.html`. Diese Demo zeigt Beispiel-Songs, Cues,
+Checklisten und einen laufenden Timecode-Simulator, ohne die bestehende
+Anwendung zu verändern.
+
+Für GitHub Pages in den Repository-Einstellungen als Source den Ordner
+`/docs` auf dem gewünschten Branch auswählen.
+
 ## Projektstruktur
 
 ```text
 server/       Node.js-Server, Cue-Engine, API und WebSocket
 web-ui/       Browser-Oberfläche
+docs/         Statische Demo-Seite für GitHub Pages
 scripts/      Installation, Start, Stop, Updates und lokale Hilfsskripte
 ios/          iOS- und watchOS-Projekte für spätere Weiterentwicklung
 ```

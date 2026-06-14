@@ -55,13 +55,18 @@
     #view-live { padding-top: 0; overflow: hidden; }
     #live-picker-shell { max-width:880px; height:calc(100vh - 94px); min-height:520px; margin:0 auto; display:flex; flex-direction:column; overflow:hidden; }
     #live-glass-header { flex:0 0 auto; padding:12px 0 10px; }
-    #live-show-name { text-align: center; font-size: 10px; color: rgba(255,255,255,.42); margin-bottom: 7px; letter-spacing: 1.4px; text-transform: uppercase; }
+    #live-show-name { text-align: center; font-size: 10px; color: rgba(255,255,255,.42); margin-bottom: 7px; letter-spacing: 1.4px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #live-position { position: relative; min-height: 146px; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035)); box-shadow: 0 22px 55px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.26), inset 0 -1px rgba(255,255,255,.05); backdrop-filter: blur(34px) saturate(155%); -webkit-backdrop-filter: blur(34px) saturate(155%); }
     #live-position:after { content:''; position:absolute; inset:1px 14% auto; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent); }
     #live-position-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(110deg, rgba(37,99,235,.46), rgba(96,165,250,.14)); border-right: 1px solid rgba(191,219,254,.48); box-shadow: 12px 0 38px rgba(59,130,246,.2); transition: width .12s linear; }
     #live-position-content { position:relative; z-index:1; min-height:146px; padding:17px 23px 21px; }
     #live-position-header { position:relative; z-index:2; display:flex; align-items:baseline; gap:10px; }
-    #live-position-name { flex: 1; font-size: clamp(15px, 2.5vw, 20px); font-weight: 650; color:rgba(255,255,255,.9); }
+    #live-position-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; font-size: clamp(15px, 2.5vw, 20px); font-weight: 650; color:rgba(255,255,255,.9); }
+    #live-position-name .marquee-track { display: inline-flex; }
+    #live-position-name.marquee { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%); }
+    #live-position-name.marquee .marquee-track { animation: live-marquee var(--marquee-duration, 12s) linear infinite; }
+    #live-position-name.marquee .marquee-content { padding-right: 2.5em; }
+    @keyframes live-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     #live-position-remaining { color: rgba(219,234,254,.8); font-size: 10px; white-space: nowrap; }
     #live-tc { position:absolute; inset:50% 0 auto; width:100%; transform:translateY(-50%); font-size:clamp(42px,7vw,72px); font-weight:680; letter-spacing:4px; color:#fff; line-height:1; text-align:center; white-space:nowrap; text-shadow:0 3px 22px rgba(0,0,0,.42); }
     #live-position:not(.show) #live-position-fill { width: 0 !important; }
@@ -1116,7 +1121,7 @@ function renderCurrentPosition(position, tcString) {
   const panel = document.getElementById('live-position');
   if (!position) {
     panel.classList.remove('show');
-    document.getElementById('live-position-name').textContent = 'Keine Position aktiv';
+    setMarqueeText(document.getElementById('live-position-name'), 'Keine Position aktiv');
     document.getElementById('live-position-remaining').textContent = '';
     document.getElementById('live-position-fill').style.width = '0';
     return;
@@ -1127,11 +1132,45 @@ function renderCurrentPosition(position, tcString) {
   const duration = Math.max(0.001, end - start);
   const progress = Math.max(0, Math.min(1, (now - start) / duration));
   const remaining = Math.max(0, Math.ceil(end - now));
-  document.getElementById('live-position-name').textContent = position.name;
+  setMarqueeText(document.getElementById('live-position-name'), position.name);
   document.getElementById('live-position-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
   document.getElementById('live-position-fill').style.width = `${progress * 100}%`;
   panel.classList.add('show');
 }
+
+// Setzt einen Text einzeilig in die Kopfzeile. Passt der Text nicht in die
+// verfügbare Breite, läuft er als nahtlose Laufschrift (Marquee) durch.
+// Wird der gleiche Text erneut gesetzt, bleibt die laufende Animation erhalten.
+function setMarqueeText(el, text) {
+  if (!el || el.dataset.marqueeText === text) return;
+  el.dataset.marqueeText = text;
+  el.classList.remove('marquee');
+  el.style.removeProperty('--marquee-duration');
+  const content = document.createElement('span');
+  content.className = 'marquee-content';
+  content.textContent = text;
+  const track = document.createElement('span');
+  track.className = 'marquee-track';
+  track.appendChild(content);
+  el.replaceChildren(track);
+  if (content.scrollWidth > el.clientWidth + 1) {
+    el.classList.add('marquee');
+    const distance = content.offsetWidth; // inkl. Abstand (padding-right) zur zweiten Kopie
+    track.appendChild(content.cloneNode(true));
+    el.style.setProperty('--marquee-duration', `${Math.max(8, distance / 55)}s`);
+  }
+}
+
+// Bei Größenänderung (z. B. Gerät drehen) Laufschrift neu bewerten.
+let _marqueeResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_marqueeResizeTimer);
+  _marqueeResizeTimer = setTimeout(() => {
+    const el = document.getElementById('live-position-name');
+    const text = el?.dataset.marqueeText;
+    if (text != null) { delete el.dataset.marqueeText; setMarqueeText(el, text); }
+  }, 200);
+});
 
 function formatRemainingTime(seconds) {
   if (seconds < 60) return `${seconds}s`;

@@ -99,7 +99,7 @@
       <div class="toolbar">
         <div>
           <h1>TC Cue System – Demo</h1>
-          <p class="muted">GitHub-Pages-Demo mit Beispielsongs, Cues und Listen. Läuft komplett statisch und verändert die Hauptanwendung nicht.</p>
+          <p class="muted">GitHub Pages Demo mit Beispielsongs, Cues und Listen. Läuft komplett statisch und verändert die Hauptanwendung nicht.</p>
         </div>
         <div>
           <button id="toggle">Start</button>
@@ -156,12 +156,12 @@
       checklists: [
         {
           title: 'Vor Showstart',
-          trigger: 'Vor erstem Cue',
+          trigger: { type: 'before-first-cue' },
           items: ['Mikros prüfen', 'Monitorpegel kontrollieren', 'Lichtpult Szene laden']
         },
         {
           title: 'Nach Cue „Umbau bereit“',
-          trigger: 'Nach cue-2',
+          trigger: { type: 'after-cue', cueId: 'cue-2' },
           items: ['Bühnenelement links sichern', 'Seitengasse frei melden']
         }
       ]
@@ -198,9 +198,24 @@
         .join('');
     };
 
-    const renderChecklists = (activeCueId) => {
+    const cueRows = demo.cues
+      .map((cue) => ({ ...cue, frame: toFrames(cue.tc) }))
+      .sort((a, b) => a.frame - b.frame);
+
+    const renderChecklists = () => {
       checklists.innerHTML = demo.checklists.map((list) => {
-        const cueTriggered = list.trigger === 'Nach cue-2' ? activeCueId === 'cue-2' || state.frame > toFrames('00:00:36:00') : state.frame >= 0;
+        let cueTriggered = false;
+        let triggerCue = null;
+        if (list.trigger.type === 'before-first-cue') {
+          cueTriggered = cueRows.length > 0 && state.frame >= cueRows[0].frame;
+        }
+        if (list.trigger.type === 'after-cue') {
+          triggerCue = cueRows.find((cue) => cue.id === list.trigger.cueId) ?? null;
+          cueTriggered = Boolean(triggerCue) && state.frame >= triggerCue.frame;
+        }
+        const triggerText = list.trigger.type === 'before-first-cue'
+          ? 'Vor erstem Cue'
+          : `Nach ${triggerCue?.title ?? list.trigger.cueId}`;
         const items = list.items.map((item) => {
           const done = cueTriggered ? 'done' : '';
           return `<li class="checklist-item ${done}">${item}</li>`;
@@ -208,7 +223,7 @@
         return `
           <article style="margin-bottom:.75rem; padding:.75rem; border:1px solid var(--border); border-radius:8px;">
             <h3>${list.title}</h3>
-            <p class="muted" style="margin-bottom:.4rem;">Trigger: ${list.trigger}</p>
+            <p class="muted" style="margin-bottom:.4rem;">Trigger: ${triggerText}</p>
             <ul>${items}</ul>
           </article>
         `;
@@ -220,11 +235,11 @@
       tcEl.textContent = tc;
 
       let firedCue = null;
-      const rows = demo.cues.map((cue) => {
-        const cueFrame = toFrames(cue.tc);
-        const fired = cueFrame <= state.frame;
+      const nextCue = cueRows.find((candidate) => candidate.frame > state.frame);
+      const rows = cueRows.map((cue) => {
+        const fired = cue.frame <= state.frame;
         if (fired) firedCue = cue;
-        const next = cueFrame > state.frame && !demo.cues.some((c) => toFrames(c.tc) > state.frame && toFrames(c.tc) < cueFrame);
+        const next = nextCue ? nextCue.id === cue.id : false;
         return `
           <tr class="${fired ? 'cue-fired' : ''}">
             <td>${cue.tc}</td>
@@ -248,7 +263,7 @@
         currentCue.textContent = 'Noch kein Cue ausgelöst.';
       }
 
-      renderChecklists(firedCue?.id);
+      renderChecklists();
     };
 
     const tick = () => {

@@ -132,7 +132,12 @@
     .live-checklist-queue-trigger { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-transform:uppercase; }
     .live-checklist-queue-count { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; white-space:nowrap; }
     .live-checklist-queue-preview { display:none; margin-top:7px; color:rgba(255,255,255,.58); font-size:11px; line-height:1.4; }
-    .live-checklist-queue:hover .live-checklist-queue-preview { display:block; }
+    .live-checklist-queue:hover .live-checklist-queue-preview,
+    .live-checklist-queue.expanded .live-checklist-queue-preview { display:block; }
+    .live-checklist-queue.expanded { min-height:82px; }
+    .live-checklist-queue .live-cue-listicon { cursor:pointer; padding:7px; margin:-7px; border-radius:9px; transition:background .15s; }
+    .live-checklist-queue .live-cue-listicon:hover { background:rgba(45,212,191,.2); }
+    .live-checklist-queue.expanded .live-cue-listicon { background:rgba(45,212,191,.16); }
     .live-checklist-queue-preview span { display:block; position:relative; padding-left:12px; }
     .live-checklist-queue-preview span:before { content:'•'; position:absolute; left:0; color:rgba(94,234,212,.5); }
     .live-checklist-queue.done .live-checklist-queue-preview span { color:rgba(255,255,255,.4); text-decoration:line-through; }
@@ -913,6 +918,7 @@ let ws, reconnectTimer;
 let currentShowId = null;
 let allShows = [];
 let _triggeredChecklistIds = new Set();
+let _expandedChecklistIds = new Set();
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
@@ -1284,6 +1290,18 @@ function startTcWatchdog() {
   }, 250);
 }
 
+// Klick auf die Listen-Glyphe: Aufgabenliste in der Cue-Liste auf-/zuklappen.
+function toggleChecklistExpand(id, iconEl) {
+  const row = iconEl.closest('.live-cue-row');
+  if (_expandedChecklistIds.has(id)) {
+    _expandedChecklistIds.delete(id);
+    row?.classList.remove('expanded');
+  } else {
+    _expandedChecklistIds.add(id);
+    row?.classList.add('expanded');
+  }
+}
+
 function renderLiveChecklists(currentCue = _lastCurrentCue) {
   const wrap = document.getElementById('live-checklists');
   const show = allShows.find(show => show.id === currentShowId);
@@ -1385,13 +1403,14 @@ function renderLiveCues(cur, next, tcString) {
     if (entry.type === 'checklist') {
       const checklist = entry.checklist;
       const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
+      const expanded = _expandedChecklistIds.has(checklist.id);
       return `
-        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
+        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''} ${expanded ? 'expanded' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
           <div class="live-cue-time">
             <div class="live-cue-song">Aufgabenliste</div>
             <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
           </div>
-          <div class="live-cue-listicon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="4" r="1.2" fill="currentColor"/><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><line x1="6.5" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="live-cue-listicon" role="button" title="Liste auf-/zuklappen" onclick="event.stopPropagation();toggleChecklistExpand('${checklist.id}',this)"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="4" r="1.2" fill="currentColor"/><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><line x1="6.5" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
           <div>
             <div class="live-cue-title">${esc(checklist.title)}</div>
             <div class="live-checklist-queue-preview">${checklist.items.map(item => `<span>${esc(item.text)}</span>`).join('')}</div>

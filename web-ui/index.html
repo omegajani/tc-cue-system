@@ -1838,7 +1838,7 @@ function renderCueTable(show) {
   const rows = [...show.cues]
     .sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc))
     .map((c, i) => `
-    <tr onclick="openCueModal('${c.id}')">`
+    <tr onclick="openCueModal('${c.id}')">
       <td>${i + 1}</td>
       <td class="cell-tc">${esc(c.tc)}</td>
       <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}</td>

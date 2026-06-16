@@ -2427,7 +2427,7 @@ async function requestMidiDevices() {
     return;
   }
   try {
-    midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+    midiAccess = await navigator.requestMIDIAccess({ sysex: false });
     populateMidiDevices();
     midiAccess.onstatechange = () => populateMidiDevices();
   } catch (e) {

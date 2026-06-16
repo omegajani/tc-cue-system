@@ -131,16 +131,15 @@
     .live-checklist-queue .live-cue-title { color:rgba(153,246,228,.78); }
     .live-checklist-queue-trigger { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-transform:uppercase; }
     .live-checklist-queue-count { color:rgba(94,234,212,.5); font-size:9px; font-weight:650; white-space:nowrap; }
-    .live-checklist-queue-preview { display:none; margin-top:7px; color:rgba(255,255,255,.58); font-size:11px; line-height:1.4; }
-    .live-checklist-queue:hover .live-checklist-queue-preview,
-    .live-checklist-queue.expanded .live-checklist-queue-preview { display:block; }
+    /* Abhakbare Punkte – nur sichtbar, wenn die Liste aufgeklappt ist (kein Hover) */
+    .live-checklist-queue-items { display:none; margin-top:9px; gap:6px; }
+    .live-checklist-queue.expanded .live-checklist-queue-items { display:grid; }
     .live-checklist-queue.expanded { min-height:82px; }
+    .live-checklist-queue:not(.expanded):hover { min-height:58px; }
     .live-checklist-queue .live-cue-listicon { cursor:pointer; padding:7px; margin:-7px; border-radius:9px; transition:background .15s; }
     .live-checklist-queue .live-cue-listicon:hover { background:rgba(45,212,191,.2); }
     .live-checklist-queue.expanded .live-cue-listicon { background:rgba(45,212,191,.16); }
-    .live-checklist-queue-preview span { display:block; position:relative; padding-left:12px; }
-    .live-checklist-queue-preview span:before { content:'•'; position:absolute; left:0; color:rgba(94,234,212,.5); }
-    .live-checklist-queue.done .live-checklist-queue-preview span { color:rgba(255,255,255,.4); text-decoration:line-through; }
+    .live-checklist-queue .live-checklist-item { min-height:34px; }
     #live-checklists { display:none; flex:0 0 auto; margin-bottom:14px; gap:10px; }
     #live-checklists.show { display:grid; }
     .live-checklist { position:relative; overflow:hidden; border:1px solid rgba(45,212,191,.42); border-radius:22px; padding:16px; background:linear-gradient(135deg,rgba(13,148,136,.22),rgba(15,23,42,.72)); box-shadow:inset 0 1px rgba(255,255,255,.17),0 16px 38px rgba(0,0,0,.22); cursor:pointer; }
@@ -1413,7 +1412,11 @@ function renderLiveCues(cur, next, tcString) {
           <div class="live-cue-listicon" role="button" title="Liste auf-/zuklappen" onclick="event.stopPropagation();toggleChecklistExpand('${checklist.id}',this)"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="4" r="1.2" fill="currentColor"/><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><line x1="6.5" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
           <div>
             <div class="live-cue-title">${esc(checklist.title)}</div>
-            <div class="live-checklist-queue-preview">${checklist.items.map(item => `<span>${esc(item.text)}</span>`).join('')}</div>
+            <div class="live-checklist-queue-items">${checklist.items.map(item => `
+              <label class="live-checklist-item ${item.checked ? 'checked' : ''}" onclick="event.stopPropagation()">
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem('${checklist.id}','${item.id}',this.checked)" />
+                <span>${esc(item.text)}</span>
+              </label>`).join('')}</div>
           </div>
           <div class="live-checklist-queue-count">${done ? '✓ Erledigt' : `${checklist.items.length} Punkte`}</div>
         </div>`;
@@ -2091,6 +2094,9 @@ async function toggleChecklistItem(checklistId, itemId, checked) {
   const show = allShows.find(show => show.id === currentShowId);
   const checklist = show?.checklists?.find(item => item.id === checklistId);
   if (!checklist) return;
+  // Interaktion in der Cue-Liste: nicht automatisch wegscrollen, erst nach Ruhe.
+  _pickerBrowsing = true;
+  scheduleLivePickerReset();
   checklist.items = checklist.items.map(item => item.id === itemId ? { ...item, checked } : item);
   const updated = { ...checklist, items: checklist.items.map(item => ({ ...item })) };
   renderLiveChecklists(_lastCurrentCue);

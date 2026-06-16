@@ -2471,29 +2471,49 @@ function startBrowserMTC() {
     lastMtcTc = tc;
     lastMtcTime = Date.now();
     document.getElementById('mtc-decoded-tc').textContent = tc;
+    // Event-getrieben posten: jedes dekodierte TC sofort an den Server
+    // (Server dedupliziert identische TCs). So hängt der Takt nicht allein
+    // am setInterval, das Chrome im Hintergrund-Tab auf 1 Hz drosselt.
+    postMtcTick(tc);
   };
 
   midiActiveInput.onmidimessage = (event) => {
     mtcDecoder.processMidiMessage(Array.from(event.data));
   };
 
-  // Post to server at ~25Hz (only when fresh TC)
+  // Heartbeat: Status aktualisieren + letztes TC nachsenden (Fallback).
   mtcTickInterval = setInterval(() => {
-    if (!lastMtcTc) return;
-    const age = Date.now() - lastMtcTime;
     const stat = document.getElementById('mtc-decode-status');
-    if (age < 500) {
-      stat.textContent = 'MTC erkannt ✓';
-      stat.style.color = 'var(--green)';
-      fetch('/api/tc/midi-tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: lastMtcTc }) }).catch(() => {});
+    if (lastMtcTc && Date.now() - lastMtcTime < 500) {
+      if (document.hidden) {
+        stat.textContent = '⚠︎ Tab im Hintergrund – TC wird gedrosselt!';
+        stat.style.color = 'var(--red)';
+      } else {
+        stat.textContent = 'MTC erkannt ✓';
+        stat.style.color = 'var(--green)';
+      }
+      postMtcTick(lastMtcTc);
     } else {
       stat.textContent = 'Kein Signal';
       stat.style.color = 'var(--muted)';
     }
-  }, 40);
+  }, 100);
 
   document.getElementById('tc-source-status').textContent = 'Läuft';
 }
+
+function postMtcTick(tc) {
+  fetch('/api/tc/midi-tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc }) }).catch(() => {});
+}
+
+// Warnung, wenn das Relay-Tab in den Hintergrund geht: Chrome drosselt dann
+// Timer/Events auf ~1 Hz → Frames bleiben scheinbar stehen, TC-Punkt blinkt.
+document.addEventListener('visibilitychange', () => {
+  if (!mtcDecoder) return;
+  if (document.hidden) {
+    console.warn('[MTC] Tab im Hintergrund – Chrome drosselt den TC-Relay auf ~1 Hz. Tab im Vordergrund halten!');
+  }
+});
 
 function stopBrowserMTC() {
   if (mtcTickInterval) { clearInterval(mtcTickInterval); mtcTickInterval = null; }

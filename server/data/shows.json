@@ -3,7 +3,7 @@
     "id": "show-demo-001",
     "name": "Blinded by Delight",
     "date": "2026-05-01",
-    "tcSource": "simulator",
+    "tcSource": "mtc",
     "fallbackMode": "stop",
     "audioChannel": "left",
     "positions": [
@@ -114,109 +114,178 @@
         "startTc": "08:29:19:00",
         "endTc": "08:35:31:00",
         "id": "5dd73963-e43e-4023-b495-b8ebc7a13725"
+      },
+      {
+        "name": "Pos. 17 Splendor",
+        "startTc": "09:00:01:00",
+        "endTc": "09:04:17:22",
+        "id": "eab7b360-dc56-42fe-a141-491398d31e96"
+      },
+      {
+        "name": "Pos. 18 Supersonic Boom",
+        "startTc": "09:30:01:00",
+        "endTc": "09:35:05:06",
+        "id": "bdc86617-bf40-4d97-9021-5a55679c5fc8"
+      },
+      {
+        "name": "Pos. 19 Die Welt die wir lieben",
+        "startTc": "10:00:01:00",
+        "endTc": "10:03:51:00",
+        "id": "3c71c63c-1406-4311-a243-e742fdf90b27"
+      },
+      {
+        "name": "Pos. 21 Nightmare",
+        "startTc": "11:00:01:00",
+        "endTc": "11:03:41:00",
+        "id": "c7fc637b-aebf-4248-b027-dc42a3a176f6"
+      },
+      {
+        "name": "Pos.22.1 Blossoming",
+        "startTc": "11:03:41:01",
+        "endTc": "11:07:53:19",
+        "id": "dc86d9da-6778-44e0-93d6-4bd0ca0556a1"
+      },
+      {
+        "name": "Pos. 22.2 Blossoming Reprise",
+        "startTc": "11:15:01:00",
+        "endTc": "11:15:57:15",
+        "id": "41f24583-7b66-4473-b8ea-99f167714369"
+      },
+      {
+        "name": "Pos. 23 Happy Hour 2",
+        "startTc": "11:30:01:00",
+        "endTc": "11:32:19:00",
+        "id": "a2533aac-e57f-469b-a837-6e117d937039"
+      },
+      {
+        "name": "Pos. 24 Eine Wunderschöne Lüge Lang C MOLL",
+        "startTc": "12:00:01:00",
+        "endTc": "12:06:29:03",
+        "id": "9a4dc13c-b2b0-4f8f-8628-b9634ab7ab71"
+      },
+      {
+        "name": "Pos. 24b Eine Wunderschöne Lüge Kurz C MOLL",
+        "startTc": "12:30:01:00",
+        "endTc": "12:34:15:01",
+        "id": "33e7e2c2-39ab-47b3-9ac7-0be8299fa42e"
+      },
+      {
+        "name": "Pos. 24 Eine Wunderschöne Lüge Lang D MOLL",
+        "startTc": "13:00:01:00",
+        "endTc": "13:06:28:05",
+        "id": "6413b66f-d3f9-42ce-9a1e-23fcfe71b408"
+      },
+      {
+        "name": "Pos. 24b Eine Wunderschöne Lüge Kurz D MOLL",
+        "startTc": "13:30:01:00",
+        "endTc": "13:34:15:04",
+        "id": "372b3d57-bef3-403b-9a08-6e45b051a32d"
+      },
+      {
+        "name": "Pos. 25 All In",
+        "startTc": "14:00:01:00",
+        "endTc": "14:04:15:09",
+        "id": "83ad8e63-de67-4424-85b7-23a730fb3738"
+      },
+      {
+        "name": "Pos. 26.1 Blinded By Delight",
+        "startTc": "14:30:03:01",
+        "endTc": "14:36:14:19",
+        "id": "5e9369c1-38ec-460a-b36d-b2674e51aa3a"
+      },
+      {
+        "name": "Pos. 26.2 Blindet By Delight Reprise",
+        "startTc": "15:00:01:00",
+        "endTc": "15:00:58:09",
+        "id": "23d1f6f8-961d-4e43-92d4-c24fd0cc88e5"
+      },
+      {
+        "name": "Pos. 27 Noch Eine Chance!",
+        "startTc": "15:30:01:00",
+        "endTc": "15:33:33:15",
+        "id": "de04b8de-368c-40ff-a09a-55eccb5e39e3"
+      },
+      {
+        "name": "Pos. 28 Good Life",
+        "startTc": "16:00:01:00",
+        "endTc": "16:04:16:08",
+        "id": "e0bbfc76-d44f-4075-b42a-cdc9129e282c"
+      },
+      {
+        "name": "Pos. 29 Bows",
+        "startTc": "16:30:01:00",
+        "endTc": "16:32:42:00",
+        "id": "e91e452e-cb15-4829-8183-3e1e5a43e9b1"
+      },
+      {
+        "name": "Pos. 30 Good Life Reprise",
+        "startTc": "17:00:01:00",
+        "endTc": "17:00:54:00",
+        "id": "82270ffb-4fa1-4a9c-9744-07c202a5865e"
       }
     ],
     "cues": [
       {
-        "id": "cue-001",
-        "tc": "00:00:10:00",
-        "title": "Einlass beendet",
-        "message": "Türen schließen! Einlass ist beendet.",
-        "color": "#3b82f6"
-      },
-      {
-        "id": "cue-002",
-        "tc": "00:00:20:00",
-        "title": "Licht Blackout",
-        "message": "Licht auf Blackout! Beginn Akt 1.",
-        "color": "#ef4444"
-      },
-      {
-        "id": "cue-003",
-        "tc": "00:00:35:00",
-        "title": "Szene 1.1 – Wache",
-        "message": "Umbau Wache bereit? → Bühne frei!",
-        "color": "#f59e0b"
-      },
-      {
-        "id": "cue-004",
-        "tc": "00:01:00:00",
-        "title": "Pausenansage",
-        "message": "Pausenansage in 60 Sekunden vorbereiten.",
-        "color": "#10b981"
-      },
-      {
         "id": "cue-005",
-        "tc": "00:01:30:00",
-        "title": "Akt 2 Beginn",
-        "message": "Akt 2 beginnt! Alle Positionen einnehmen.",
-        "color": "#8b5cf6"
+        "tc": "05:00:00:00",
+        "title": "SB rechts HH Dream",
+        "message": "Handsender für Dream bringen",
+        "color": "#0433ff",
+        "resetShow": false
       },
       {
-        "id": "bf420ce0-5afc-437e-a4bc-031472bfdf1f",
-        "tc": "02:01:00:00",
-        "title": "Test: Traum Übergang",
-        "message": "Übergang für Wovon träumst du vorbereiten.",
-        "color": "#38bdf8"
+        "id": "690f8f93-7f9f-4066-b7fa-55f468b03e19",
+        "tc": "05:04:11:00",
+        "title": "Dream HH mitnehmen",
+        "message": "nach Life's Delight Dream Handsender entgegennehmen und zum Radioraum bringen",
+        "color": "#0433ff",
+        "resetShow": false
       },
       {
-        "id": "f38080f5-3d5d-4249-aa43-e3e649bfc90f",
-        "tc": "02:33:00:00",
-        "title": "Test: Lift off Effekt",
-        "message": "Effekt und Lichtwechsel für Lift off auslösen.",
-        "color": "#a78bfa"
+        "id": "89761557-2adb-4647-abcb-78a55bab0d87",
+        "tc": "07:04:17:00",
+        "title": "LICHT AUS!",
+        "message": "Arbeitslicht beim Radioraum und Monitor ausmachen",
+        "color": "#fffb00",
+        "resetShow": false
       },
       {
-        "id": "b1c2e814-d342-473c-a48e-13a40f62b750",
-        "tc": "03:32:00:00",
-        "title": "Test: Running Mitte",
-        "message": "Bühnenaktion zur Songmitte prüfen.",
-        "color": "#fb7185"
+        "id": "dd2bc3ee-fa7f-42a7-901b-8414010e4c35",
+        "tc": "09:33:00:00",
+        "title": "HH Dream presetten am alten Portplatz + Handschlaufen",
+        "message": "HH zum alten Portplatz SB rechts und\nHandschlaufen 0-Gasse rechts für Glückshormone",
+        "color": "#0433ff",
+        "resetShow": false
       },
       {
-        "id": "ce0b5f8e-b143-4417-ae24-a37eaa1cf857",
-        "tc": "04:02:00:00",
-        "title": "Test: Eclipse Blackout",
-        "message": "Blackout für Eclipse of Delight vorbereiten.",
-        "color": "#818cf8"
+        "id": "42766d4c-9e7c-4f85-b4f7-7a5e0c2439ac",
+        "tc": "11:15:57:00",
+        "title": "HH Luci übergeben",
+        "message": "SB links",
+        "color": "#ff40ff",
+        "resetShow": false
       },
       {
-        "id": "c561d5a4-329f-4b78-8aca-9ba340c437ce",
-        "tc": "05:32:00:00",
-        "title": "Test: Weightless Fokus",
-        "message": "Fokuswechsel während Weightless auslösen.",
-        "color": "#34d399"
-      },
-      {
-        "id": "08fb0f1c-a79a-44cd-877b-54d6689ad9e9",
-        "tc": "07:33:00:00",
-        "title": "Test: Sunset Umbau",
-        "message": "Umbau für Sunset kontrollieren.",
-        "color": "#f59e0b"
+        "id": "59a3f5f5-168d-4a7b-b95f-00f9e43e3299",
+        "tc": "14:30:02:00",
+        "title": "HH Luci abholen + Handschlaufe",
+        "message": "SB links Luci abholen\nmit Handschlaufe versehen und auf Stativ SB link",
+        "color": "#ff40ff",
+        "resetShow": false
       }
     ],
     "checklists": [
       {
         "id": "bd061410-2189-4939-9a20-0c97c0b4d844",
-        "title": "Preset Show",
+        "title": "Preset 18:45",
         "trigger": {
           "type": "time",
-          "time": "14:36"
+          "time": "18:45"
         },
         "items": [
           {
             "id": "467a3e78-9884-4143-9ded-279a74e8f2bf",
-            "text": "Mikros verteilen",
-            "checked": true
-          },
-          {
-            "id": "146e1d0d-ce23-41da-849d-1e8ffa6d3413",
-            "text": "Bock haben",
-            "checked": true
-          },
-          {
-            "id": "b2393697-3dbf-4d94-af24-ec91eea305b7",
-            "text": "Saufen!",
+            "text": "HH Luci in den Wagen für Eclipse of Delight",
             "checked": true
           }
         ]
@@ -226,17 +295,22 @@
         "title": "Pause",
         "trigger": {
           "type": "after-cue",
-          "cueId": "cue-003"
+          "cueId": "cue-005"
         },
         "items": [
           {
             "id": "ba392775-111b-443f-b916-852b6b890b8b",
-            "text": "Mikro von Seitenbühne links holen",
+            "text": "Mikro von Lucy aus dem Wasserbecken holen",
             "checked": true
           },
           {
             "id": "59cc3b81-d33e-4c13-862e-7947d1cac873",
             "text": "rauchen",
+            "checked": true
+          },
+          {
+            "id": "d9844973-eab3-405c-b5da-4fb21f3dc63c",
+            "text": "Handschlaufe an HH Dream anbringen",
             "checked": true
           }
         ]

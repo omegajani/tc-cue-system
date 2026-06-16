@@ -1386,7 +1386,7 @@ function renderLiveCues(cur, next, tcString) {
       const checklist = entry.checklist;
       const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
       return `
-        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
           <div class="live-cue-time">
             <div class="live-cue-song">Aufgabenliste</div>
             <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
@@ -1493,15 +1493,38 @@ function updateLiveCueCountdown(nextCue, tcString) {
   countdown.textContent = `in ${formatRemainingTime(secondsUntil)}`;
 }
 
+// Ziel-Zeile für den Snap-Back auf das nächste Element: steht zwischen dem
+// aktuellen und dem nächsten Cue noch eine offene Aufgabenliste, wird auf die
+// Liste gesnappt, sonst auf den nächsten Cue.
+function findNextFollowRow(list) {
+  const nextId = _lastNextCue?.id;
+  if (!nextId) return null;
+  const nextRow = list.querySelector(`[data-cue-id="${nextId}"]`);
+  if (!nextRow) return null;
+  const rows = [...list.querySelectorAll('.live-cue-row')];
+  const nextIdx = rows.indexOf(nextRow);
+  const curRow = _lastCurrentCue?.id ? list.querySelector(`[data-cue-id="${_lastCurrentCue.id}"]`) : null;
+  const startIdx = curRow ? rows.indexOf(curRow) + 1 : 0;
+  for (let i = startIdx; i < nextIdx; i++) {
+    if (rows[i].classList.contains('live-checklist-queue') && !rows[i].classList.contains('done')) {
+      return rows[i];
+    }
+  }
+  return nextRow;
+}
+
 function followLiveCurrentCue(smooth = true, preferNext = false) {
   // preferNext: nach dem Scrollen auf den nächsten (anstehenden) Cue snappen
   // statt zurück auf den bereits abgefeuerten aktuellen Cue.
-  const cueId = preferNext
-    ? (_lastNextCue?.id || _lastCurrentCue?.id)
-    : (_lastCurrentCue?.id || _lastNextCue?.id);
-  if (!cueId) return;
   const list = document.getElementById('live-cue-list');
-  const row = list.querySelector(`[data-cue-id="${cueId}"]`);
+  let row = preferNext ? findNextFollowRow(list) : null;
+  if (!row) {
+    const cueId = preferNext
+      ? (_lastNextCue?.id || _lastCurrentCue?.id)
+      : (_lastCurrentCue?.id || _lastNextCue?.id);
+    if (!cueId) return;
+    row = list.querySelector(`[data-cue-id="${cueId}"]`);
+  }
   if (!row) return;
   const listTop = list.getBoundingClientRect().top;
   const rowTop = row.getBoundingClientRect().top;

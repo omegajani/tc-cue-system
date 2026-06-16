@@ -1493,8 +1493,12 @@ function updateLiveCueCountdown(nextCue, tcString) {
   countdown.textContent = `in ${formatRemainingTime(secondsUntil)}`;
 }
 
-function followLiveCurrentCue(smooth = true) {
-  const cueId = _lastCurrentCue?.id || _lastNextCue?.id;
+function followLiveCurrentCue(smooth = true, preferNext = false) {
+  // preferNext: nach dem Scrollen auf den nächsten (anstehenden) Cue snappen
+  // statt zurück auf den bereits abgefeuerten aktuellen Cue.
+  const cueId = preferNext
+    ? (_lastNextCue?.id || _lastCurrentCue?.id)
+    : (_lastCurrentCue?.id || _lastNextCue?.id);
   if (!cueId) return;
   const list = document.getElementById('live-cue-list');
   const row = list.querySelector(`[data-cue-id="${cueId}"]`);
@@ -1544,7 +1548,7 @@ function scheduleLivePickerReset() {
     }
     _pickerBrowsing = false;
     _pickerScrollTimer = null;
-    followLiveCurrentCue(true);
+    followLiveCurrentCue(true, true);
   }, 4000);
 }
 

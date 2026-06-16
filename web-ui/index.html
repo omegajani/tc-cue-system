@@ -955,8 +955,9 @@ function applySettings(s) {
   const liveTc = document.getElementById('live-tc');
   liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(30px,5vw,48px)' : s.liveFontSize === 'large' ? 'clamp(48px,9vw,84px)' : '';
   // Großer TC optional
-  liveTc.style.display = s.liveBigTc === false ? 'none' : '';
-  document.getElementById('live-position').classList.toggle('compact', s.liveBigTc === false);
+  const livePos = document.getElementById('live-position');
+  livePos.style.display = s.liveBigTc === false ? 'none' : '';
+  liveTc.style.display = '';
   window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
   window._screenFlash = !!s.screenFlash;
   _liveCueRenderSignature = '';

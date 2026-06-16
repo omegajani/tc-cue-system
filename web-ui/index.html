@@ -36,10 +36,17 @@
     }
 
     /* ── STATUS BAR ─────────────────────────────────────────────────── */
-    #status-bar { display: flex; align-items: center; gap: 12px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+    #status-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
-    #tc-display { display:inline-block; width:13ch; flex:0 0 13ch; font-size:17px; font-weight:bold; letter-spacing:2px; color:#ffffff; margin-left:auto; text-align:right; white-space:nowrap; }
+    #tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+    #tc-dot.connected { background: var(--green); }
+    #hdr-center { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; }
+    #hdr-song { min-width: 0; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    #hdr-remaining { flex: 0 0 auto; color: var(--muted); white-space: nowrap; }
+    #hdr-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.06); }
+    #hdr-progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, rgba(59,130,246,.85), rgba(96,165,250,.5)); transition: width .12s linear; }
+    #tc-display { display:inline-block; width:13ch; flex:0 0 13ch; font-size:17px; font-weight:bold; letter-spacing:2px; color:#ffffff; text-align:right; white-space:nowrap; }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
     nav { display: flex; border-bottom: 1px solid var(--border); }
@@ -60,6 +67,8 @@
     #live-position:after { content:''; position:absolute; inset:1px 14% auto; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent); }
     #live-position-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(110deg, rgba(37,99,235,.46), rgba(96,165,250,.14)); border-right: 1px solid rgba(191,219,254,.48); box-shadow: 12px 0 38px rgba(59,130,246,.2); transition: width .12s linear; }
     #live-position-content { position:relative; z-index:1; min-height:146px; padding:17px 23px 21px; }
+    #live-position.compact, #live-position.compact #live-position-content { min-height:auto; }
+    #live-position.compact #live-position-content { padding:14px 23px 15px; }
     #live-position-header { position:relative; z-index:2; display:flex; align-items:baseline; gap:10px; }
     #live-position-name { flex: 1; font-size: clamp(15px, 2.5vw, 20px); font-weight: 650; color:rgba(255,255,255,.9); }
     #live-position-remaining { color: rgba(219,234,254,.8); font-size: 10px; white-space: nowrap; }
@@ -73,7 +82,7 @@
     #live-cue-list:after { content:''; flex:0 0 calc(100% - 104px); }
     #live-cue-list::-webkit-scrollbar { width:6px; }
     #live-cue-list::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.2); }
-    .live-cue-row { position:relative; display:grid; grid-template-columns:96px 10px minmax(0,1fr) auto; gap:13px; align-items:center; min-height:58px; width:100%; padding:11px 16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); box-shadow:inset 0 1px rgba(255,255,255,.11),0 8px 24px rgba(0,0,0,.12); color:var(--muted); cursor:pointer; overflow:hidden; transform-origin:center top; scroll-snap-align:start; scroll-snap-stop:always; transition:transform .25s,opacity .25s,min-height .25s,padding .25s,border-color .25s,background .25s,box-shadow .25s; backdrop-filter:blur(20px) saturate(135%); -webkit-backdrop-filter:blur(20px) saturate(135%); }
+    .live-cue-row { position:relative; display:grid; grid-template-columns:96px 10px minmax(0,1fr) auto; gap:13px; align-items:center; min-height:58px; flex-shrink:0; width:100%; padding:11px 16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); box-shadow:inset 0 1px rgba(255,255,255,.11),0 8px 24px rgba(0,0,0,.12); color:var(--muted); cursor:pointer; overflow:hidden; transform-origin:center top; scroll-snap-align:start; scroll-snap-stop:always; transition:transform .25s,opacity .25s,min-height .25s,padding .25s,border-color .25s,background .25s,box-shadow .25s; backdrop-filter:blur(20px) saturate(135%); -webkit-backdrop-filter:blur(20px) saturate(135%); }
     .live-cue-row:hover { min-height:82px; opacity:1; transform:scale(1); border-color:rgba(255,255,255,.22); background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.04)); }
     .live-cue-row.past { opacity:.28; transform:scale(.93); }
     .live-cue-row.depth-3 { opacity:.38; transform:scale(.94); }
@@ -86,6 +95,8 @@
     .live-cue-song { margin-bottom:4px; overflow:hidden; color:rgba(255,255,255,.42); font-size:9px; font-weight:650; letter-spacing:.55px; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
     .live-cue-tc { width:96px; font-size:10px; letter-spacing:1px; white-space:nowrap; }
     .live-cue-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cue-color); }
+    .live-cue-listicon { display:flex; align-items:center; justify-content:center; overflow:visible; color:var(--cue-color); }
+    .live-cue-listicon svg { width:15px; height:15px; flex:0 0 auto; }
     .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
     .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
     .live-cue-reset-badge { display:inline-flex; align-items:center; gap:3px; margin-top:5px; padding:2px 7px; border-radius:99px; background:rgba(239,68,68,.13); border:1px solid rgba(239,68,68,.28); color:#fca5a5; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
@@ -97,8 +108,14 @@
     .live-cue-row.current .live-cue-dot { width: 11px; height: 11px; }
     .live-cue-row.current .live-cue-title { color:#fff; font-size:clamp(20px,3.2vw,30px); line-height:1.1; }
     .live-cue-row.current .live-cue-message { display:block; }
+    /* Aktueller Cue: größere TC (12px) braucht mehr Platz → linke Spalte inhaltsbasiert, kein seitlicher Anschnitt */
+    .live-cue-row.current { grid-template-columns: auto 10px minmax(0,1fr) auto; }
+    .live-cue-row.current .live-cue-time { width:auto; min-width:0; overflow:visible; }
+    .live-cue-row.current .live-cue-tc { width:auto; }
     .live-cue-state { min-height:11px; margin-bottom:3px; overflow:hidden; color:var(--cue-color); font-size:8px; font-weight:700; letter-spacing:.75px; line-height:1.1; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
     .live-cue-countdown { min-width:52px; color:var(--cue-color); font-size:11px; font-weight:700; text-align:right; white-space:nowrap; }
+    .live-cue-countdown.paused { color:var(--muted); font-weight:600; opacity:.85; }
+    .live-cue-countdown.songs { color:rgba(255,255,255,.6); font-weight:600; }
     .live-checklist-queue { --cue-color:#2dd4bf; border-color:rgba(45,212,191,.16); background:linear-gradient(145deg,rgba(45,212,191,.075),rgba(255,255,255,.02)); }
     .live-checklist-queue.done { --cue-color:#10b981; border-color:rgba(16,185,129,.2); background:linear-gradient(145deg,rgba(16,185,129,.09),rgba(255,255,255,.02)); }
     .live-checklist-queue:hover { min-height:82px; border-color:rgba(45,212,191,.3); background:linear-gradient(145deg,rgba(45,212,191,.11),rgba(255,255,255,.03)); }
@@ -230,6 +247,11 @@
     th { background:rgba(255,255,255,.025); color:var(--muted); font-weight:normal; text-transform:uppercase; font-size:9px; letter-spacing:.6px; white-space:nowrap; }
     tr:hover td { background:rgba(255,255,255,.022); }
     td.actions { white-space: nowrap; }
+    .cue-table-wrap tbody tr { cursor:pointer; }
+    .cell-tc { font-family:'SFMono-Regular','SF Mono',Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; letter-spacing:1px; white-space:nowrap; }
+    .cell-title { font-weight:650; }
+    .cell-message { color:var(--muted); }
+    .cell-color-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; vertical-align:middle; flex:0 0 auto; }
     .inline-edit { width:100%; min-width:90px; border:1px solid transparent; border-radius:6px; background:transparent; color:inherit; padding:6px 7px; font:inherit; transition:border-color .15s,background .15s; }
     .inline-edit:hover { border-color:var(--border); background:rgba(255,255,255,.025); }
     .inline-edit:focus { outline:none; border-color:var(--accent); background:var(--bg); }
@@ -287,6 +309,8 @@
     .url-item code { flex:1; color:var(--accent); font-size:12px; }
     @media (max-width: 760px) {
       .view { padding: 16px 12px; }
+      /* iOS zoomt bei Fokus auf Felder mit <16px hinein – verhindern, damit Modals sichtbar bleiben */
+      .form-row input, .form-row select, .form-row textarea { font-size: 16px; }
       .settings-grid { grid-template-columns: 1fr; }
       .show-layout { grid-template-columns:1fr; }
       .show-library { position:static; }
@@ -309,16 +333,21 @@
 
 <!-- ── STATUS BAR ──────────────────────────────────────────────────────── -->
 <div id="status-bar">
-  <span id="ws-dot"></span>
-  <span id="ws-status">Verbinde...</span>
+  <span id="ws-dot" title="Server-Verbindung: getrennt"></span>
+  <span id="tc-dot" title="Timecode-Signal: noch kein Signal empfangen"></span>
+  <div id="hdr-center">
+    <span id="hdr-song"></span>
+    <span id="hdr-remaining"></span>
+  </div>
   <span id="tc-display">--:--:--:--</span>
+  <div id="hdr-progress"><div id="hdr-progress-fill"></div></div>
 </div>
 
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <nav>
   <button class="active" data-view="live" onclick="showView('live',this)">Live</button>
-  <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="edit" onclick="showView('edit',this)">Edit</button>
+  <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
 </nav>
 
@@ -406,6 +435,12 @@
         <span class="sp-hint">TC-Format: HH:MM:SS:FF statt HH:MM:SS</span>
       </div>
       <label class="toggle"><input type="checkbox" id="s-show-frames" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Großer TC-Zähler
+        <span class="sp-hint">Großen Timecode im Live-Panel anzeigen</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-live-big-tc" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
     <div class="sp-row">
       <div class="sp-label">Schriftgröße Live-TC</div>
@@ -662,6 +697,7 @@
       </div>
     </div>
     <div class="modal-actions">
+      <button class="btn btn-danger" id="f-cue-delete" style="display:none" onclick="deleteCue(document.getElementById('f-cue-id').value)">Löschen</button>
       <div style="flex:1"></div>
       <button class="btn" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveCue()">Speichern</button>
@@ -689,6 +725,7 @@
       </div>
     </div>
     <div class="modal-actions">
+      <button class="btn btn-danger" id="f-position-delete" style="display:none" onclick="deletePosition(document.getElementById('f-position-id').value)">Löschen</button>
       <div style="flex:1"></div>
       <button class="btn" onclick="closePositionModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="savePosition()">Speichern</button>
@@ -766,7 +803,7 @@
     <div>
       <div class="edit-overview-kicker">Geladene Show</div>
       <div class="edit-overview-name" id="edit-show-name">Keine Show geladen</div>
-      <div class="edit-overview-hint">Änderungen in Tabellenfeldern werden beim Verlassen des Feldes gespeichert.</div>
+      <div class="edit-overview-hint">Auf einen Eintrag tippen, um ihn zu bearbeiten oder zu löschen.</div>
     </div>
     <div class="edit-overview-counts">
       <div class="edit-overview-count"><strong id="edit-count-positions">0</strong><span>Songs</span></div>
@@ -803,7 +840,7 @@
         <span class="edit-section-chevron">⌄</span>
         <span class="edit-section-title">
           <h2>Cues</h2>
-          <span class="edit-card-description">Timecode, Farbe, Titel und Nachricht direkt in der Tabelle bearbeiten.</span>
+          <span class="edit-card-description">Eintrag antippen zum Bearbeiten oder Löschen.</span>
         </span>
       </button>
       <div class="toolbar">
@@ -875,6 +912,7 @@ const SETTINGS_KEY = 'tc-cue-settings';
 const EDIT_SECTIONS_KEY = 'tc-cue-edit-sections';
 const SETTING_DEFAULTS = {
   showFrames:      true,
+  liveBigTc:       true,
   liveFontSize:    'normal',
   nextCuePreviews: 0,
   screenFlash:     false,
@@ -897,6 +935,7 @@ function saveSettings() {
 function getCurrentSettingsFromUI() {
   return {
     showFrames:       document.getElementById('s-show-frames').checked,
+    liveBigTc:        document.getElementById('s-live-big-tc').checked,
     liveFontSize:     document.getElementById('s-live-font').value,
     nextCuePreviews:  Number(document.getElementById('s-next-cue-previews').value),
     screenFlash:      document.getElementById('s-screen-flash').checked,
@@ -910,6 +949,9 @@ function applySettings(s) {
   // Live TC font size
   const liveTc = document.getElementById('live-tc');
   liveTc.style.fontSize = s.liveFontSize === 'small' ? 'clamp(30px,5vw,48px)' : s.liveFontSize === 'large' ? 'clamp(48px,9vw,84px)' : '';
+  // Großer TC optional
+  liveTc.style.display = s.liveBigTc === false ? 'none' : '';
+  document.getElementById('live-position').classList.toggle('compact', s.liveBigTc === false);
   window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
   window._screenFlash = !!s.screenFlash;
   _liveCueRenderSignature = '';
@@ -927,6 +969,7 @@ function openSettings() {
   const s = loadSettings();
   // Populate UI
   document.getElementById('s-show-frames').checked = s.showFrames;
+  document.getElementById('s-live-big-tc').checked = s.liveBigTc;
   document.getElementById('s-live-font').value     = s.liveFontSize;
   document.getElementById('s-next-cue-previews').value = String(s.nextCuePreviews);
   document.getElementById('s-screen-flash').checked = s.screenFlash;
@@ -1078,8 +1121,19 @@ function connect() {
 }
 
 function setWsStatus(ok) {
-  document.getElementById('ws-dot').className = ok ? 'connected' : '';
-  document.getElementById('ws-status').textContent = ok ? 'Verbunden' : 'Getrennt – verbinde…';
+  const dot = document.getElementById('ws-dot');
+  dot.className = ok ? 'connected' : '';
+  dot.title = ok ? 'Server-Verbindung: verbunden' : 'Server-Verbindung: getrennt';
+}
+
+function updateTcDot() {
+  const dot = document.getElementById('tc-dot');
+  dot.className = _tcRunning ? 'connected' : '';
+  dot.title = !_everReceivedTc
+    ? 'Timecode-Signal: noch kein Signal empfangen'
+    : _tcRunning
+      ? 'Timecode-Signal: aktiv (TC läuft)'
+      : 'Timecode-Signal: kein Signal (TC steht)';
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1089,6 +1143,10 @@ function handleEvent(evt) {
   const tc = evt.tc;
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
   if (evt.type === 'TC_UPDATE') {
+    _lastTcUpdateAt = Date.now();
+    _everReceivedTc = true;
+    _tcRunning = true;
+    updateTcDot();
     document.getElementById('tc-display').textContent = displayTc;
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
@@ -1119,6 +1177,9 @@ function renderCurrentPosition(position, tcString) {
     document.getElementById('live-position-name').textContent = 'Keine Position aktiv';
     document.getElementById('live-position-remaining').textContent = '';
     document.getElementById('live-position-fill').style.width = '0';
+    document.getElementById('hdr-song').textContent = '';
+    document.getElementById('hdr-remaining').textContent = '';
+    document.getElementById('hdr-progress-fill').style.width = '0';
     return;
   }
   const start = tcStringToSeconds(position.startTc);
@@ -1130,6 +1191,9 @@ function renderCurrentPosition(position, tcString) {
   document.getElementById('live-position-name').textContent = position.name;
   document.getElementById('live-position-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
   document.getElementById('live-position-fill').style.width = `${progress * 100}%`;
+  document.getElementById('hdr-song').textContent = position.name;
+  document.getElementById('hdr-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
+  document.getElementById('hdr-progress-fill').style.width = `${progress * 100}%`;
   panel.classList.add('show');
 }
 
@@ -1153,6 +1217,26 @@ let _pickerScrollTimer = null;
 let _pickerHovered = false;
 let _suppressPickerScroll = false;
 let _pickerSelectionFrame = null;
+
+// TC-Lauf-Erkennung: kommt für TC_STALE_MS kein TC_UPDATE mehr (Nuendo pausiert,
+// MTC-Quarter-Frames hören auf), gilt der TC als "steht" → kein irreführender Countdown.
+const TC_STALE_MS = 700;
+let _lastTcUpdateAt = 0;
+let _everReceivedTc = false;
+let _tcRunning = false;
+let _tcWatchdog = null;
+
+function startTcWatchdog() {
+  if (_tcWatchdog) return;
+  _tcWatchdog = setInterval(() => {
+    const running = _everReceivedTc && (Date.now() - _lastTcUpdateAt) <= TC_STALE_MS;
+    if (running !== _tcRunning) {
+      _tcRunning = running;
+      updateTcDot();
+      updateLiveCueCountdown(_lastNextCue, _lastTcString);
+    }
+  }, 250);
+}
 
 function renderLiveChecklists(currentCue = _lastCurrentCue) {
   const wrap = document.getElementById('live-checklists');
@@ -1261,7 +1345,7 @@ function renderLiveCues(cur, next, tcString) {
             <div class="live-cue-song">Aufgabenliste</div>
             <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
           </div>
-          <div class="live-cue-dot"></div>
+          <div class="live-cue-listicon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="4" r="1.2" fill="currentColor"/><circle cx="3" cy="8" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><line x1="6.5" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="6.5" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
           <div>
             <div class="live-cue-title">${esc(checklist.title)}</div>
             <div class="live-checklist-queue-preview">${checklist.items.map(item => `<span>${esc(item.text)}</span>`).join('')}</div>
@@ -1319,9 +1403,46 @@ function findPositionForCue(cue, show) {
     .sort((a, b) => tcStringToSeconds(b.startTc) - tcStringToSeconds(a.startTc))[0] || null;
 }
 
+// Anzahl Songs bis der Cue feuert. 0 = Cue-Song läuft bereits (Zeit-Countdown sinnvoll);
+// N>0 = Cue liegt N Songs voraus; null = keine Song-Info → Zeit-Fallback.
+function songsUntilCue(cue, tcString, show) {
+  const positions = [...(show?.positions || [])]
+    .sort((a, b) => tcStringToSeconds(a.startTc) - tcStringToSeconds(b.startTc));
+  if (!positions.length) return null;
+  const cueSong = findPositionForCue(cue, show);
+  if (!cueSong) return null;
+  const now = tcStringToSeconds(tcString);
+  const songStart = tcStringToSeconds(cueSong.startTc);
+  const songEnd = tcStringToSeconds(cueSong.endTc);
+  if (now >= songStart && now <= songEnd) return 0; // Song des Cues läuft
+  if (now > songEnd) return 0; // sollte beim nächsten Cue nicht vorkommen
+  // Song noch nicht gestartet: Songs zählen, deren Start zwischen jetzt und dem Cue-Song liegt.
+  return positions.filter(p => {
+    const s = tcStringToSeconds(p.startTc);
+    return s > now && s <= songStart;
+  }).length;
+}
+
 function updateLiveCueCountdown(nextCue, tcString) {
   const countdown = document.querySelector('[data-next-countdown]');
   if (!countdown || !nextCue) return;
+  const show = allShows.find(s => s.id === currentShowId);
+  const songs = songsUntilCue(nextCue, tcString, show);
+  // Cue liegt in einem späteren Song → stabile Song-Anzeige (über TC-Lücken hinweg).
+  if (songs && songs > 0) {
+    countdown.classList.remove('paused');
+    countdown.classList.add('songs');
+    countdown.textContent = songs === 1 ? 'noch 1 Song' : `noch ${songs} Songs`;
+    return;
+  }
+  countdown.classList.remove('songs');
+  // Song des Cues läuft (oder keine Song-Info): Zeit-Countdown, aber TC-Stillstand beachten.
+  if (!_tcRunning) {
+    countdown.textContent = 'TC steht';
+    countdown.classList.add('paused');
+    return;
+  }
+  countdown.classList.remove('paused');
   const secondsUntil = Math.max(0, Math.ceil(tcStringToSeconds(nextCue.tc) - tcStringToSeconds(tcString)));
   countdown.textContent = `in ${formatRemainingTime(secondsUntil)}`;
 }
@@ -1426,13 +1547,6 @@ function formatTimecodeValue(value) {
 function formatTimecodeInput(input) {
   const formatted = formatTimecodeValue(input.value);
   if (formatted !== input.value && formatted.includes(':')) input.value = formatted;
-}
-
-function inlineEditKeydown(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    event.currentTarget.blur();
-  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1614,18 +1728,15 @@ function renderPositionTable(show) {
     return;
   }
   const rows = positions.map((position, i) => `
-    <tr>
+    <tr onclick="openPositionModal('${position.id}')">
       <td>${i + 1}</td>
-      <td><input class="inline-edit inline-edit-title" value="${esc(position.name)}" aria-label="Name von ${esc(position.name)}" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','name',this.value)" /></td>
-      <td><input class="inline-edit inline-edit-tc" value="${esc(position.startTc)}" inputmode="numeric" aria-label="Start-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','startTc',this.value)" /></td>
-      <td><input class="inline-edit inline-edit-tc" value="${esc(position.endTc)}" inputmode="numeric" aria-label="End-TC von ${esc(position.name)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updatePositionField('${position.id}','endTc',this.value)" /></td>
-      <td class="actions">
-        <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deletePosition('${position.id}')">✕</button>
-      </td>
+      <td class="cell-title">${esc(position.name)}</td>
+      <td class="cell-tc">${esc(position.startTc)}</td>
+      <td class="cell-tc">${esc(position.endTc)}</td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>Position / Song</th><th>Start-TC</th><th>End-TC</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>Position / Song</th><th>Start-TC</th><th>End-TC</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -1639,6 +1750,7 @@ function openPositionModal(positionId) {
   document.getElementById('f-position-name').value = position?.name || '';
   document.getElementById('f-position-start').value = position?.startTc || '';
   document.getElementById('f-position-end').value = position?.endTc || '';
+  document.getElementById('f-position-delete').style.display = position ? '' : 'none';
   document.getElementById('position-modal-overlay').classList.add('show');
   document.getElementById('f-position-name').focus();
 }
@@ -1668,28 +1780,10 @@ async function savePosition() {
   await reloadCurrentShow();
 }
 
-async function updatePositionField(positionId, field, rawValue) {
-  const show = allShows.find(show => show.id === currentShowId);
-  const position = show?.positions?.find(item => item.id === positionId);
-  if (!position) return;
-  const value = field === 'startTc' || field === 'endTc' ? formatTimecodeValue(rawValue) : rawValue.trim();
-  if (!value || value === position[field]) {
-    renderPositionTable(show);
-    return;
-  }
-  const updated = { ...position, [field]: value };
-  if (tcStringToSeconds(updated.endTc) <= tcStringToSeconds(updated.startTc)) {
-    alert('Der End-TC muss nach dem Start-TC liegen.');
-    renderPositionTable(show);
-    return;
-  }
-  await api('PUT', `/api/shows/${currentShowId}/positions/${positionId}`, updated);
-  await reloadCurrentShow();
-}
-
 async function deletePosition(positionId) {
-  if (!confirm('Position wirklich löschen?')) return;
+  if (!positionId || !confirm('Position wirklich löschen?')) return;
   await api('DELETE', `/api/shows/${currentShowId}/positions/${positionId}`);
+  closePositionModal();
   await reloadCurrentShow();
 }
 
@@ -1703,18 +1797,15 @@ function renderCueTable(show) {
     return;
   }
   const rows = show.cues.map((c, i) => `
-    <tr>
+    <tr onclick="openCueModal('${c.id}')">
       <td>${i + 1}</td>
-      <td><input class="inline-edit inline-edit-tc" value="${esc(c.tc)}" inputmode="numeric" aria-label="Timecode von ${esc(c.title)}" oninput="formatTimecodeInput(this)" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','tc',this.value)" /></td>
-      <td><div class="inline-title-wrap"><input class="inline-color" type="color" value="${esc(c.color)}" aria-label="Farbe von ${esc(c.title)}" onchange="updateCueField('${c.id}','color',this.value)" /><input class="inline-edit inline-edit-title" value="${esc(c.title)}" aria-label="Titel von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','title',this.value)" />${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;cursor:default">↺</span>' : ''}</div></td>
-      <td><input class="inline-edit" value="${esc(c.message)}" aria-label="Nachricht von ${esc(c.title)}" onkeydown="inlineEditKeydown(event)" onchange="updateCueField('${c.id}','message',this.value)" /></td>
-      <td class="actions">
-        <button class="btn btn-small btn-icon btn-danger" title="Löschen" onclick="deleteCue('${c.id}')">✕</button>
-      </td>
+      <td class="cell-tc">${esc(c.tc)}</td>
+      <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}</td>
+      <td class="cell-message">${esc(c.message)}</td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -1736,6 +1827,7 @@ async function openCueModal(cueId) {
     document.getElementById('f-message').value         = cue.message;
     document.getElementById('f-color').value           = cue.color;
     document.getElementById('f-reset-show').checked   = !!cue.resetShow;
+    document.getElementById('f-cue-delete').style.display = '';
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
     document.getElementById('f-cue-id').value          = '';
@@ -1744,6 +1836,7 @@ async function openCueModal(cueId) {
     document.getElementById('f-message').value         = '';
     document.getElementById('f-color').value           = '#f59e0b';
     document.getElementById('f-reset-show').checked   = false;
+    document.getElementById('f-cue-delete').style.display = 'none';
   }
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
@@ -1773,27 +1866,10 @@ async function saveCue() {
   await reloadCurrentShow();
 }
 
-async function updateCueField(cueId, field, rawValue) {
-  const show = allShows.find(show => show.id === currentShowId);
-  const cue = show?.cues.find(item => item.id === cueId);
-  if (!cue) return;
-  const value = field === 'tc' ? formatTimecodeValue(rawValue) : rawValue.trim();
-  if ((field === 'tc' || field === 'title') && !value) {
-    alert('TC und Titel sind Pflichtfelder.');
-    renderCueTable(show);
-    return;
-  }
-  if (value === cue[field]) {
-    renderCueTable(show);
-    return;
-  }
-  await api('PUT', `/api/shows/${currentShowId}/cues/${cueId}`, { ...cue, [field]: value });
-  await reloadCurrentShow();
-}
-
 async function deleteCue(cueId) {
-  if (!confirm('Cue wirklich löschen?')) return;
+  if (!cueId || !confirm('Cue wirklich löschen?')) return;
   await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
+  closeModal();
   await reloadCurrentShow();
 }
 
@@ -2030,30 +2106,17 @@ function triggerScreenFlash(force = false) {
   flash.classList.add('fire');
 }
 
+let _alarmAudio = null;
 async function playAlarm(force = false) {
   const settings = loadSettings();
   if (!force && !settings.alarmEnabled) return false;
   const volume = Math.max(0, Math.min(1, settings.alarmVolume / 100));
   if (volume === 0 && !force) return false;
-  const peakVolume = Math.max(0.0001, volume * 0.8);
   try {
-    // Frischen Context pro Ton — kein persistenter suspended Context, den
-    // der Browser bei beliebigen Klicks auto-resumed (würde Transient/Piep erzeugen)
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') await ctx.resume();
-    if (ctx.state !== 'running') { ctx.close(); return false; }
-    const gain = ctx.createGain();
-    gain.connect(ctx.destination);
-    const osc = ctx.createOscillator();
-    osc.frequency.value = 880;
-    osc.connect(gain);
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(peakVolume, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-    osc.start(now);
-    osc.stop(now + 0.23);
-    osc.onended = () => ctx.close();
+    if (!_alarmAudio) _alarmAudio = new Audio('alert.mp3');
+    _alarmAudio.volume = (force && volume === 0) ? 0.8 : volume;
+    _alarmAudio.currentTime = 0;
+    await _alarmAudio.play();
     return true;
   } catch (e) {
     console.warn('[Alarm] Playback failed:', e);
@@ -2591,6 +2654,7 @@ function esc(str) {
 applySettings(loadSettings());
 applyEditSectionState();
 connect();
+startTcWatchdog();
 setInterval(() => {
   renderLiveChecklists(_lastCurrentCue);
   renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);

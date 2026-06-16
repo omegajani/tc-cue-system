@@ -36,13 +36,17 @@
     }
 
     /* ── STATUS BAR ─────────────────────────────────────────────────── */
-    #status-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+    #status-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: nowrap; }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
     #tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #tc-dot.connected { background: var(--green); }
     #hdr-center { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; }
     #hdr-song { min-width: 0; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    #hdr-song .marquee-track { display: inline-flex; }
+    #hdr-song.marquee { text-overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); }
+    #hdr-song.marquee .marquee-track { animation: live-marquee var(--marquee-duration, 12s) linear infinite; }
+    #hdr-song.marquee .marquee-content { padding-right: 2.5em; }
     #hdr-remaining { flex: 0 0 auto; color: var(--muted); white-space: nowrap; }
     #hdr-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.06); }
     #hdr-progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, rgba(59,130,246,.85), rgba(96,165,250,.5)); transition: width .12s linear; }
@@ -1183,7 +1187,7 @@ function renderCurrentPosition(position, tcString) {
     setMarqueeText(document.getElementById('live-position-name'), 'Keine Position aktiv');
     document.getElementById('live-position-remaining').textContent = '';
     document.getElementById('live-position-fill').style.width = '0';
-    document.getElementById('hdr-song').textContent = '';
+    setMarqueeText(document.getElementById('hdr-song'), '');
     document.getElementById('hdr-remaining').textContent = '';
     document.getElementById('hdr-progress-fill').style.width = '0';
     return;
@@ -1197,7 +1201,7 @@ function renderCurrentPosition(position, tcString) {
   setMarqueeText(document.getElementById('live-position-name'), position.name);
   document.getElementById('live-position-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
   document.getElementById('live-position-fill').style.width = `${progress * 100}%`;
-  document.getElementById('hdr-song').textContent = position.name;
+  setMarqueeText(document.getElementById('hdr-song'), position.name);
   document.getElementById('hdr-remaining').textContent = `noch ${formatRemainingTime(remaining)}`;
   document.getElementById('hdr-progress-fill').style.width = `${progress * 100}%`;
   panel.classList.add('show');
@@ -1231,9 +1235,11 @@ let _marqueeResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(_marqueeResizeTimer);
   _marqueeResizeTimer = setTimeout(() => {
-    const el = document.getElementById('live-position-name');
-    const text = el?.dataset.marqueeText;
-    if (text != null) { delete el.dataset.marqueeText; setMarqueeText(el, text); }
+    for (const id of ['live-position-name', 'hdr-song']) {
+      const el = document.getElementById(id);
+      const text = el?.dataset.marqueeText;
+      if (text != null) { delete el.dataset.marqueeText; setMarqueeText(el, text); }
+    }
   }, 200);
 });
 

@@ -226,9 +226,9 @@
     .show-fields { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(160px,.65fr); gap:12px; }
     .show-fields .show-field-wide { grid-column:1 / -1; }
     .show-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
-    .show-transfer-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .show-transfer-actions .btn { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:9px; }
-    .show-transfer-note { margin-top:12px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .show-library-footer { display:flex; align-items:center; gap:11px; margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.07); }
+    .show-library-footer .btn { flex:0 0 auto; }
+    .show-library-hint { color:var(--muted); font-size:10px; line-height:1.45; }
     .show-save-note { display:flex; gap:9px; align-items:flex-start; margin-top:14px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
     .show-save-note:before { content:'i'; display:grid; place-items:center; flex:0 0 auto; width:17px; height:17px; border-radius:50%; background:rgba(59,130,246,.14); color:#93c5fd; font-size:10px; font-weight:700; }
     #show-active-state { display:inline-flex; align-items:center; gap:7px; min-height:26px; margin-top:14px; padding:5px 9px; border:1px solid var(--border); border-radius:99px; color:var(--muted); font-size:10px; }
@@ -327,7 +327,7 @@
       .settings-grid { grid-template-columns: 1fr; }
       .show-layout { grid-template-columns:1fr; }
       .show-library { position:static; }
-      .show-fields, .show-transfer-actions { grid-template-columns:1fr; }
+      .show-fields { grid-template-columns:1fr; }
       .show-fields .show-field-wide { grid-column:auto; }
       .edit-overview { grid-template-columns:1fr; }
       .edit-overview-counts { display:grid; grid-template-columns:repeat(3,1fr); }
@@ -368,15 +368,18 @@
 <div id="view-show" class="view">
   <div class="page-heading">
     <h1>Show</h1>
-    <p>Shows verwalten, laden und ihre grundlegenden Eigenschaften bearbeiten.</p>
+    <p>Shows laden, sichern und ihre grundlegenden Eigenschaften bearbeiten.</p>
   </div>
   <div class="show-layout">
     <div class="show-card show-library">
-      <h2>Show auswählen</h2>
+      <h2>Show laden</h2>
       <p class="show-card-description">„Laden“ aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
       <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
       <div class="toolbar">
         <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
+        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus Datei laden">
+          Aus Datei laden ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+        </label>
         <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
       </div>
       <div id="show-active-state"></div>
@@ -385,6 +388,11 @@
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-cues">0</span><span class="show-summary-label">Cues</span></div>
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-checklists">0</span><span class="show-summary-label">Listen</span></div>
       </div>
+      <div class="show-library-footer">
+        <button class="btn btn-small" onclick="exportSelectedShow()" title="Gewählte Show als Datei sichern">Sichern ↓</button>
+        <span class="show-library-hint">„Aus Datei laden“ legt die Show neu an und aktiviert sie sofort – so überträgst du Shows auf andere Rechner.</span>
+      </div>
+      <div id="import-feedback" class="show-feedback"></div>
     </div>
 
     <div class="show-main">
@@ -414,19 +422,6 @@
           <button class="btn btn-primary" onclick="saveSelectedShow()">Basisdaten speichern</button>
         </div>
         <div class="show-save-note">Songs, Cues und Aufgabenlisten werden auf der Edit-Seite automatisch gespeichert. Dieser Button speichert nur die Basisdaten oben.</div>
-      </div>
-
-      <div class="show-card">
-        <h2>Sicherung und Austausch</h2>
-        <p class="show-card-description">Optional: Show als Datei sichern oder auf ein anderes TC-Cue-System übertragen.</p>
-        <div class="show-transfer-actions">
-          <button class="btn" onclick="exportSelectedShow()" title="Show als JSON exportieren">Show exportieren ↓</button>
-          <label class="btn btn-accent" style="cursor:pointer;" title="Show aus JSON importieren">
-            Show importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
-          </label>
-        </div>
-        <p class="show-transfer-note">Beim Import wird eine neue Show angelegt. Die aktuell geladene Show bleibt unverändert.</p>
-        <div id="import-feedback" class="show-feedback"></div>
       </div>
     </div>
   </div>
@@ -2273,10 +2268,11 @@ async function importShow(input) {
     const bundle = JSON.parse(text);
     if (!bundle.show) throw new Error('Ungültiges Format – "show" fehlt.');
     const result = await api('POST', '/api/io/show', bundle);
-    fb.style.color = 'var(--green)';
-    fb.textContent = `Importiert: "${result.show.name}" mit ${result.show.cues.length} Cue(s).`;
     input.value = '';
     await loadAdmin();
+    await selectShow(result.show.id);
+    fb.style.color = 'var(--green)';
+    fb.textContent = `Geladen: "${result.show.name}" (${result.show.cues.length} Cues).`;
   } catch (e) {
     fb.style.color = 'var(--red)';
     fb.textContent = 'Fehler: ' + e.message;

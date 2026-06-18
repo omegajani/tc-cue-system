@@ -42,18 +42,38 @@ function writeJson<T>(name: string, data: T[]): void {
 }
 
 // Shows
-export function getShows(): Show[] { return readJson<Show>("shows"); }
-export function saveShows(shows: Show[]): void { writeJson("shows", shows); }
+// In-Memory-Arbeitskopie: granulare Edits (upsertShow/deleteShow) mutieren nur
+// den Cache. Auf die Platte geschrieben wird erst per flushShows() (Speichern,
+// neue/gelöschte Show, Import, Live-Abhaken).
+let cache: Show[] | null = null;
+
+export function getShows(): Show[] {
+  if (cache === null) cache = readJson<Show>("shows");
+  return cache;
+}
+
+/** Setzt die Arbeitskopie und schreibt sie sofort auf die Platte. */
+export function saveShows(shows: Show[]): void {
+  cache = shows;
+  writeJson("shows", shows);
+}
+
+/** Schreibt die aktuelle In-Memory-Arbeitskopie auf die Platte. */
+export function flushShows(): void {
+  if (cache !== null) writeJson("shows", cache);
+}
 
 export function getShow(id: string): Show | undefined {
   return getShows().find((s) => s.id === id);
 }
 
+/** Nur In-Memory – Persistenz erst per flushShows(). */
 export function upsertShow(show: Show): void {
   const all = getShows().filter((s) => s.id !== show.id);
-  saveShows([...all, show]);
+  cache = [...all, show];
 }
 
+/** Nur In-Memory – Persistenz erst per flushShows(). */
 export function deleteShow(id: string): void {
-  saveShows(getShows().filter((s) => s.id !== id));
+  cache = getShows().filter((s) => s.id !== id);
 }

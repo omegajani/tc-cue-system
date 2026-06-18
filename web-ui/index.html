@@ -289,6 +289,8 @@
     .btn-danger { border-color: var(--red); color: var(--red); }
     .btn-accent { border-color: var(--accent); color: var(--accent); }
     .btn-small { padding: 3px 9px; font-size: 11px; }
+    #show-save-btn.dirty { position: relative; border-color: var(--accent); color: var(--accent); }
+    #show-save-btn.dirty:after { content: ''; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
     .btn-icon { padding: 3px 7px; font-size: 13px; }
 
     /* ── MONITOR ────────────────────────────────────────────────────── */
@@ -419,7 +421,7 @@
         </div>
         <div class="show-actions">
           <div id="show-save-feedback" class="show-feedback"></div>
-          <button class="btn btn-primary" onclick="saveSelectedShow()">Speichern</button>
+          <button class="btn btn-primary" id="show-save-btn" onclick="saveSelectedShow()">Speichern</button>
         </div>
         <div class="show-save-note">Speichert die komplette Show: diese Einstellungen sowie alle Songs, Cues und Aufgabenlisten.</div>
       </div>
@@ -914,6 +916,17 @@ let allShows = [];
 let _triggeredChecklistIds = new Set();
 let _expandedChecklistIds = new Set();
 let _collapsedChecklistIds = new Set();
+let _unsavedEdits = false; // Edit-Seite geändert, aber noch nicht via „Speichern" auf Platte geschrieben
+
+function markUnsavedEdits() {
+  _unsavedEdits = true;
+  updateSaveDirtyIndicator();
+}
+
+function updateSaveDirtyIndicator() {
+  const btn = document.getElementById('show-save-btn');
+  if (btn) btn.classList.toggle('dirty', _unsavedEdits);
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
@@ -1723,6 +1736,11 @@ function previewSelectedShow() {
 async function loadSelectedShow() {
   const id = document.getElementById('show-select').value;
   if (!id) return;
+  if (_unsavedEdits && id !== currentShowId &&
+      !confirm('Es gibt ungespeicherte Änderungen an der aktuellen Show, die noch nicht in die Show-Datei geschrieben sind. Andere Show laden?')) {
+    document.getElementById('show-select').value = currentShowId || '';
+    return;
+  }
   currentShowId = id;
   _triggeredChecklistIds = new Set();
   let s = allShows.find(x => x.id === id);
@@ -1741,6 +1759,8 @@ async function loadSelectedShow() {
   renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   renderLiveChecklists(_lastCurrentCue);
   previewSelectedShow();
+  _unsavedEdits = false;
+  updateSaveDirtyIndicator();
 }
 
 async function resetChecklistsForShow(show) {
@@ -1787,6 +1807,8 @@ async function saveSelectedShow() {
   const idx = allShows.findIndex(item => item.id === id);
   if (idx !== -1) allShows[idx] = updated;
   if (id === currentShowId) document.getElementById('live-show-name').textContent = updated.name;
+  _unsavedEdits = false;
+  updateSaveDirtyIndicator();
   feedback.style.color = 'var(--green)';
   feedback.textContent = 'Show gespeichert.';
   const sel = document.getElementById('show-select');
@@ -1871,6 +1893,7 @@ async function savePosition() {
   else await api('POST', `/api/shows/${currentShowId}/positions`, body);
   closePositionModal();
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 async function deletePosition(positionId) {
@@ -1878,6 +1901,7 @@ async function deletePosition(positionId) {
   await api('DELETE', `/api/shows/${currentShowId}/positions/${positionId}`);
   closePositionModal();
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1959,6 +1983,7 @@ async function saveCue() {
   }
   closeModal();
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 async function deleteCue(cueId) {
@@ -1966,6 +1991,7 @@ async function deleteCue(cueId) {
   await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
   closeModal();
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2086,6 +2112,7 @@ async function saveChecklist() {
   else await api('POST', `/api/shows/${currentShowId}/checklists`, { title, trigger, items });
   closeChecklistModal();
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 async function toggleChecklistItem(checklistId, itemId, checked) {
@@ -2099,6 +2126,7 @@ async function toggleChecklistItem(checklistId, itemId, checked) {
   const updated = { ...checklist, items: checklist.items.map(item => ({ ...item })) };
   renderLiveChecklists(_lastCurrentCue);
   await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, updated);
+  await api('POST', '/api/shows/persist').catch(() => {}); // Live-Abhaken sofort auf Platte
   await reloadCurrentShow();
 }
 
@@ -2112,6 +2140,7 @@ async function completeChecklist(checklistId) {
     ...checklist,
     items: checklist.items,
   });
+  await api('POST', '/api/shows/persist').catch(() => {}); // Live-Abhaken sofort auf Platte
   await reloadCurrentShow();
 }
 
@@ -2120,6 +2149,7 @@ async function deleteChecklist(checklistId) {
   await api('DELETE', `/api/shows/${currentShowId}/checklists/${checklistId}`);
   _triggeredChecklistIds.delete(checklistId);
   await reloadCurrentShow();
+  markUnsavedEdits();
 }
 
 async function reloadCurrentShow() {
@@ -2178,6 +2208,7 @@ async function importCSV() {
   fb.style.color = fail ? 'var(--accent)' : 'var(--green)';
   fb.textContent = `Import abgeschlossen: ${ok} Cues importiert${fail ? `, ${fail} Fehler` : ''}.`;
   await reloadCurrentShow();
+  if (ok) markUnsavedEdits();
 }
 
 // Simple CSV line parser (handles quoted fields)

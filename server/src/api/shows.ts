@@ -1,13 +1,20 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import { Checklist, Cue, Show, ShowPosition } from "../types.js";
-import { getShows, getShow, upsertShow, deleteShow } from "../engine/store.js";
+import { getShows, getShow, upsertShow, deleteShow, flushShows } from "../engine/store.js";
 import { cueEngine } from "../engine/cueEngine.js";
 
 const router = Router();
 
 router.get("/", (_req, res) => {
   res.json(getShows());
+});
+
+// Schreibt die In-Memory-Arbeitskopie auf die Platte (Live-Abhaken).
+// Muss vor /:id-Routen stehen.
+router.post("/persist", (_req, res) => {
+  flushShows();
+  res.json({ ok: true });
 });
 
 // Currently loaded show with cues pre-sorted by TC (must come before /:id)
@@ -26,6 +33,7 @@ router.get("/:id", (req, res) => {
 router.post("/", (req, res) => {
   const show: Show = { ...req.body, id: randomUUID(), cues: req.body.cues ?? [], positions: req.body.positions ?? [], checklists: req.body.checklists ?? [] };
   upsertShow(show);
+  flushShows();
   cueEngine.loadShow(show);
   res.status(201).json(show);
 });
@@ -35,6 +43,7 @@ router.put("/:id", (req, res) => {
   if (!existing) return res.status(404).json({ error: "Show not found" });
   const updated: Show = { ...existing, ...req.body, id: req.params.id };
   upsertShow(updated);
+  flushShows(); // PUT = expliziter „Speichern"-Pfad → auf Platte schreiben
   // Use updateShowData to preserve fired-cue state.
   // Only do a full loadShow (which resets firedCueIds) if cues or positions
   // have structurally changed – detected by a change in serialised content.
@@ -51,6 +60,7 @@ router.put("/:id", (req, res) => {
 
 router.delete("/:id", (req, res) => {
   deleteShow(req.params.id);
+  flushShows();
   res.status(204).send();
 });
 

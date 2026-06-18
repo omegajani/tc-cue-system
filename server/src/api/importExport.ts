@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import { Show } from "../types.js";
-import { getShow, upsertShow, getShows } from "../engine/store.js";
+import { getShow, upsertShow, getShows, flushShows } from "../engine/store.js";
 
 const router = Router();
 
@@ -45,6 +45,7 @@ router.post("/show", (req, res) => {
   };
 
   upsertShow(newShow);
+  flushShows();
   res.status(201).json({ show: newShow });
 });
 

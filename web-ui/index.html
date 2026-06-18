@@ -918,6 +918,7 @@ let currentShowId = null;
 let allShows = [];
 let _triggeredChecklistIds = new Set();
 let _expandedChecklistIds = new Set();
+let _collapsedChecklistIds = new Set();
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
@@ -1292,13 +1293,10 @@ function startTcWatchdog() {
 // Klick auf die Listen-Glyphe: Aufgabenliste in der Cue-Liste auf-/zuklappen.
 function toggleChecklistExpand(id, iconEl) {
   const row = iconEl.closest('.live-cue-row');
-  if (_expandedChecklistIds.has(id)) {
-    _expandedChecklistIds.delete(id);
-    row?.classList.remove('expanded');
-  } else {
-    _expandedChecklistIds.add(id);
-    row?.classList.add('expanded');
-  }
+  const willExpand = !row?.classList.contains('expanded');
+  row?.classList.toggle('expanded', willExpand);
+  if (willExpand) { _expandedChecklistIds.add(id); _collapsedChecklistIds.delete(id); }
+  else { _collapsedChecklistIds.add(id); _expandedChecklistIds.delete(id); }
 }
 
 function renderLiveChecklists(currentCue = _lastCurrentCue) {
@@ -1402,7 +1400,12 @@ function renderLiveCues(cur, next, tcString) {
     if (entry.type === 'checklist') {
       const checklist = entry.checklist;
       const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
-      const expanded = _expandedChecklistIds.has(checklist.id);
+      const hasOpen = checklist.items.some(item => !item.checked);
+      // Standard: Listen mit offenen Punkten sind aufgeklappt. Glyphen-Toggle
+      // setzt einen expliziten Override (auf-/zugeklappt).
+      const expanded = _expandedChecklistIds.has(checklist.id) ? true
+        : _collapsedChecklistIds.has(checklist.id) ? false
+        : hasOpen;
       return `
         <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''} ${expanded ? 'expanded' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
           <div class="live-cue-time">

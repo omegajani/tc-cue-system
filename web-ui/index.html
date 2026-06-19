@@ -373,17 +373,19 @@
     <p>Shows laden, sichern und ihre grundlegenden Eigenschaften bearbeiten.</p>
   </div>
   <div class="show-layout">
-    <div class="show-card show-library">
-      <h2>Show laden</h2>
-      <p class="show-card-description">„Laden“ aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
-      <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
-        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus Datei laden">
-          Aus Datei laden ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+    <div class=”show-card show-library”>
+      <h2>Show laden/speichern</h2>
+      <p class=”show-card-description”>„Laden” aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
+      <select class=”admin-select” id=”show-select” onchange=”previewSelectedShow()”></select>
+      <div class=”toolbar”>
+        <button class=”btn btn-primary” onclick=”loadSelectedShow()”>Laden</button>
+        <button class=”btn btn-primary” id=”show-save-btn” onclick=”saveSelectedShow()”>Speichern</button>
+        <label class=”btn btn-accent” style=”cursor:pointer;” title=”Show aus Datei laden”>
+          Aus Datei laden ↑ <input type=”file” id=”import-file” accept=”.json” onchange=”importShow(this)” style=”display:none;” />
         </label>
-        <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
+        <button class=”btn btn-accent” onclick=”openNewShowDialog()”>+ Neue Show</button>
       </div>
+      <div id=”show-save-feedback” class=”show-feedback”></div>
       <div id="show-active-state"></div>
       <div class="show-summary">
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-positions">0</span><span class="show-summary-label">Songs</span></div>
@@ -419,11 +421,6 @@
             </select>
           </div>
         </div>
-        <div class="show-actions">
-          <div id="show-save-feedback" class="show-feedback"></div>
-          <button class="btn btn-primary" id="show-save-btn" onclick="saveSelectedShow()">Speichern</button>
-        </div>
-        <div class="show-save-note">Speichert die komplette Show: diese Einstellungen sowie alle Songs, Cues und Aufgabenlisten.</div>
       </div>
     </div>
   </div>

@@ -8,6 +8,15 @@ export interface Cue {
   message: string;
   color: string;
   resetShow?: boolean;
+  // Rollenzuordnung (clientseitige Filterung):
+  gewerk?: string;       // 'licht'|'ton'|'buehne'|'regie'|'video'; undefined = allgemein (alle sehen)
+  positions?: string[];  // Crew-Positionen im Gewerk (NICHT die Timeline-ShowPosition); leer = ganzes Gewerk
+}
+
+// Zugriffskonfiguration der Show (weiche, clientseitige Filterung).
+export interface ShowAccess {
+  adminPassword?: string;                   // Master-Passwort; leer = kein Gate
+  gewerkPasswords?: Record<string, string>; // pro Gewerk-ID ein Passwort, z.B. { ton: "…" }
 }
 
 export interface ShowPosition {
@@ -47,6 +56,7 @@ export interface Show {
   fps?: 24 | 25 | 29.97 | 30;
   audioDevice?: string;
   audioChannel?: "left" | "right" | "mix";
+  access?: ShowAccess;
 }
 
 // WebSocket event payloads

@@ -406,6 +406,34 @@
     #hdr-gewerk-label { color:var(--text); font-size:12px; }
     #hdr-gewerk-switch { background:none; border:none; color:var(--muted); font-size:11px; font-family:inherit; cursor:pointer; padding:0; }
     #hdr-gewerk-switch:hover { color:var(--text); }
+    /* Login password step */
+    .login-pw-input { width:100%; padding:15px 18px; border-radius:14px; font-family:var(--ql-font-ui); font-size:16px; border:1px solid var(--ql-border); background:var(--ql-surface); color:var(--ql-text-strong); text-align:center; letter-spacing:2px; }
+    .login-pw-input:focus { outline:none; border-color:var(--ql-accent); }
+    .login-pw-error { min-height:18px; margin-top:10px; text-align:center; font-size:12px; color:var(--ql-red-on); }
+    #login-step-password.shake { animation: login-shake .4s; }
+    @keyframes login-shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-8px);} 40%,80%{transform:translateX(8px);} }
+    .login-admin-link { display:block; width:100%; margin-top:14px; padding:12px; border-radius:12px; border:1px dashed var(--ql-glass-stroke-soft); background:none; color:var(--ql-muted); font-family:var(--ql-font-ui); font-size:12px; cursor:pointer; }
+    .login-admin-link:hover { color:var(--ql-text); border-color:var(--ql-accent); }
+    .login-position-btn.meister { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.06); }
+    .login-position-meta { display:block; font-size:11px; font-weight:400; color:var(--ql-muted); margin-top:2px; }
+    /* Cue modal: Positionen-Checkboxen */
+    .cue-positions-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .cue-pos-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; cursor:pointer; user-select:none; transition:all .12s; }
+    .cue-pos-chip input { width:14px; height:14px; accent-color:var(--accent); margin:0; }
+    .cue-pos-chip.checked { border-color:var(--accent); background:rgba(245,158,11,.1); color:var(--accent-soft); }
+    /* Cue-Tabelle: Gewerk-Zelle */
+    .cell-gewerk { white-space:nowrap; }
+    .gewerk-tag { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text); }
+    .gewerk-tag-dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+    .gewerk-tag-pos { color:var(--muted); font-size:10px; }
+    .gewerk-tag-allg { color:var(--muted); font-size:11px; }
+    /* Show-View: Zugriff/Passwörter-Karte */
+    .access-field { display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; align-items:center; margin-bottom:10px; }
+    .access-field label { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--text); }
+    .access-field label .gewerk-tag-dot { width:9px; height:9px; }
+    .access-field input { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 11px; border-radius:7px; font-family:inherit; font-size:13px; }
+    .access-field input:focus { outline:none; border-color:var(--accent); }
+    .access-note { display:flex; gap:9px; align-items:flex-start; margin-top:6px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
   </style>
 </head>
 <body>
@@ -416,10 +444,19 @@
       <div class="login-brand-mark">Q<span>Lyst</span></div>
       <div class="login-brand-sub" id="login-show-name">TC Cue System</div>
     </div>
-    <!-- Step 1: Gewerk wählen -->
-    <div id="login-step-gewerk">
+    <!-- Step 0: Passwort (nur wenn Zugriffsschutz aktiv) -->
+    <div id="login-step-password" style="display:none;">
+      <div class="login-prompt">Passwort eingeben</div>
+      <input id="login-password" type="password" class="login-pw-input" placeholder="••••••" autocomplete="off"
+        onkeydown="if(event.key==='Enter')loginCheckPassword()" />
+      <div id="login-pw-error" class="login-pw-error"></div>
+      <button class="login-enter-btn" style="border-color:var(--ql-accent);background:var(--ql-accent-tint);color:var(--ql-accent-soft);opacity:1;cursor:pointer;" onclick="loginCheckPassword()">Weiter →</button>
+    </div>
+    <!-- Step 1: Gewerk wählen (Bootstrap, ohne Passwort) -->
+    <div id="login-step-gewerk" style="display:none;">
       <div class="login-prompt">An welchem Gewerk arbeitest du?</div>
       <div class="login-gewerk-grid" id="login-gewerk-grid"></div>
+      <button class="login-admin-link" onclick="loginEnterAdmin()">Admin · Vollzugriff (Einrichtung)</button>
     </div>
     <!-- Step 2: Position wählen -->
     <div id="login-step-position" style="display:none;">
@@ -519,6 +556,13 @@
             </select>
           </div>
         </div>
+      </div>
+
+      <div class="show-card">
+        <h2>Zugriff / Passwörter</h2>
+        <p class="show-card-description">Beim Start melden sich die Gewerke per Passwort an und sehen nur ihre Cues. Das Admin-Passwort schaltet alles frei.</p>
+        <div id="access-fields"></div>
+        <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Passwörter werden mit „Speichern" in der Show abgelegt.</div>
       </div>
     </div>
   </div>
@@ -793,6 +837,14 @@
     <div class="form-row">
       <label>Nachricht</label>
       <textarea id="f-message" placeholder="Umbau Bühne links – bitte bereit!"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Gewerk</label>
+      <select id="f-gewerk" onchange="renderCueGewerkPositions()"></select>
+    </div>
+    <div class="form-row" id="f-positions-row" style="display:none;">
+      <label>Positionen <span style="text-transform:none;letter-spacing:0;color:var(--muted);">(keine = ganzes Gewerk / Meister)</span></label>
+      <div id="f-positions" class="cue-positions-grid"></div>
     </div>
     <div class="form-row" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(239,68,68,.2);border-radius:9px;background:rgba(239,68,68,.045);">
       <input type="checkbox" id="f-reset-show" style="width:16px;height:16px;accent-color:#ef4444;flex:0 0 auto;" />
@@ -1461,9 +1513,22 @@ function renderLiveCues(cur, next, tcString) {
   _lastTcString = tcString;
   const list = document.getElementById('live-cue-list');
   const show = allShows.find(show => show.id === currentShowId);
-  const cues = [...(show?.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+  const allCues = [...(show?.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
+
+  // Rollenfilter: Position/Meister sehen nur ihre Cues; Admin/kein Login → alles.
+  const identity = getLoginIdentity();
+  const cues = allCues.filter(cue => cueVisibleToIdentity(cue, identity));
+  // Bei aktiver Filterung „Aktuell/Als Nächstes" innerhalb der sichtbaren Teilmenge
+  // neu bestimmen – der Server meldet den global aktuellen Cue, der für diese Rolle
+  // evtl. gar nicht sichtbar ist.
+  if (identity && identity.level !== 'admin') {
+    const nowSec = tcStringToSeconds(tcString || '00:00:00:00');
+    cur = [...cues].reverse().find(cue => tcStringToSeconds(cue.tc) <= nowSec) || null;
+    next = cues.find(cue => tcStringToSeconds(cue.tc) > nowSec) || null;
+  }
+
   if (!cues.length) {
-    list.innerHTML = '<div id="no-cue">Keine Cues in dieser Show.</div>';
+    list.innerHTML = `<div id="no-cue">${allCues.length ? 'Keine Cues für deine Rolle.' : 'Keine Cues in dieser Show.'}</div>`;
     _liveCueRenderSignature = '';
     return;
   }
@@ -1476,6 +1541,7 @@ function renderLiveCues(cur, next, tcString) {
   const previewStart = currentIndex >= 0 ? currentIndex + 1 : nextIndex >= 0 ? nextIndex : 0;
   const previewCueIds = new Set(cues.slice(previewStart, previewStart + previewCount).map(cue => cue.id));
   const signature = JSON.stringify([
+    identity ? [identity.level, identity.gewerk, identity.position] : null,
     cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
     (show?.positions || []).map(position => [position.id, position.name, position.startTc, position.endTc]),
     (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.items.map(item => [item.id, item.text, item.checked])]),
@@ -1497,7 +1563,7 @@ function renderLiveCues(cur, next, tcString) {
   );
   const entries = [
     ...cues.map((cue, index) => ({ type: 'cue', cue, cueIndex: index, sort: tcStringToSeconds(cue.tc) })),
-    ...queuedChecklists.map(checklist => ({ type: 'checklist', checklist, sort: checklistSortPosition(checklist, cues) })),
+    ...queuedChecklists.map(checklist => ({ type: 'checklist', checklist, sort: checklistSortPosition(checklist, allCues) })),
   ].sort((a, b) => a.sort - b.sort || (a.type === 'cue' ? -1 : 1));
   list.innerHTML = entries.map(entry => {
     if (entry.type === 'checklist') {
@@ -1826,6 +1892,36 @@ function previewSelectedShow() {
   document.getElementById('show-summary-cues').textContent = show?.cues?.length || 0;
   document.getElementById('show-summary-checklists').textContent = show?.checklists?.length || 0;
   document.getElementById('show-save-feedback').textContent = '';
+  renderAccessFields(show);
+}
+
+// Zugriffs-/Passwortfelder der Show-View (Admin + ein Passwort je Gewerk)
+function renderAccessFields(show) {
+  const wrap = document.getElementById('access-fields');
+  if (!wrap) return;
+  const acc = show?.access || {};
+  const gpw = acc.gewerkPasswords || {};
+  const adminRow = `
+    <div class="access-field">
+      <label><span class="gewerk-tag-dot" style="background:var(--accent)"></span>Admin</label>
+      <input id="access-admin" type="text" autocomplete="off" placeholder="Admin-Passwort (leer = kein Schutz)" value="${esc(acc.adminPassword || '')}" />
+    </div>`;
+  const gewerkRows = GEWERKE.map(g => `
+    <div class="access-field">
+      <label><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</label>
+      <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Passwort ${esc(g.label)}" value="${esc(gpw[g.id] || '')}" />
+    </div>`).join('');
+  wrap.innerHTML = adminRow + gewerkRows;
+}
+
+function collectAccessConfig() {
+  const adminPassword = (document.getElementById('access-admin')?.value || '').trim();
+  const gewerkPasswords = {};
+  document.querySelectorAll('.access-gewerk-pw').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) gewerkPasswords[inp.getAttribute('data-gewerk')] = v;
+  });
+  return { adminPassword, gewerkPasswords };
 }
 
 async function loadSelectedShow() {
@@ -1890,11 +1986,14 @@ async function saveSelectedShow() {
     feedback.textContent = 'Bitte einen Namen eingeben.';
     return;
   }
+  // Zugriffsfelder nur übernehmen, wenn sie gerendert sind – sonst bestehende access behalten
+  const access = document.getElementById('access-admin') ? collectAccessConfig() : show.access;
   const updated = await api('PUT', `/api/shows/${id}`, {
     ...show,
     name,
     date,
     fallbackMode: document.getElementById('s-fallback').value,
+    access,
   });
   if (currentShowId && id !== currentShowId) {
     await api('POST', `/api/shows/${currentShowId}/activate`).catch(() => {});
@@ -2016,12 +2115,23 @@ function renderCueTable(show) {
       <td class="cell-tc">${esc(c.tc)}</td>
       <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}</td>
       <td class="cell-message">${esc(c.message)}</td>
+      <td class="cell-gewerk">${gewerkTagHtml(c)}</td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Gewerk</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// Gewerk-/Positions-Zuordnung eines Cues als kleines Tag (für die Cue-Tabelle)
+function gewerkTagHtml(cue) {
+  const g = GEWERKE.find(x => x.id === cue.gewerk);
+  if (!g) return '<span class="gewerk-tag-allg">Allgemein</span>';
+  const pos = Array.isArray(cue.positions) && cue.positions.length
+    ? cue.positions.join(', ')
+    : 'alle';
+  return `<span class="gewerk-tag"><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)} <span class="gewerk-tag-pos">· ${esc(pos)}</span></span>`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2041,6 +2151,10 @@ async function openCueModal(cueId) {
     document.getElementById('f-message').value         = cue.message;
     document.getElementById('f-color').value           = cue.color;
     document.getElementById('f-reset-show').checked   = !!cue.resetShow;
+    _editingCuePositions = Array.isArray(cue.positions) ? cue.positions : [];
+    populateCueGewerkSelect();
+    document.getElementById('f-gewerk').value = cue.gewerk || '';
+    renderCueGewerkPositions();
     document.getElementById('f-cue-delete').style.display = '';
   } else {
     document.getElementById('modal-title').textContent = 'Neuer Cue';
@@ -2050,10 +2164,36 @@ async function openCueModal(cueId) {
     document.getElementById('f-message').value         = '';
     document.getElementById('f-color').value           = '#f59e0b';
     document.getElementById('f-reset-show').checked   = false;
+    _editingCuePositions = [];
+    populateCueGewerkSelect();
+    document.getElementById('f-gewerk').value = '';
+    renderCueGewerkPositions();
     document.getElementById('f-cue-delete').style.display = 'none';
   }
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
+}
+
+// Gewerk-/Positions-Zuordnung im Cue-Modal
+let _editingCuePositions = [];
+function populateCueGewerkSelect() {
+  document.getElementById('f-gewerk').innerHTML =
+    '<option value="">— Allgemein (alle sehen)</option>' +
+    GEWERKE.map(g => `<option value="${g.id}">${esc(g.label)}</option>`).join('');
+}
+function renderCueGewerkPositions() {
+  const gewerkId = document.getElementById('f-gewerk').value;
+  const row = document.getElementById('f-positions-row');
+  const wrap = document.getElementById('f-positions');
+  const g = GEWERKE.find(x => x.id === gewerkId);
+  if (!g) { row.style.display = 'none'; wrap.innerHTML = ''; return; }
+  row.style.display = '';
+  wrap.innerHTML = g.positions.map(pos => {
+    const checked = _editingCuePositions.includes(pos);
+    return `<label class="cue-pos-chip ${checked ? 'checked' : ''}">
+      <input type="checkbox" value="${esc(pos)}" ${checked ? 'checked' : ''}
+        onchange="this.closest('.cue-pos-chip').classList.toggle('checked', this.checked)" />${esc(pos)}</label>`;
+  }).join('');
 }
 
 function closeModal() {
@@ -2068,6 +2208,8 @@ async function saveCue() {
     message:      document.getElementById('f-message').value.trim(),
     color:        document.getElementById('f-color').value,
     resetShow:    document.getElementById('f-reset-show').checked,
+    gewerk:       document.getElementById('f-gewerk').value,
+    positions:    [...document.querySelectorAll('#f-positions input:checked')].map(i => i.value),
   };
   if (!body.tc || !body.title) { alert('TC und Titel sind Pflichtfelder.'); return; }
 
@@ -2904,9 +3046,33 @@ const GEWERKE = [
   { id: 'video',  label: 'Video',  glyph: '▦', color: '#ec4899', positions: ['Projektion'] },
 ];
 
-let _loginGewerk = null;
-let _loginPosition = null;
+let _loginGewerk = null;       // freigeschaltetes Gewerk (id) während der Auswahl
+let _loginLevel = null;        // 'position' | 'meister' während der Auswahl
+let _loginPosition = null;     // gewählte Crew-Position
+let _identity = null;          // aktive Identität: { level, gewerk?, position? } | null
 
+// ── Identität & Sichtbarkeit ─────────────────────────────────────────────
+function getLoginIdentity() { return _identity; }
+
+function getAccessConfig() {
+  const show = allShows.find(s => s.id === currentShowId) || allShows[0];
+  return show?.access || {};
+}
+function isAccessGated() {
+  return !!(getAccessConfig().adminPassword || '').trim();
+}
+
+// Ist ein Cue für die gegebene Identität sichtbar? (clientseitige Filterung)
+function cueVisibleToIdentity(cue, id) {
+  if (!id || id.level === 'admin') return true;   // Admin / kein Login → alles
+  if (!cue.gewerk) return true;                    // allgemeiner Cue → für alle
+  if (cue.gewerk !== id.gewerk) return false;      // anderes Gewerk → verbergen
+  if (id.level === 'meister') return true;         // Meister → alle Cues seines Gewerks
+  const pos = Array.isArray(cue.positions) ? cue.positions : [];
+  return pos.length === 0 || pos.includes(id.position); // Position: leer = ganzes Gewerk
+}
+
+// ── Login-Schritte ───────────────────────────────────────────────────────
 function loginRenderGewerke() {
   const grid = document.getElementById('login-gewerk-grid');
   grid.innerHTML = GEWERKE.map(g => {
@@ -2923,87 +3089,180 @@ function loginRenderGewerke() {
   }).join('');
 }
 
-function loginSelectGewerk(id) {
+function loginShowStep(step) {
+  ['password', 'gewerk', 'position'].forEach(s => {
+    const el = document.getElementById('login-step-' + s);
+    if (el) el.style.display = s === step ? '' : 'none';
+  });
+}
+
+// Passwort prüfen → Admin oder passendes Gewerk freischalten
+function loginCheckPassword() {
+  const input = document.getElementById('login-password');
+  const pw = input.value;
+  const acc = getAccessConfig();
+  if (pw && pw === (acc.adminPassword || '')) { loginEnterAdmin(); return; }
+  const match = Object.entries(acc.gewerkPasswords || {}).find(([, p]) => p && p === pw);
+  if (match) { input.value = ''; loginUnlockGewerk(match[0]); return; }
+  // Falsch → Fehlermeldung + Shake
+  document.getElementById('login-pw-error').textContent = 'Passwort nicht erkannt.';
+  const step = document.getElementById('login-step-password');
+  step.classList.remove('shake'); void step.offsetWidth; step.classList.add('shake');
+}
+
+// Bootstrap-Pfad (kein Passwort gesetzt): Gewerk direkt freischalten
+function loginSelectGewerk(id) { loginUnlockGewerk(id); }
+
+function loginUnlockGewerk(id) {
   _loginGewerk = id;
+  _loginLevel = null;
   _loginPosition = null;
   const g = GEWERKE.find(x => x.id === id);
   const tint = (p) => `color-mix(in srgb, ${g.color} ${p}, transparent)`;
-  document.getElementById('login-step-gewerk').style.display = 'none';
-  document.getElementById('login-step-position').style.display = '';
+  loginShowStep('position');
   document.getElementById('login-selected-badge').style.cssText =
     `background:${tint('18%')};border:1px solid ${tint('36%')};color:${g.color};`;
   document.getElementById('login-selected-badge').textContent = g.glyph;
   document.getElementById('login-selected-label').textContent = g.label;
   document.getElementById('login-enter-btn').disabled = true;
-  document.getElementById('login-position-list').innerHTML = g.positions.map(pos => `
-    <button class="login-position-btn" onclick="loginSelectPosition(this,'${esc(pos)}')"
-      style="border-color:${tint('30%')}0;">
-      ${esc(pos)}
-      <span class="login-position-radio">
-        <span class="radio-dot" style="background:${g.color};"></span>
+  document.getElementById('login-pw-error').textContent = '';
+  const meisterBtn = `
+    <button class="login-position-btn meister" onclick="loginSelectMeister(this)">
+      <span>Meister – alle Cues
+        <span class="login-position-meta">Sieht jeden Cue des Gewerks</span>
       </span>
+      <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
+    </button>`;
+  const posBtns = g.positions.map(pos => `
+    <button class="login-position-btn" onclick="loginSelectPosition(this,'${esc(pos)}')">
+      ${esc(pos)}
+      <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
     </button>`).join('');
+  document.getElementById('login-position-list').innerHTML = meisterBtn + posBtns;
 }
 
-function loginSelectPosition(btn, pos) {
-  _loginPosition = pos;
+function _loginClearPositionSelection() {
   const g = GEWERKE.find(x => x.id === _loginGewerk);
   document.querySelectorAll('.login-position-btn').forEach(b => {
     b.classList.remove('selected');
-    b.style.borderColor = 'var(--ql-border)';
-    b.style.background = 'var(--ql-surface)';
+    b.style.borderColor = b.classList.contains('meister') ? 'rgba(245,158,11,.4)' : 'var(--ql-border)';
+    b.style.background = b.classList.contains('meister') ? 'rgba(245,158,11,.06)' : 'var(--ql-surface)';
   });
+  document.getElementById('login-enter-btn').disabled = false;
+  document.getElementById('login-enter-btn').style.borderColor = g.color;
+}
+
+function loginSelectPosition(btn, pos) {
+  _loginLevel = 'position';
+  _loginPosition = pos;
+  const g = GEWERKE.find(x => x.id === _loginGewerk);
+  _loginClearPositionSelection();
   btn.classList.add('selected');
   btn.style.borderColor = `color-mix(in srgb, ${g.color} 55%, transparent)`;
   btn.style.background = `color-mix(in srgb, ${g.color} 14%, var(--ql-surface))`;
-  document.getElementById('login-enter-btn').disabled = false;
-  document.getElementById('login-enter-btn').style.borderColor = g.color.replace('#', '#') ;
+}
+
+function loginSelectMeister(btn) {
+  _loginLevel = 'meister';
+  _loginPosition = null;
+  const g = GEWERKE.find(x => x.id === _loginGewerk);
+  _loginClearPositionSelection();
+  btn.classList.add('selected');
+  btn.style.borderColor = `color-mix(in srgb, ${g.color} 60%, transparent)`;
+  btn.style.background = `color-mix(in srgb, ${g.color} 16%, var(--ql-surface))`;
 }
 
 function loginBack() {
-  document.getElementById('login-step-position').style.display = 'none';
-  document.getElementById('login-step-gewerk').style.display = '';
-  _loginGewerk = null;
-  _loginPosition = null;
+  _loginGewerk = null; _loginLevel = null; _loginPosition = null;
+  loginShowStep(isAccessGated() ? 'password' : 'gewerk');
 }
 
 function loginEnter() {
-  if (!_loginGewerk || !_loginPosition) return;
-  try { localStorage.setItem('ql-login', JSON.stringify({ gewerk: _loginGewerk, position: _loginPosition })); } catch(_) {}
-  applyLogin(_loginGewerk, _loginPosition);
+  if (!_loginGewerk || !_loginLevel) return;
+  const identity = _loginLevel === 'meister'
+    ? { level: 'meister', gewerk: _loginGewerk }
+    : { level: 'position', gewerk: _loginGewerk, position: _loginPosition };
+  applyIdentity(identity, true);
+}
+
+function loginEnterAdmin() {
+  applyIdentity({ level: 'admin' }, true);
 }
 
 function loginSwitch() {
   try { localStorage.removeItem('ql-login'); } catch(_) {}
-  _loginGewerk = null;
-  _loginPosition = null;
-  document.getElementById('login-step-position').style.display = 'none';
-  document.getElementById('login-step-gewerk').style.display = '';
-  document.getElementById('login-screen').classList.remove('hidden');
+  _identity = null;
+  _loginGewerk = null; _loginLevel = null; _loginPosition = null;
   document.getElementById('hdr-gewerk').classList.remove('show');
+  applyTabGating();
+  document.getElementById('login-screen').classList.remove('hidden');
+  loginShowStep(isAccessGated() ? 'password' : 'gewerk');
+  const pw = document.getElementById('login-password');
+  if (pw) { pw.value = ''; setTimeout(() => pw.focus(), 50); }
+  document.getElementById('login-pw-error').textContent = '';
 }
 
-function applyLogin(gewerkId, position) {
-  const g = GEWERKE.find(x => x.id === gewerkId);
+// Identität aktivieren: Login schließen, Status-Bar + Tab-Gating + Live-Filter
+function applyIdentity(identity, persist) {
+  _identity = identity;
+  if (persist) { try { localStorage.setItem('ql-login', JSON.stringify(identity)); } catch(_) {} }
   document.getElementById('login-screen').classList.add('hidden');
   const badge = document.getElementById('hdr-gewerk');
   badge.classList.add('show');
-  document.getElementById('hdr-gewerk-dot').style.background = g.color;
-  document.getElementById('hdr-gewerk-label').textContent = `${g.label} · ${position}`;
+  const dot = document.getElementById('hdr-gewerk-dot');
+  const label = document.getElementById('hdr-gewerk-label');
+  if (identity.level === 'admin') {
+    dot.style.background = 'var(--accent)';
+    label.textContent = 'Admin';
+  } else {
+    const g = GEWERKE.find(x => x.id === identity.gewerk);
+    dot.style.background = g ? g.color : 'var(--muted)';
+    label.textContent = `${g ? g.label : identity.gewerk} · ${identity.level === 'meister' ? 'Meister' : identity.position}`;
+  }
+  applyTabGating();
+  if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
+}
+
+// Nicht-Admins sehen nur den Live-Tab (sobald Zugriffsschutz aktiv ist)
+function applyTabGating() {
+  const showAll = !isAccessGated() || (_identity && _identity.level === 'admin');
+  const gated = ['edit', 'show', 'settings'];
+  document.querySelectorAll('nav button[data-view]').forEach(btn => {
+    const view = btn.getAttribute('data-view');
+    btn.style.display = (gated.includes(view) && !showAll) ? 'none' : '';
+  });
+  // Falls aktuell ein gesperrter Tab offen ist → auf Live wechseln
+  if (!showAll) {
+    const activeBtn = document.querySelector('nav button.active');
+    const activeView = activeBtn?.getAttribute('data-view');
+    if (activeView && gated.includes(activeView)) {
+      const liveBtn = document.querySelector('nav button[data-view="live"]');
+      if (liveBtn) showView('live', liveBtn);
+    }
+  }
 }
 
 function loginInit() {
   loginRenderGewerke();
-  try {
-    const saved = JSON.parse(localStorage.getItem('ql-login') || 'null');
-    if (saved?.gewerk && saved?.position) {
-      _loginGewerk = saved.gewerk;
-      _loginPosition = saved.position;
-      applyLogin(saved.gewerk, saved.position);
-      return;
-    }
-  } catch(_) {}
-  // Show login on first visit
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('ql-login') || 'null'); } catch(_) {}
+  // Gespeicherte Identität (auch altes Format { gewerk, position } migrieren)
+  if (saved && !saved.level && saved.gewerk && saved.position) {
+    saved = { level: 'position', gewerk: saved.gewerk, position: saved.position };
+  }
+  if (saved && saved.level) applyIdentity(saved, false);
+  // Step-Entscheidung erfolgt in resolveLoginGate() nach dem Laden der Shows
+  // (braucht die access-Config aus allShows).
+}
+
+// Nach dem Laden der Shows: Tab-Gating + ersten Login-Schritt final festlegen.
+function resolveLoginGate() {
+  applyTabGating();
+  if (_identity) return;  // bereits via gespeicherter Identität eingeloggt
+  if (document.getElementById('login-step-position').style.display === '') return; // mitten in der Auswahl
+  loginShowStep(isAccessGated() ? 'password' : 'gewerk');
+  const pw = document.getElementById('login-password');
+  if (pw && isAccessGated()) setTimeout(() => pw.focus(), 80);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3031,8 +3290,10 @@ loginInit();
     const loginShowName = document.getElementById('login-show-name');
     if (loginShowName) loginShowName.textContent = s.name;
     renderLiveChecklists(null);
-    renderLiveCues(null, null, '00:00:00:00');
+    renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
   }
+  // Login-Gate erst jetzt entscheiden (braucht die geladene access-Config der Show)
+  resolveLoginGate();
 })();
 </script>
 </body>

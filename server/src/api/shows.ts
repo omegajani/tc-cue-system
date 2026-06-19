@@ -81,6 +81,8 @@ router.post("/:id/cues", (req, res) => {
     message: req.body.message ?? "",
     color: req.body.color ?? "#f59e0b",
     resetShow: req.body.resetShow ?? false,
+    gewerk: req.body.gewerk || undefined,
+    positions: Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined,
   };
   show.cues.push(cue);
   upsertShow(show);
@@ -100,6 +102,11 @@ router.put("/:id/cues/:cueId", (req, res) => {
     message: req.body.message ?? show.cues[idx].message,
     color: req.body.color ?? show.cues[idx].color,
     resetShow: req.body.resetShow ?? show.cues[idx].resetShow ?? false,
+    // gewerk/positions: leeres Feld bedeutet bewusst "entfernen" → direkt übernehmen
+    gewerk: req.body.gewerk !== undefined ? (req.body.gewerk || undefined) : show.cues[idx].gewerk,
+    positions: req.body.positions !== undefined
+      ? (Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined)
+      : show.cues[idx].positions,
   };
   upsertShow(show);
   cueEngine.loadShow(show);

@@ -35,11 +35,26 @@ export class UsbMidiInput extends EventEmitter {
     }
   }
 
+  /**
+   * Erzeugt ein RtMidi-Input – gibt null zurück, wenn RtMidi nicht initialisiert
+   * werden kann (z. B. fehlender ALSA-Zugriff: /dev/snd nicht erreichbar). So
+   * stört ein fehlender MIDI-Zugriff weder die API-Endpoints noch den Server.
+   */
+  private newInput(): any | null {
+    const midi = this.loadMidi();
+    if (!midi) return null;
+    try {
+      return new midi.Input();
+    } catch (err) {
+      console.warn("[USB-MIDI] RtMidi nicht verfügbar:", (err as Error).message);
+      return null;
+    }
+  }
+
   /** Aktuell verfügbare MIDI-Eingänge auflisten. */
   listPorts(): UsbMidiPort[] {
-    const midi = this.loadMidi();
-    if (!midi) return [];
-    const probe = new midi.Input();
+    const probe = this.newInput();
+    if (!probe) return [];
     try {
       const count = probe.getPortCount();
       const ports: UsbMidiPort[] = [];
@@ -58,10 +73,9 @@ export class UsbMidiInput extends EventEmitter {
    */
   start(portName?: string): boolean {
     if (this._isRunning) return true;
-    const midi = this.loadMidi();
-    if (!midi) return false;
+    const input = this.newInput();
+    if (!input) return false;
 
-    const input = new midi.Input();
     const count = input.getPortCount();
     let idx = -1;
     if (portName) {

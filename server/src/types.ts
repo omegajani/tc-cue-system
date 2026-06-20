@@ -15,8 +15,9 @@ export interface Cue {
 
 // Zugriffskonfiguration der Show (weiche, clientseitige Filterung).
 export interface ShowAccess {
-  adminPassword?: string;                   // Master-Passwort; leer = kein Gate
-  gewerkPasswords?: Record<string, string>; // pro Gewerk-ID ein Passwort, z.B. { ton: "…" }
+  adminPassword?: string;                     // Master-Passwort; leer = kein Gate
+  gewerkPasswords?: Record<string, string>;   // Positions-Passwort pro Gewerk (sieht nur eigene Position)
+  meisterPasswords?: Record<string, string>;  // Meister-Passwort pro Gewerk (sieht alle Cues des Gewerks)
 }
 
 export interface ShowPosition {

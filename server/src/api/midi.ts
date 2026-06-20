@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { rtpMidiInput } from "../tc/rtpMidiInput.js";
 import { oscTcInput } from "../tc/oscTcInput.js";
+import { usbMidiInput } from "../tc/usbMidiInput.js";
 
 const router = Router();
 
@@ -17,7 +18,31 @@ router.get("/status", (_req, res) => {
       running: oscTcInput.isRunning(),
       port: oscTcInput.getPort(),
     },
+    usbMidi: {
+      running: usbMidiInput.isRunning(),
+      portName: usbMidiInput.getPortName(),
+    },
   });
+});
+
+// GET /api/midi/usb/ports — verfügbare USB-MIDI-Eingänge auflisten
+router.get("/usb/ports", (_req, res) => {
+  res.json({ ports: usbMidiInput.listPorts() });
+});
+
+// POST /api/midi/usb/start — USB-MIDI-Eingang öffnen (browserunabhängiger MTC)
+router.post("/usb/start", (req, res) => {
+  const { portName } = req.body as { portName?: string };
+  if (usbMidiInput.isRunning()) return res.json({ ok: true, already: true, portName: usbMidiInput.getPortName() });
+  const ok = usbMidiInput.start(portName);
+  if (!ok) return res.status(400).json({ ok: false, error: "Port nicht gefunden oder MIDI nicht verfügbar" });
+  res.json({ ok: true, portName: usbMidiInput.getPortName() });
+});
+
+// POST /api/midi/usb/stop
+router.post("/usb/stop", (_req, res) => {
+  usbMidiInput.stop();
+  res.json({ ok: true });
 });
 
 // POST /api/midi/rtpmidi/start — start AppleMIDI listener

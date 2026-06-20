@@ -716,6 +716,7 @@
         <option value="simulator">Simulator</option>
         <option value="browser-ltc">Browser LTC (Audio)</option>
         <option value="browser-mtc">Browser MTC (Web MIDI / USB)</option>
+        <option value="usb-midi">USB MIDI (Server, ohne Browser)</option>
         <option value="rtpmidi">AppleMIDI / rtpMIDI (Netzwerk)</option>
         <option value="osc">OSC Timecode (UDP)</option>
         <option value="server-ltc">Server LTC (Raspberry Pi)</option>
@@ -803,6 +804,32 @@
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
         Verbinde dein DAW (Logic, Ableton, QLab…) per Netzwerk-MIDI. macOS: System &gt; MIDI-Studio &gt; Netzwerk &gt; Gerät hinzufügen.
+      </div>
+    </div>
+
+    <!-- USB MIDI (Server-seitig, browserunabhängig) -->
+    <div id="usb-midi-group" style="display:none;margin-top:8px;">
+      <div class="sp-row">
+        <div class="sp-label">MIDI-Eingang</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="usb-midi-port" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+            <option value="">– Keine Geräte –</option>
+          </select>
+          <button class="btn btn-small" onclick="loadUsbMidiPorts()" title="Geräteliste aktualisieren">↻</button>
+        </div>
+      </div>
+      <div class="sp-row" style="margin-top:6px;">
+        <div class="sp-label"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" onclick="startUsbMidi()">▶ Starten</button>
+          <button class="btn btn-danger btn-small" onclick="stopUsbMidi()">■ Stoppen</button>
+        </div>
+      </div>
+      <div id="usb-midi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
+        Status: –
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Der Server liest MTC direkt vom USB-MIDI-Interface – kein Browser nötig. Das gewählte Gerät wird beim Serverstart automatisch geöffnet (headless/Autostart-tauglich).
       </div>
     </div>
 
@@ -2589,6 +2616,7 @@ function onTcSourceChange(val) {
   document.getElementById('ltc-monitor').style.display         = val === 'browser-ltc' ? '' : 'none';
   document.getElementById('midi-device-group').style.display   = val === 'browser-mtc' ? '' : 'none';
   document.getElementById('mtc-monitor').style.display         = val === 'browser-mtc' ? '' : 'none';
+  document.getElementById('usb-midi-group').style.display      = val === 'usb-midi'    ? '' : 'none';
   document.getElementById('rtpmidi-group').style.display       = val === 'rtpmidi'     ? '' : 'none';
   document.getElementById('osc-group').style.display           = val === 'osc'         ? '' : 'none';
   document.getElementById('simulator-section').style.display   = val === 'simulator'   ? '' : 'none';
@@ -2596,6 +2624,7 @@ function onTcSourceChange(val) {
   if (val === 'browser-ltc') requestAudioDevices();
   if (val !== 'browser-mtc') stopBrowserMTC();
   if (val === 'browser-mtc') requestMidiDevices();
+  if (val === 'usb-midi') { loadUsbMidiPorts(); loadUsbMidiStatus(); }
   if (val === 'rtpmidi') loadRtpMidiStatus();
   if (val === 'osc') loadOscStatus();
   saveShowTcSettings(val);
@@ -2629,12 +2658,14 @@ async function saveShowTcSettings(source) {
   if (!show) return;
   const deviceId = document.getElementById('audio-device-select')?.value || undefined;
   const channel  = document.getElementById('audio-channel-select')?.value || 'left';
+  const midiPort = document.getElementById('usb-midi-port')?.value || undefined;
   // Map UI source names to TCSource type
-  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator', 'server-ltc': 'ltc' };
-  await api('PUT', `/api/shows/${currentShowId}`, {
-    ...show, tcSource: tcSourceMap[source] || source,
-    audioDevice: deviceId, audioChannel: channel,
-  }).catch(() => {});
+  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'usb-midi': 'usb-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator', 'server-ltc': 'ltc' };
+  const tcSource = tcSourceMap[source] || source;
+  const updated = await api('PUT', `/api/shows/${currentShowId}`, {
+    ...show, tcSource, audioDevice: deviceId, audioChannel: channel, midiPort,
+  }).catch(() => null);
+  if (updated) { const i = allShows.findIndex(s => s.id === currentShowId); if (i !== -1) allShows[i] = updated; }
 }
 
 async function startBrowserLTC() {
@@ -2754,7 +2785,7 @@ function drawLevelMeter(analyser) {
 // Restore TC source settings when a show is loaded
 function restoreTcSourceUI(show) {
   if (!show) return;
-  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator' };
+  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'usb-mtc': 'usb-midi', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator' };
   const src = tcSourceMap[show.tcSource] || 'simulator';
   document.getElementById('tc-source-select').value = src;
   onTcSourceChange(src);
@@ -2943,6 +2974,59 @@ async function stopRtpMidi() {
   if (rtpMidiPollInterval) { clearInterval(rtpMidiPollInterval); rtpMidiPollInterval = null; }
   await api('POST', '/api/midi/rtpmidi/stop').catch(() => {});
   loadRtpMidiStatus();
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// USB-MIDI SERVER-SIDE CONTROL (browserunabhängiges MTC)
+// ════════════════════════════════════════════════════════════════════════════
+let usbMidiPollInterval = null;
+
+async function loadUsbMidiPorts() {
+  const data = await api('GET', '/api/midi/usb/ports').catch(() => null);
+  const sel = document.getElementById('usb-midi-port');
+  const prev = sel.value;
+  const ports = data?.ports || [];
+  sel.innerHTML = ports.length
+    ? ports.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')
+    : '<option value="">– Keine Geräte –</option>';
+  // Gespeichertes Port bevorzugen, sonst vorherige Auswahl beibehalten
+  const show = allShows.find(s => s.id === currentShowId);
+  const want = show?.midiPort || prev;
+  if (want && ports.some(p => p.name === want)) sel.value = want;
+}
+
+async function loadUsbMidiStatus() {
+  const data = await api('GET', '/api/midi/status').catch(() => null);
+  if (!data || !data.usbMidi) return;
+  const el = document.getElementById('usb-midi-status');
+  const u = data.usbMidi;
+  if (u.running) {
+    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · ${esc(u.portName || '')}`;
+    document.getElementById('tc-source-status').textContent = 'Läuft';
+  } else {
+    el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
+  }
+}
+
+async function startUsbMidi() {
+  const portName = document.getElementById('usb-midi-port').value;
+  const el = document.getElementById('usb-midi-status');
+  if (!portName) { el.innerHTML = '<span style="color:var(--red)">Kein Gerät gewählt</span>'; return; }
+  const res = await api('POST', '/api/midi/usb/start', { portName }).catch(() => null);
+  if (res && res.ok) {
+    saveShowTcSettings('usb-midi'); // Port + Quelle persistieren → Auto-Start beim Boot
+    loadUsbMidiStatus();
+    if (!usbMidiPollInterval) usbMidiPollInterval = setInterval(loadUsbMidiStatus, 3000);
+  } else {
+    el.innerHTML = '<span style="color:var(--red)">Start fehlgeschlagen (Gerät belegt oder nicht gefunden)</span>';
+  }
+}
+
+async function stopUsbMidi() {
+  if (usbMidiPollInterval) { clearInterval(usbMidiPollInterval); usbMidiPollInterval = null; }
+  await api('POST', '/api/midi/usb/stop').catch(() => {});
+  loadUsbMidiStatus();
   document.getElementById('tc-source-status').textContent = '';
 }
 

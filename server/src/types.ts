@@ -1,4 +1,4 @@
-export type TCSource = "ltc" | "mtc" | "rtpmidi" | "osc" | "simulator";
+export type TCSource = "ltc" | "mtc" | "usb-mtc" | "rtpmidi" | "osc" | "simulator";
 export type FallbackMode = "stop" | "continue" | "loop";
 
 export interface Cue {
@@ -57,6 +57,7 @@ export interface Show {
   fps?: 24 | 25 | 29.97 | 30;
   audioDevice?: string;
   audioChannel?: "left" | "right" | "mix";
+  midiPort?: string; // gewähltes USB-MIDI-Eingangsport (Name) für Auto-Start
   access?: ShowAccess;
 }
 

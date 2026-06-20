@@ -1,0 +1,13 @@
+#!/bin/sh
+# Gegenstück zum pre-commit-Hook: nach einem Pull/Merge die neueste Show aus der
+# Repo-Kopie (server/data/shows.json) in die Live-Datei übernehmen (neuestes
+# gewinnt). So propagiert eine auf einem Rechner bearbeitete Show beim Pull auf
+# die anderen. Best-effort – blockiert nie.
+root="$(git rev-parse --show-toplevel)"
+node "$root/scripts/sync-show.mjs" >/dev/null 2>&1 || true
+# Läuft der Server als systemd-User-Dienst, neu starten, damit die Show geladen
+# wird (no-op auf Rechnern ohne diesen Dienst, z. B. dem Entwicklungs-Mac).
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user try-restart tc-cue-system >/dev/null 2>&1 || true
+fi
+exit 0

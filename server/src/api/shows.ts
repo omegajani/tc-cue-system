@@ -159,6 +159,8 @@ router.post("/:id/checklists", (req, res) => {
     id: randomUUID(),
     title: req.body.title,
     trigger: req.body.trigger,
+    gewerk: req.body.gewerk || undefined,
+    positions: Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined,
     items: (req.body.items ?? []).map((item: { text: string; checked?: boolean }) => ({
       id: randomUUID(),
       text: item.text,
@@ -175,11 +177,16 @@ router.put("/:id/checklists/:checklistId", (req, res) => {
   if (!show) return res.status(404).json({ error: "Show not found" });
   const idx = (show.checklists ?? []).findIndex((checklist) => checklist.id === req.params.checklistId);
   if (idx === -1) return res.status(404).json({ error: "Checklist not found" });
+  const prev = show.checklists![idx];
   show.checklists![idx] = {
-    ...show.checklists![idx],
+    ...prev,
     ...req.body,
     id: req.params.checklistId,
-    items: (req.body.items ?? show.checklists![idx].items).map((item: { id?: string; text: string; checked?: boolean }) => ({
+    gewerk: req.body.gewerk !== undefined ? (req.body.gewerk || undefined) : prev.gewerk,
+    positions: req.body.positions !== undefined
+      ? (Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined)
+      : prev.positions,
+    items: (req.body.items ?? prev.items).map((item: { id?: string; text: string; checked?: boolean }) => ({
       id: item.id ?? randomUUID(),
       text: item.text,
       checked: item.checked ?? false,

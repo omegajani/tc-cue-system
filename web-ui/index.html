@@ -235,7 +235,7 @@
     .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .show-layout { grid-template-columns:minmax(280px,.72fr) minmax(420px,1.28fr); align-items:start; }
     .show-main { display:grid; gap:16px; }
-    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin: 0; }
+    .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin: 0; min-width:0; }
     .edit-card .section-header { justify-content:space-between; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border); }
     .edit-card .section-header h2 { color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.1px; text-transform:none; }
     .edit-card-description { margin-top:4px; color:var(--muted); font-size:10px; line-height:1.45; }
@@ -285,7 +285,7 @@
     #sim-state { font-size: 11px; color: var(--muted); }
 
     /* Cue table */
-    .cue-table-wrap { overflow-x:auto; border:1px solid rgba(255,255,255,.055); border-radius:11px; }
+    .cue-table-wrap { overflow-x:auto; border:1px solid rgba(255,255,255,.055); border-radius:11px; min-width:0; }
     table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
     th, td { border:0; border-bottom:1px solid rgba(255,255,255,.055); padding:7px 10px; text-align:left; vertical-align:middle; }
     tr:last-child td { border-bottom:0; }
@@ -372,12 +372,6 @@
       #live-position-content { padding:14px 15px 18px; }
       .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
       .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
-      /* Cue-Tabelle: Gewerk-Spalte auf nur den Farbpunkt reduzieren (kein H-Scroll) */
-      .gewerk-tag-label, .gewerk-tag-pos { display:none; }
-      .cell-gewerk { width:1%; }
-      /* Passwörter-Karte: alles vertikal stapeln */
-      .access-field, .access-dual-inputs { grid-template-columns:1fr; }
-      .access-dual-head { display:none; }
     }
 
     /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
@@ -432,25 +426,23 @@
     .cue-pos-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; cursor:pointer; user-select:none; transition:all .12s; }
     .cue-pos-chip input { width:14px; height:14px; accent-color:var(--accent); margin:0; }
     .cue-pos-chip.checked { border-color:var(--accent); background:rgba(245,158,11,.1); color:var(--accent-soft); }
-    /* Cue-Tabelle: Gewerk-Zelle */
-    .cell-gewerk { white-space:nowrap; }
+    /* Gewerk-Tag unter dem Cue-Titel */
+    .cell-gewerk-inline { margin-top:3px; }
     .gewerk-tag { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text); }
     .gewerk-tag-dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
     .gewerk-tag-pos { color:var(--muted); font-size:10px; }
     .gewerk-tag-allg { color:var(--muted); font-size:11px; }
     /* Show-View: Zugriff/Passwörter-Karte */
-    .access-field { display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; align-items:center; margin-bottom:10px; }
-    .access-field label { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--text); }
-    .access-field label .gewerk-tag-dot { width:9px; height:9px; }
-    .access-field input { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 11px; border-radius:7px; font-family:inherit; font-size:13px; }
-    .access-field input:focus { outline:none; border-color:var(--accent); }
-    .access-dual-inputs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .access-input-wrap { display:flex; flex-direction:column; gap:4px; }
-    .access-input-wrap span { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
-    .access-dual-head { display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; margin-bottom:6px; }
-    .access-dual-head .access-dual-cols { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .access-dual-head .access-dual-cols span { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
-    .access-note { display:flex; gap:9px; align-items:flex-start; margin-top:6px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
+    .access-admin { display:grid; grid-template-columns:max-content 1fr; gap:10px; align-items:center; margin-bottom:14px; }
+    .access-admin label { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--text); white-space:nowrap; }
+    .access-gewerk-table { display:grid; grid-template-columns:max-content 1fr 1fr; gap:6px 8px; align-items:center; }
+    .access-col-head { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+    .access-gewerk-table label { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text); white-space:nowrap; padding-right:4px; }
+    .access-gewerk-table input { min-width:0; width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; box-sizing:border-box; }
+    .access-gewerk-table input:focus { outline:none; border-color:var(--accent); }
+    .access-admin input { min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
+    .access-admin input:focus { outline:none; border-color:var(--accent); }
+    .access-note { display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
   </style>
 </head>
 <body>
@@ -1962,24 +1954,16 @@ function renderAccessFields(show) {
   const gpw = acc.gewerkPasswords || {};
   const mpw = acc.meisterPasswords || {};
   const adminRow = `
-    <div class="access-field">
+    <div class="access-admin">
       <label><span class="gewerk-tag-dot" style="background:var(--accent)"></span>Admin</label>
       <input id="access-admin" type="text" autocomplete="off" placeholder="Admin-Passwort (leer = kein Schutz)" value="${esc(acc.adminPassword || '')}" />
     </div>`;
-  const dualHead = `
-    <div class="access-dual-head">
-      <span></span>
-      <div class="access-dual-cols"><span>Position</span><span>Meister (alle Cues)</span></div>
-    </div>`;
-  const gewerkRows = GEWERKE.map(g => `
-    <div class="access-field access-field-dual">
-      <label><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</label>
-      <div class="access-dual-inputs">
-        <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Positions-Passwort" value="${esc(gpw[g.id] || '')}" />
-        <input data-gewerk="${g.id}" class="access-meister-pw" type="text" autocomplete="off" placeholder="Meister-Passwort" value="${esc(mpw[g.id] || '')}" />
-      </div>
-    </div>`).join('');
-  wrap.innerHTML = adminRow + dualHead + gewerkRows;
+  const tableHead = `<span></span><span class="access-col-head">Position</span><span class="access-col-head">Meister</span>`;
+  const gewerkItems = GEWERKE.map(g => `
+    <label><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</label>
+    <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(gpw[g.id] || '')}" />
+    <input data-gewerk="${g.id}" class="access-meister-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(mpw[g.id] || '')}" />`).join('');
+  wrap.innerHTML = adminRow + `<div class="access-gewerk-table">${tableHead}${gewerkItems}</div>`;
 }
 
 function collectAccessConfig() {
@@ -2188,13 +2172,12 @@ function renderCueTable(show) {
     <tr onclick="openCueModal('${c.id}')">
       <td>${i + 1}</td>
       <td class="cell-tc">${esc(c.tc)}</td>
-      <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}</td>
+      <td class="cell-title"><span class="cell-color-dot" style="background:${esc(c.color)}"></span>${esc(c.title)}${c.resetShow ? '<span title="Show-Reset" style="margin-left:6px;font-size:11px;color:#f87171;">↺</span>' : ''}${c.gewerk ? '<div class="cell-gewerk-inline">' + gewerkTagHtml(c) + '</div>' : ''}</td>
       <td class="cell-message">${esc(c.message)}</td>
-      <td class="cell-gewerk">${gewerkTagHtml(c)}</td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th><th>Gewerk</th></tr></thead>
+      <thead><tr><th>#</th><th>TC</th><th>Titel</th><th>Nachricht</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }

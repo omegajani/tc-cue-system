@@ -433,6 +433,12 @@
     .access-field label .gewerk-tag-dot { width:9px; height:9px; }
     .access-field input { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 11px; border-radius:7px; font-family:inherit; font-size:13px; }
     .access-field input:focus { outline:none; border-color:var(--accent); }
+    .access-dual-inputs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .access-input-wrap { display:flex; flex-direction:column; gap:4px; }
+    .access-input-wrap span { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+    .access-dual-head { display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; margin-bottom:6px; }
+    .access-dual-head .access-dual-cols { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .access-dual-head .access-dual-cols span { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
     .access-note { display:flex; gap:9px; align-items:flex-start; margin-top:6px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
   </style>
 </head>
@@ -560,7 +566,7 @@
 
       <div class="show-card">
         <h2>Zugriff / Passwörter</h2>
-        <p class="show-card-description">Beim Start melden sich die Gewerke per Passwort an und sehen nur ihre Cues. Das Admin-Passwort schaltet alles frei.</p>
+        <p class="show-card-description">Pro Gewerk zwei Passwörter: das <strong>Positions-Passwort</strong> schaltet die Positions-Auswahl frei (sieht nur die eigene Position), das <strong>Meister-Passwort</strong> meldet direkt als Meister an (sieht alle Cues des Gewerks). Das Admin-Passwort schaltet alles frei.</p>
         <div id="access-fields"></div>
         <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Passwörter werden mit „Speichern" in der Show abgelegt.</div>
       </div>
@@ -1895,33 +1901,47 @@ function previewSelectedShow() {
   renderAccessFields(show);
 }
 
-// Zugriffs-/Passwortfelder der Show-View (Admin + ein Passwort je Gewerk)
+// Zugriffs-/Passwortfelder der Show-View (Admin + je Gewerk: Positions- + Meister-Passwort)
 function renderAccessFields(show) {
   const wrap = document.getElementById('access-fields');
   if (!wrap) return;
   const acc = show?.access || {};
   const gpw = acc.gewerkPasswords || {};
+  const mpw = acc.meisterPasswords || {};
   const adminRow = `
     <div class="access-field">
       <label><span class="gewerk-tag-dot" style="background:var(--accent)"></span>Admin</label>
       <input id="access-admin" type="text" autocomplete="off" placeholder="Admin-Passwort (leer = kein Schutz)" value="${esc(acc.adminPassword || '')}" />
     </div>`;
+  const dualHead = `
+    <div class="access-dual-head">
+      <span></span>
+      <div class="access-dual-cols"><span>Position</span><span>Meister (alle Cues)</span></div>
+    </div>`;
   const gewerkRows = GEWERKE.map(g => `
-    <div class="access-field">
+    <div class="access-field access-field-dual">
       <label><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</label>
-      <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Passwort ${esc(g.label)}" value="${esc(gpw[g.id] || '')}" />
+      <div class="access-dual-inputs">
+        <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Positions-Passwort" value="${esc(gpw[g.id] || '')}" />
+        <input data-gewerk="${g.id}" class="access-meister-pw" type="text" autocomplete="off" placeholder="Meister-Passwort" value="${esc(mpw[g.id] || '')}" />
+      </div>
     </div>`).join('');
-  wrap.innerHTML = adminRow + gewerkRows;
+  wrap.innerHTML = adminRow + dualHead + gewerkRows;
 }
 
 function collectAccessConfig() {
   const adminPassword = (document.getElementById('access-admin')?.value || '').trim();
   const gewerkPasswords = {};
+  const meisterPasswords = {};
   document.querySelectorAll('.access-gewerk-pw').forEach(inp => {
     const v = inp.value.trim();
     if (v) gewerkPasswords[inp.getAttribute('data-gewerk')] = v;
   });
-  return { adminPassword, gewerkPasswords };
+  document.querySelectorAll('.access-meister-pw').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) meisterPasswords[inp.getAttribute('data-gewerk')] = v;
+  });
+  return { adminPassword, gewerkPasswords, meisterPasswords };
 }
 
 async function loadSelectedShow() {
@@ -3096,24 +3116,28 @@ function loginShowStep(step) {
   });
 }
 
-// Passwort prüfen → Admin oder passendes Gewerk freischalten
+// Passwort prüfen → Admin / Meister / Position freischalten
 function loginCheckPassword() {
   const input = document.getElementById('login-password');
   const pw = input.value;
   const acc = getAccessConfig();
   if (pw && pw === (acc.adminPassword || '')) { loginEnterAdmin(); return; }
-  const match = Object.entries(acc.gewerkPasswords || {}).find(([, p]) => p && p === pw);
-  if (match) { input.value = ''; loginUnlockGewerk(match[0]); return; }
+  // Meister-Passwörter vor Positions-Passwörtern prüfen
+  const mMatch = Object.entries(acc.meisterPasswords || {}).find(([, p]) => p && p === pw);
+  if (mMatch) { input.value = ''; loginUnlockGewerk(mMatch[0], 'meister'); return; }
+  const gMatch = Object.entries(acc.gewerkPasswords || {}).find(([, p]) => p && p === pw);
+  if (gMatch) { input.value = ''; loginUnlockGewerk(gMatch[0], 'position'); return; }
   // Falsch → Fehlermeldung + Shake
   document.getElementById('login-pw-error').textContent = 'Passwort nicht erkannt.';
   const step = document.getElementById('login-step-password');
   step.classList.remove('shake'); void step.offsetWidth; step.classList.add('shake');
 }
 
-// Bootstrap-Pfad (kein Passwort gesetzt): Gewerk direkt freischalten
-function loginSelectGewerk(id) { loginUnlockGewerk(id); }
+// Bootstrap-Pfad (kein Passwort gesetzt): Gewerk direkt freischalten, beide Ebenen wählbar
+function loginSelectGewerk(id) { loginUnlockGewerk(id, 'bootstrap'); }
 
-function loginUnlockGewerk(id) {
+// mode: 'bootstrap' (Position + Meister) | 'position' (nur Positionen) | 'meister' (nur Meister)
+function loginUnlockGewerk(id, mode = 'bootstrap') {
   _loginGewerk = id;
   _loginLevel = null;
   _loginPosition = null;
@@ -3126,19 +3150,26 @@ function loginUnlockGewerk(id) {
   document.getElementById('login-selected-label').textContent = g.label;
   document.getElementById('login-enter-btn').disabled = true;
   document.getElementById('login-pw-error').textContent = '';
-  const meisterBtn = `
+  const showMeister = mode === 'bootstrap' || mode === 'meister';
+  const showPositions = mode === 'bootstrap' || mode === 'position';
+  const meisterBtn = showMeister ? `
     <button class="login-position-btn meister" onclick="loginSelectMeister(this)">
       <span>Meister – alle Cues
         <span class="login-position-meta">Sieht jeden Cue des Gewerks</span>
       </span>
       <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
-    </button>`;
-  const posBtns = g.positions.map(pos => `
+    </button>` : '';
+  const posBtns = showPositions ? g.positions.map(pos => `
     <button class="login-position-btn" onclick="loginSelectPosition(this,'${esc(pos)}')">
       ${esc(pos)}
       <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
-    </button>`).join('');
+    </button>`).join('') : '';
   document.getElementById('login-position-list').innerHTML = meisterBtn + posBtns;
+  // Meister-Passwort: Meister direkt vorauswählen → nur „Live starten" nötig
+  if (mode === 'meister') {
+    const btn = document.querySelector('.login-position-btn.meister');
+    if (btn) loginSelectMeister(btn);
+  }
 }
 
 function _loginClearPositionSelection() {

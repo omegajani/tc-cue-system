@@ -812,24 +812,17 @@
       <div class="sp-row">
         <div class="sp-label">MIDI-Eingang</div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="usb-midi-port" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+          <select id="usb-midi-port" onchange="onUsbMidiPortChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
             <option value="">– Keine Geräte –</option>
           </select>
           <button class="btn btn-small" onclick="loadUsbMidiPorts()" title="Geräteliste aktualisieren">↻</button>
-        </div>
-      </div>
-      <div class="sp-row" style="margin-top:6px;">
-        <div class="sp-label"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-small" onclick="startUsbMidi()">▶ Starten</button>
-          <button class="btn btn-danger btn-small" onclick="stopUsbMidi()">■ Stoppen</button>
         </div>
       </div>
       <div id="usb-midi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
         Status: –
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
-        Der Server liest MTC direkt vom USB-MIDI-Interface – kein Browser nötig. Das gewählte Gerät wird beim Serverstart automatisch geöffnet (headless/Autostart-tauglich).
+        Der Server liest MTC direkt vom USB-MIDI-Interface – kein Browser nötig. Gerät wählen genügt: es startet sofort, wird gemerkt und beim Serverstart automatisch wieder geöffnet (headless/Autostart-tauglich).
       </div>
     </div>
 
@@ -2624,7 +2617,8 @@ function onTcSourceChange(val) {
   if (val === 'browser-ltc') requestAudioDevices();
   if (val !== 'browser-mtc') stopBrowserMTC();
   if (val === 'browser-mtc') requestMidiDevices();
-  if (val === 'usb-midi') { loadUsbMidiPorts(); loadUsbMidiStatus(); }
+  if (val !== 'usb-midi') stopUsbMidi();
+  if (val === 'usb-midi') selectUsbMidiSource();
   if (val === 'rtpmidi') loadRtpMidiStatus();
   if (val === 'osc') loadOscStatus();
   saveShowTcSettings(val);
@@ -3009,10 +3003,33 @@ async function loadUsbMidiStatus() {
   }
 }
 
-async function startUsbMidi() {
+// Quelle „USB MIDI" gewählt → Ports laden und gemerktes/erstes Gerät automatisch
+// aktivieren (kein manueller Start nötig).
+async function selectUsbMidiSource() {
+  await loadUsbMidiPorts();
   const portName = document.getElementById('usb-midi-port').value;
+  // Schon auf diesem Port aktiv? → nicht neu starten (kein TC-Aussetzer)
+  const status = await api('GET', '/api/midi/status').catch(() => null);
+  if (status?.usbMidi?.running && status.usbMidi.portName === portName) {
+    loadUsbMidiStatus();
+    if (!usbMidiPollInterval) usbMidiPollInterval = setInterval(loadUsbMidiStatus, 3000);
+    return;
+  }
+  if (portName) await activateUsbMidi(portName);
+  else loadUsbMidiStatus();
+}
+
+// Gerätewechsel im Dropdown → sofort aktivieren
+function onUsbMidiPortChange() {
+  const portName = document.getElementById('usb-midi-port').value;
+  if (portName) activateUsbMidi(portName);
+}
+
+// Öffnet das Port serverseitig und merkt es sich (Auto-Start beim Boot).
+async function activateUsbMidi(portName) {
   const el = document.getElementById('usb-midi-status');
   if (!portName) { el.innerHTML = '<span style="color:var(--red)">Kein Gerät gewählt</span>'; return; }
+  await api('POST', '/api/midi/usb/stop').catch(() => {}); // evtl. anderes Gerät zuerst schließen
   const res = await api('POST', '/api/midi/usb/start', { portName }).catch(() => null);
   if (res && res.ok) {
     saveShowTcSettings('usb-midi'); // Port + Quelle persistieren → Auto-Start beim Boot

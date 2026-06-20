@@ -375,9 +375,38 @@
     }
 
     /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
-    #login-screen { position:fixed; inset:0; z-index:500; background:var(--ql-bg-gradient); display:flex; align-items:center; justify-content:center; padding:28px; overflow-y:auto; }
+    #login-screen { position:fixed; inset:0; z-index:500; background:var(--ql-bg-gradient); display:flex; align-items:center; justify-content:center; padding:28px; overflow:hidden; }
     #login-screen.hidden { display:none; }
-    .login-shell { width:100%; max-width:560px; }
+    /* Sanft wandernde Lichtquelle – zwei versetzt kreisende Glows lassen die helle Ecke „wabern" */
+    #login-screen::before, #login-screen::after {
+      content:''; position:absolute; top:50%; left:50%; width:75vmax; height:75vmax; margin:-37.5vmax;
+      border-radius:50%; pointer-events:none; will-change:transform;
+    }
+    #login-screen::before {
+      background:radial-gradient(circle, rgba(245,158,11,.13), rgba(245,158,11,0) 62%);
+      filter:blur(30px); animation:login-glow-a 26s ease-in-out infinite;
+    }
+    #login-screen::after {
+      background:radial-gradient(circle, rgba(120,140,255,.07), rgba(120,140,255,0) 60%);
+      filter:blur(40px); animation:login-glow-b 34s ease-in-out infinite;
+    }
+    @keyframes login-glow-a {
+      0%   { transform:translate(-26%,-30%); }
+      25%  { transform:translate(24%,-14%); }
+      50%  { transform:translate(30%,26%); }
+      75%  { transform:translate(-12%,22%); }
+      100% { transform:translate(-26%,-30%); }
+    }
+    @keyframes login-glow-b {
+      0%   { transform:translate(22%,28%); }
+      33%  { transform:translate(-24%,14%); }
+      66%  { transform:translate(-8%,-26%); }
+      100% { transform:translate(22%,28%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #login-screen::before, #login-screen::after { animation:none; }
+    }
+    .login-shell { position:relative; z-index:1; width:100%; max-width:560px; }
     .login-brand { text-align:center; margin-bottom:26px; }
     .login-brand-mark { font-family:var(--ql-font-ui); font-size:26px; font-weight:700; letter-spacing:-.8px; color:var(--ql-text-strong); }
     .login-brand-mark span { color:var(--ql-accent); }

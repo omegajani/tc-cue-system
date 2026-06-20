@@ -38,6 +38,11 @@ function readJson<T>(name: string): T[] {
 
 function writeJson<T>(name: string, data: T[]): void {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  // Shows beim Schreiben mit Zeitstempel versehen → „neuestes gewinnt" beim Repo-Sync
+  if (name === "shows") {
+    const now = new Date().toISOString();
+    for (const show of data as unknown as Array<{ savedAt?: string }>) show.savedAt = now;
+  }
   fs.writeFileSync(filePath(name), JSON.stringify(data, null, 2), "utf-8");
 }
 

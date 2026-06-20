@@ -30,6 +30,13 @@ else
   mkdir -p "$HOME/.tc-cue-system"
 fi
 
+# Git-Hook aktivieren: Show-Datei wird beim Commit automatisch mitversioniert
+# (neuestes gewinnt), egal von welchem Rechner gepusht wird.
+if command -v git >/dev/null 2>&1 && git -C "$ROOT_DIR" rev-parse >/dev/null 2>&1; then
+  git -C "$ROOT_DIR" config core.hooksPath .githooks
+  echo "Git-Hook aktiviert: Show-Datei wird mitversioniert."
+fi
+
 echo
 echo "Installation abgeschlossen."
 if [[ "$(uname -s)" == "Darwin" ]]; then

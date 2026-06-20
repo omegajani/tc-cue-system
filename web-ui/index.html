@@ -372,6 +372,12 @@
       #live-position-content { padding:14px 15px 18px; }
       .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
       .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
+      /* Cue-Tabelle: Gewerk-Spalte auf nur den Farbpunkt reduzieren (kein H-Scroll) */
+      .gewerk-tag-label, .gewerk-tag-pos { display:none; }
+      .cell-gewerk { width:1%; }
+      /* Passwörter-Karte: alles vertikal stapeln */
+      .access-field, .access-dual-inputs { grid-template-columns:1fr; }
+      .access-dual-head { display:none; }
     }
 
     /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
@@ -2193,14 +2199,14 @@ function renderCueTable(show) {
     </table>`;
 }
 
-// Gewerk-/Positions-Zuordnung eines Cues als kleines Tag (für die Cue-Tabelle)
+// Gewerk-/Positions-Zuordnung eines Cues als kleines Tag (für die Cue-Tabelle).
+// Auf Mobile bleibt nur der Farbpunkt sichtbar (Label/Position via CSS ausgeblendet),
+// der title-Tooltip trägt die volle Info.
 function gewerkTagHtml(cue) {
   const g = GEWERKE.find(x => x.id === cue.gewerk);
-  if (!g) return '<span class="gewerk-tag-allg">Allgemein</span>';
-  const pos = Array.isArray(cue.positions) && cue.positions.length
-    ? cue.positions.join(', ')
-    : 'alle';
-  return `<span class="gewerk-tag"><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)} <span class="gewerk-tag-pos">· ${esc(pos)}</span></span>`;
+  if (!g) return '<span class="gewerk-tag gewerk-tag-allg" title="Allgemein"><span class="gewerk-tag-dot" style="background:var(--muted)"></span><span class="gewerk-tag-label">Allgemein</span></span>';
+  const pos = Array.isArray(cue.positions) && cue.positions.length ? cue.positions.join(', ') : 'alle';
+  return `<span class="gewerk-tag" title="${esc(g.label)} · ${esc(pos)}"><span class="gewerk-tag-dot" style="background:${g.color}"></span><span class="gewerk-tag-label">${esc(g.label)}</span> <span class="gewerk-tag-pos">· ${esc(pos)}</span></span>`;
 }
 
 // Dezente Indikator-Badges an einer Live-Cue-Zeile, nur für Meister/Admin:

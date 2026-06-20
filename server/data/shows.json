@@ -3,7 +3,7 @@
     "id": "show-demo-001",
     "name": "Blinded by Delight",
     "date": "2026-05-01",
-    "tcSource": "mtc",
+    "tcSource": "simulator",
     "fallbackMode": "stop",
     "audioChannel": "left",
     "positions": [
@@ -231,7 +231,11 @@
         "title": "SB rechts HH Dream",
         "message": "Handsender für Dream bringen",
         "color": "#0433ff",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       },
       {
         "id": "690f8f93-7f9f-4066-b7fa-55f468b03e19",
@@ -239,7 +243,11 @@
         "title": "Dream HH mitnehmen",
         "message": "nach Life's Delight Dream Handsender entgegennehmen und zum Radioraum bringen",
         "color": "#0433ff",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       },
       {
         "id": "89761557-2adb-4647-abcb-78a55bab0d87",
@@ -247,7 +255,11 @@
         "title": "LICHT AUS!",
         "message": "Arbeitslicht beim Radioraum und Monitor ausmachen",
         "color": "#fffb00",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       },
       {
         "id": "dd2bc3ee-fa7f-42a7-901b-8414010e4c35",
@@ -255,7 +267,11 @@
         "title": "HH Dream presetten am alten Portplatz + Handschlaufen",
         "message": "HH zum alten Portplatz SB rechts und\nHandschlaufen 0-Gasse rechts für Glückshormone",
         "color": "#0433ff",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       },
       {
         "id": "42766d4c-9e7c-4f85-b4f7-7a5e0c2439ac",
@@ -263,7 +279,11 @@
         "title": "HH Luci übergeben",
         "message": "SB links",
         "color": "#ff40ff",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       },
       {
         "id": "59a3f5f5-168d-4a7b-b95f-00f9e43e3299",
@@ -271,7 +291,11 @@
         "title": "HH Luci abholen + Handschlaufe",
         "message": "SB links Luci abholen\nmit Handschlaufe versehen und auf Stativ SB link",
         "color": "#ff40ff",
-        "resetShow": false
+        "resetShow": false,
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
+        ]
       }
     ],
     "checklists": [
@@ -286,8 +310,12 @@
           {
             "id": "467a3e78-9884-4143-9ded-279a74e8f2bf",
             "text": "HH Luci in den Wagen für Eclipse of Delight",
-            "checked": true
+            "checked": false
           }
+        ],
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
         ]
       },
       {
@@ -301,18 +329,22 @@
           {
             "id": "ba392775-111b-443f-b916-852b6b890b8b",
             "text": "Mikro von Lucy aus dem Wasserbecken holen",
-            "checked": true
+            "checked": false
           },
           {
             "id": "59cc3b81-d33e-4c13-862e-7947d1cac873",
             "text": "rauchen",
-            "checked": true
+            "checked": false
           },
           {
             "id": "d9844973-eab3-405c-b5da-4fb21f3dc63c",
             "text": "Handschlaufe an HH Dream anbringen",
-            "checked": true
+            "checked": false
           }
+        ],
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
         ]
       },
       {
@@ -333,8 +365,26 @@
             "text": "Mac ausschalten",
             "checked": false
           }
+        ],
+        "gewerk": "ton",
+        "positions": [
+          "Radioraum"
         ]
       }
-    ]
+    ],
+    "access": {
+      "adminPassword": "admin",
+      "gewerkPasswords": {
+        "licht": "licht",
+        "ton": "ton"
+      },
+      "meisterPasswords": {
+        "licht": "licht-meister",
+        "ton": "ton-meister"
+      }
+    },
+    "midiPort": "",
+    "audioDevice": "111C074C696CA76513B2E070468EC2F4B44034E7",
+    "savedAt": "2026-06-20T09:55:38.166Z"
   }
 ]

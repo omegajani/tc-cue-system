@@ -62,6 +62,7 @@ export interface Show {
   audioChannel?: "left" | "right" | "mix";
   midiPort?: string; // gewähltes USB-MIDI-Eingangsport (Name) für Auto-Start
   access?: ShowAccess;
+  savedAt?: string;  // ISO-Zeitstempel des letzten Speicherns – „neuestes gewinnt" beim Repo-Sync
 }
 
 // WebSocket event payloads

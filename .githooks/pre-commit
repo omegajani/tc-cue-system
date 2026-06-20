@@ -1,0 +1,8 @@
+#!/bin/sh
+# Übernimmt die aktuellste Show-Datei in die versionierte Repo-Kopie
+# (server/data/shows.json) und staged sie → jeder Commit/Push trägt die
+# neueste Show, egal von welchem Rechner. Best-effort: blockiert nie den Commit.
+root="$(git rev-parse --show-toplevel)"
+node "$root/scripts/sync-show.mjs" >&2 2>/dev/null || true
+git add "$root/server/data/shows.json" 2>/dev/null || true
+exit 0

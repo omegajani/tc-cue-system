@@ -572,6 +572,29 @@
       </div>
     </div>
   </div>
+
+  <!-- Songs / Positionen -->
+  <div class="edit-layout" style="margin-top:18px;">
+    <div class="section edit-card" data-edit-section="positions">
+      <div class="section-header">
+        <button class="edit-section-toggle" type="button" onclick="toggleEditSection('positions')">
+          <span class="edit-section-chevron">⌄</span>
+          <span class="edit-section-title">
+            <h2>Songs und Positionen</h2>
+            <span class="edit-card-description">Zeitbereiche definieren, in denen Songs oder Showpositionen aktiv sind.</span>
+          </span>
+        </button>
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openPositionModal(null)">+ Song / Position</button>
+        </div>
+      </div>
+      <div class="edit-section-body">
+        <div class="cue-table-wrap" id="position-table-wrap">
+          <p class="empty-hint">Keine Show ausgewählt.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── SETTINGS VIEW ──────────────────────────────────────────────────── -->
@@ -958,7 +981,7 @@
 <div id="view-edit" class="view">
   <div class="page-heading">
     <h1>Show bearbeiten</h1>
-    <p>Songs, Cues und Aufgabenlisten der geladenen Show direkt bearbeiten.</p>
+    <p>Cues und Aufgabenlisten der geladenen Show direkt bearbeiten.</p>
   </div>
   <div class="edit-layout">
 
@@ -972,27 +995,6 @@
       <div class="edit-overview-count"><strong id="edit-count-positions">0</strong><span>Songs</span></div>
       <div class="edit-overview-count"><strong id="edit-count-cues">0</strong><span>Cues</span></div>
       <div class="edit-overview-count"><strong id="edit-count-checklists">0</strong><span>Listen</span></div>
-    </div>
-  </div>
-
-  <!-- Positions / Songs -->
-  <div class="section edit-card" data-edit-section="positions">
-    <div class="section-header">
-      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('positions')">
-        <span class="edit-section-chevron">⌄</span>
-        <span class="edit-section-title">
-          <h2>Songs und Positionen</h2>
-          <span class="edit-card-description">Zeitbereiche definieren, in denen Songs oder Showpositionen aktiv sind.</span>
-        </span>
-      </button>
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="openPositionModal(null)">+ Song / Position</button>
-      </div>
-    </div>
-    <div class="edit-section-body">
-      <div class="cue-table-wrap" id="position-table-wrap">
-        <p class="empty-hint">Keine Show ausgewählt.</p>
-      </div>
     </div>
   </div>
 
@@ -1246,7 +1248,10 @@ function showView(name, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'show') loadAdmin();
+  if (name === 'show') {
+    loadAdmin();
+    applyEditSectionState();
+  }
   if (name === 'edit') {
     loadAdmin();
     applyEditSectionState();

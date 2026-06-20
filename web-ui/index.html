@@ -136,6 +136,11 @@
     .live-cue-title { min-width:0; overflow-wrap:anywhere; font-size:13px; font-weight:650; color:rgba(255,255,255,.72); }
     .live-cue-message { display:none; min-width:0; margin-top:5px; overflow-wrap:anywhere; color:rgba(255,255,255,.62); font-size:12px; line-height:1.4; }
     .live-cue-reset-badge { display:inline-flex; align-items:center; gap:3px; margin-top:5px; padding:2px 7px; border-radius:99px; background:rgba(239,68,68,.13); border:1px solid rgba(239,68,68,.28); color:#fca5a5; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+    /* Rollen-Indikator-Badges (nur Meister/Admin): Position bzw. Gewerk·Position */
+    .live-cue-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+    .live-cue-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:99px; font-size:9px; font-weight:650; letter-spacing:.3px; line-height:1.45; white-space:nowrap; color:color-mix(in srgb, var(--badge-color, #888) 72%, white 28%); background:color-mix(in srgb, var(--badge-color, #888) 13%, transparent); border:1px solid color-mix(in srgb, var(--badge-color, #888) 30%, transparent); }
+    .live-cue-badge-dot { width:6px; height:6px; border-radius:50%; background:var(--badge-color, #888); flex:0 0 auto; }
+    .live-cue-badge-muted { color:var(--muted); background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.09); }
     .live-cue-row:hover .live-cue-message { display:block; }
     .live-cue-row.preview-visible, .live-cue-row.picker-selected { min-height:82px; }
     .live-cue-row.preview-visible .live-cue-message, .live-cue-row.picker-selected .live-cue-message { display:block; }
@@ -1585,7 +1590,7 @@ function renderLiveCues(cur, next, tcString) {
   const previewCueIds = new Set(cues.slice(previewStart, previewStart + previewCount).map(cue => cue.id));
   const signature = JSON.stringify([
     identity ? [identity.level, identity.gewerk, identity.position] : null,
-    cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
+    cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color, cue.gewerk, cue.positions]),
     (show?.positions || []).map(position => [position.id, position.name, position.startTc, position.endTc]),
     (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.gewerk, checklist.positions, checklist.items.map(item => [item.id, item.text, item.checked])]),
     [..._triggeredChecklistIds].sort(),
@@ -1658,6 +1663,7 @@ function renderLiveCues(cur, next, tcString) {
           <div class="live-cue-title">${esc(cue.title)}</div>
           ${cue.message ? `<div class="live-cue-message">${esc(cue.message)}</div>` : ''}
           ${cue.resetShow ? '<div class="live-cue-reset-badge">↺ Show-Reset</div>' : ''}
+          ${roleBadgeHtml(cue, identity)}
         </div>
         ${isNext ? '<div class="live-cue-countdown" data-next-countdown></div>' : '<div></div>'}
       </div>`;
@@ -2195,6 +2201,27 @@ function gewerkTagHtml(cue) {
     ? cue.positions.join(', ')
     : 'alle';
   return `<span class="gewerk-tag"><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)} <span class="gewerk-tag-pos">· ${esc(pos)}</span></span>`;
+}
+
+// Dezente Indikator-Badges an einer Live-Cue-Zeile, nur für Meister/Admin:
+// Meister sieht die Position(en); Admin zusätzlich das Gewerk. So lassen sich
+// die Cues auseinanderhalten. Position-Nutzer bekommen keine Badges.
+function roleBadgeHtml(cue, id) {
+  if (!id || (id.level !== 'meister' && id.level !== 'admin')) return '';
+  const g = GEWERKE.find(x => x.id === cue.gewerk);
+  const parts = [];
+  if (id.level === 'admin') {
+    parts.push(g
+      ? `<span class="live-cue-badge" style="--badge-color:${g.color}"><span class="live-cue-badge-dot"></span>${esc(g.label)}</span>`
+      : `<span class="live-cue-badge live-cue-badge-muted">Allgemein</span>`);
+  }
+  const pos = Array.isArray(cue.positions) ? cue.positions : [];
+  if (pos.length) {
+    parts.push(`<span class="live-cue-badge"${g ? ` style="--badge-color:${g.color}"` : ''}>${esc(pos.join(' · '))}</span>`);
+  } else if (cue.gewerk) {
+    parts.push('<span class="live-cue-badge live-cue-badge-muted">ganzes Gewerk</span>');
+  }
+  return parts.length ? `<div class="live-cue-badges">${parts.join('')}</div>` : '';
 }
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -5,16 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TC Cue System</title>
   <style>
+    @font-face {
+      font-family: 'Lexend';
+      src: url('fonts/Lexend-VariableFont_wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
     :root {
       --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
       --border: #2a2a2a; --text: #e5e5e5; --muted: #666;
       --accent: #f59e0b; --green: #10b981; --red: #ef4444; --blue: #3b82f6;
+      /* QL Design System tokens */
+      --ql-bg: #0f0f0f; --ql-surface: #1a1a1a; --ql-surface-2: #222;
+      --ql-border: #2a2a2a; --ql-text: #e5e5e5; --ql-text-strong: #fff;
+      --ql-muted: #666; --ql-faint: rgba(255,255,255,.42);
+      --ql-accent: #f59e0b; --ql-accent-soft: #fcd34d; --ql-accent-tint: rgba(245,158,11,.14);
+      --ql-green: #10b981; --ql-green-tint: rgba(16,185,129,.13); --ql-green-on: #6ee7b7;
+      --ql-red: #ef4444; --ql-red-tint: rgba(239,68,68,.13); --ql-red-on: #fca5a5;
+      --ql-blue: #3b82f6; --ql-blue-tint: rgba(59,130,246,.16); --ql-blue-on: #93c5fd;
+      --ql-teal: #2dd4bf; --ql-teal-tint: rgba(45,212,191,.12); --ql-teal-on: #5eead4;
+      --ql-gewerk-licht: #f59e0b; --ql-gewerk-ton: #3b82f6;
+      --ql-gewerk-buehne: #a855f7; --ql-gewerk-regie: #2dd4bf; --ql-gewerk-video: #ec4899;
+      --ql-font-ui: 'Lexend', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+      --ql-font-mono: 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+      --ql-bg-gradient: linear-gradient(145deg, #14141a, #000);
+      --ql-glass-fill: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035));
+      --ql-glass-fill-row: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+      --ql-glass-stroke: rgba(255,255,255,.2); --ql-glass-stroke-soft: rgba(255,255,255,.09);
+      --ql-shadow-glass: 0 22px 55px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.26), inset 0 -1px rgba(255,255,255,.05);
+      --ql-blur-panel: blur(34px) saturate(155%); --ql-blur-row: blur(20px) saturate(135%);
+      --ql-progress-fill: linear-gradient(110deg, rgba(37,99,235,.46), rgba(96,165,250,.14));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background:var(--bg);
       color:var(--text);
-      font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+      font-family: var(--ql-font-ui);
       min-height:100vh;
       font-weight:400;
       -webkit-font-smoothing:antialiased;
@@ -341,15 +368,86 @@
       .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
       .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
     }
+
+    /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
+    #login-screen { position:fixed; inset:0; z-index:500; background:var(--ql-bg-gradient); display:flex; align-items:center; justify-content:center; padding:28px; overflow-y:auto; }
+    #login-screen.hidden { display:none; }
+    .login-shell { width:100%; max-width:560px; }
+    .login-brand { text-align:center; margin-bottom:26px; }
+    .login-brand-mark { font-family:var(--ql-font-ui); font-size:26px; font-weight:700; letter-spacing:-.8px; color:var(--ql-text-strong); }
+    .login-brand-mark span { color:var(--ql-accent); }
+    .login-brand-sub { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; color:var(--ql-faint); margin-top:6px; }
+    .login-prompt { font-size:12px; color:var(--ql-muted); text-align:center; margin-bottom:16px; }
+    .login-gewerk-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .gewerk-tile { display:flex; flex-direction:column; align-items:flex-start; gap:14px; width:100%; text-align:left; cursor:pointer; padding:18px; border-radius:18px; border:1px solid var(--ql-glass-stroke-soft); background:var(--ql-glass-fill-row); box-shadow:inset 0 1px rgba(255,255,255,.08),0 8px 24px rgba(0,0,0,.12); backdrop-filter:var(--ql-blur-row); -webkit-backdrop-filter:var(--ql-blur-row); transition:all .22s; font-family:var(--ql-font-ui); color:inherit; }
+    .gewerk-tile:hover { border-color:rgba(255,255,255,.16); background:linear-gradient(150deg,rgba(255,255,255,.09),rgba(255,255,255,.02)); }
+    .gewerk-tile.selected { box-shadow:inset 0 1px rgba(255,255,255,.2); }
+    .gewerk-tile-icon { display:grid; place-items:center; width:44px; height:44px; border-radius:12px; font-size:20px; line-height:1; flex-shrink:0; }
+    .gewerk-tile-name { display:block; font-size:18px; font-weight:650; color:var(--ql-text-strong); letter-spacing:-.2px; }
+    .gewerk-tile-meta { display:block; margin-top:3px; font-size:11px; }
+    .login-back { background:none; border:none; color:var(--ql-muted); font-family:var(--ql-font-ui); font-size:12px; cursor:pointer; margin-bottom:16px; padding:0; }
+    .login-gewerk-header { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+    .login-gewerk-badge { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; font-size:16px; flex-shrink:0; }
+    .login-gewerk-label { font-size:16px; font-weight:650; color:var(--ql-text-strong); }
+    .login-gewerk-hint { font-size:11px; color:var(--ql-muted); }
+    .login-position-list { display:grid; gap:9px; }
+    .login-position-btn { display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left; cursor:pointer; padding:15px 18px; border-radius:14px; font-family:var(--ql-font-ui); border:1px solid var(--ql-border); background:var(--ql-surface); color:var(--ql-text); font-size:15px; font-weight:600; transition:all .15s; }
+    .login-position-btn.selected { color:var(--ql-text-strong); }
+    .login-position-radio { width:18px; height:18px; border-radius:50%; border:2px solid var(--ql-border); display:grid; place-items:center; flex-shrink:0; }
+    .login-position-radio .radio-dot { width:8px; height:8px; border-radius:50%; display:none; }
+    .login-position-btn.selected .login-position-radio .radio-dot { display:block; }
+    .login-enter-btn { width:100%; margin-top:20px; padding:14px; border-radius:12px; font-family:var(--ql-font-ui); font-size:14px; font-weight:600; transition:all .15s; border:1px solid var(--ql-green); cursor:pointer; }
+    .login-enter-btn:disabled { opacity:.5; cursor:not-allowed; background:var(--ql-surface); color:var(--ql-muted); }
+    .login-enter-btn:not(:disabled) { background:var(--ql-green-tint); color:var(--ql-green-on); }
+    /* Gewerk badge in status bar */
+    #hdr-gewerk { display:none; align-items:center; gap:7px; flex-shrink:0; }
+    #hdr-gewerk.show { display:flex; }
+    #hdr-gewerk-dot { width:7px; height:7px; border-radius:50%; }
+    #hdr-gewerk-label { color:var(--text); font-size:12px; }
+    #hdr-gewerk-switch { background:none; border:none; color:var(--muted); font-size:11px; font-family:inherit; cursor:pointer; padding:0; }
+    #hdr-gewerk-switch:hover { color:var(--text); }
   </style>
 </head>
 <body>
+<!-- ── LOGIN SCREEN ─────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-shell">
+    <div class="login-brand">
+      <div class="login-brand-mark">Q<span>Lyst</span></div>
+      <div class="login-brand-sub" id="login-show-name">TC Cue System</div>
+    </div>
+    <!-- Step 1: Gewerk wählen -->
+    <div id="login-step-gewerk">
+      <div class="login-prompt">An welchem Gewerk arbeitest du?</div>
+      <div class="login-gewerk-grid" id="login-gewerk-grid"></div>
+    </div>
+    <!-- Step 2: Position wählen -->
+    <div id="login-step-position" style="display:none;">
+      <button class="login-back" onclick="loginBack()">← Gewerk wechseln</button>
+      <div class="login-gewerk-header">
+        <div class="login-gewerk-badge" id="login-selected-badge"></div>
+        <div>
+          <div class="login-gewerk-label" id="login-selected-label"></div>
+          <div class="login-gewerk-hint">Position wählen</div>
+        </div>
+      </div>
+      <div class="login-position-list" id="login-position-list"></div>
+      <button class="login-enter-btn" id="login-enter-btn" disabled onclick="loginEnter()">Live starten →</button>
+    </div>
+  </div>
+</div>
+
 <div id="screen-flash" aria-hidden="true"></div>
 
 <!-- ── STATUS BAR ──────────────────────────────────────────────────────── -->
 <div id="status-bar">
   <span id="ws-dot" title="Server-Verbindung: getrennt"></span>
   <span id="tc-dot" title="Timecode-Signal: noch kein Signal empfangen"></span>
+  <div id="hdr-gewerk">
+    <span id="hdr-gewerk-dot"></span>
+    <span id="hdr-gewerk-label"></span>
+    <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
+  </div>
   <div id="hdr-center">
     <span id="hdr-song"></span>
     <span id="hdr-remaining"></span>
@@ -2796,6 +2894,119 @@ function esc(str) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════════════════════════════════════
+const GEWERKE = [
+  { id: 'licht',  label: 'Licht',  glyph: '☀', color: '#f59e0b', positions: ['Stellwerk', 'Verfolger 1', 'Verfolger 2'] },
+  { id: 'ton',    label: 'Ton',    glyph: '♪', color: '#3b82f6', positions: ['Monitor', 'FOH', 'Radioraum'] },
+  { id: 'buehne', label: 'Bühne',  glyph: '◑', color: '#a855f7', positions: ['Bühnenmeister', 'Seite Links', 'Seite Rechts', 'Schnürboden'] },
+  { id: 'regie',  label: 'Regie',  glyph: '◎', color: '#2dd4bf', positions: ['Inspizient', 'Regie-Pult'] },
+  { id: 'video',  label: 'Video',  glyph: '▦', color: '#ec4899', positions: ['Projektion'] },
+];
+
+let _loginGewerk = null;
+let _loginPosition = null;
+
+function loginRenderGewerke() {
+  const grid = document.getElementById('login-gewerk-grid');
+  grid.innerHTML = GEWERKE.map(g => {
+    const tint = (p) => `color-mix(in srgb, ${g.color} ${p}, transparent)`;
+    return `<button class="gewerk-tile" onclick="loginSelectGewerk('${g.id}')" style="
+      border-color:${tint('22%')};
+      background:linear-gradient(150deg,${tint('14%')},rgba(255,255,255,.02));">
+      <span class="gewerk-tile-icon" style="background:${tint('18%')};border:1px solid ${tint('36%')};color:${g.color};">${g.glyph}</span>
+      <span>
+        <span class="gewerk-tile-name">${g.label}</span>
+        <span class="gewerk-tile-meta" style="color:${g.color};">${g.positions.join(' · ')}</span>
+      </span>
+    </button>`;
+  }).join('');
+}
+
+function loginSelectGewerk(id) {
+  _loginGewerk = id;
+  _loginPosition = null;
+  const g = GEWERKE.find(x => x.id === id);
+  const tint = (p) => `color-mix(in srgb, ${g.color} ${p}, transparent)`;
+  document.getElementById('login-step-gewerk').style.display = 'none';
+  document.getElementById('login-step-position').style.display = '';
+  document.getElementById('login-selected-badge').style.cssText =
+    `background:${tint('18%')};border:1px solid ${tint('36%')};color:${g.color};`;
+  document.getElementById('login-selected-badge').textContent = g.glyph;
+  document.getElementById('login-selected-label').textContent = g.label;
+  document.getElementById('login-enter-btn').disabled = true;
+  document.getElementById('login-position-list').innerHTML = g.positions.map(pos => `
+    <button class="login-position-btn" onclick="loginSelectPosition(this,'${esc(pos)}')"
+      style="border-color:${tint('30%')}0;">
+      ${esc(pos)}
+      <span class="login-position-radio">
+        <span class="radio-dot" style="background:${g.color};"></span>
+      </span>
+    </button>`).join('');
+}
+
+function loginSelectPosition(btn, pos) {
+  _loginPosition = pos;
+  const g = GEWERKE.find(x => x.id === _loginGewerk);
+  document.querySelectorAll('.login-position-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = 'var(--ql-border)';
+    b.style.background = 'var(--ql-surface)';
+  });
+  btn.classList.add('selected');
+  btn.style.borderColor = `color-mix(in srgb, ${g.color} 55%, transparent)`;
+  btn.style.background = `color-mix(in srgb, ${g.color} 14%, var(--ql-surface))`;
+  document.getElementById('login-enter-btn').disabled = false;
+  document.getElementById('login-enter-btn').style.borderColor = g.color.replace('#', '#') ;
+}
+
+function loginBack() {
+  document.getElementById('login-step-position').style.display = 'none';
+  document.getElementById('login-step-gewerk').style.display = '';
+  _loginGewerk = null;
+  _loginPosition = null;
+}
+
+function loginEnter() {
+  if (!_loginGewerk || !_loginPosition) return;
+  try { localStorage.setItem('ql-login', JSON.stringify({ gewerk: _loginGewerk, position: _loginPosition })); } catch(_) {}
+  applyLogin(_loginGewerk, _loginPosition);
+}
+
+function loginSwitch() {
+  try { localStorage.removeItem('ql-login'); } catch(_) {}
+  _loginGewerk = null;
+  _loginPosition = null;
+  document.getElementById('login-step-position').style.display = 'none';
+  document.getElementById('login-step-gewerk').style.display = '';
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('hdr-gewerk').classList.remove('show');
+}
+
+function applyLogin(gewerkId, position) {
+  const g = GEWERKE.find(x => x.id === gewerkId);
+  document.getElementById('login-screen').classList.add('hidden');
+  const badge = document.getElementById('hdr-gewerk');
+  badge.classList.add('show');
+  document.getElementById('hdr-gewerk-dot').style.background = g.color;
+  document.getElementById('hdr-gewerk-label').textContent = `${g.label} · ${position}`;
+}
+
+function loginInit() {
+  loginRenderGewerke();
+  try {
+    const saved = JSON.parse(localStorage.getItem('ql-login') || 'null');
+    if (saved?.gewerk && saved?.position) {
+      _loginGewerk = saved.gewerk;
+      _loginPosition = saved.position;
+      applyLogin(saved.gewerk, saved.position);
+      return;
+    }
+  } catch(_) {}
+  // Show login on first visit
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════════════════════
 // Apply saved settings on startup
@@ -2808,6 +3019,8 @@ setInterval(() => {
   renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
 }, 30000);
 
+loginInit();
+
 (async () => {
   const shows = await api('GET', '/api/shows').catch(() => []);
   allShows = shows;
@@ -2815,6 +3028,8 @@ setInterval(() => {
     currentShowId = shows[0].id;
     const s = shows[0];
     document.getElementById('live-show-name').textContent = s.name;
+    const loginShowName = document.getElementById('login-show-name');
+    if (loginShowName) loginShowName.textContent = s.name;
     renderLiveChecklists(null);
     renderLiveCues(null, null, '00:00:00:00');
   }

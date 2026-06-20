@@ -15,6 +15,7 @@ import importExportRouter from "./api/importExport.js";
 import midiRouter from "./api/midi.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
 import { oscTcInput } from "./tc/oscTcInput.js";
+import { usbMidiInput } from "./tc/usbMidiInput.js";
 
 const app = express();
 const PORT = 3000;
@@ -127,6 +128,9 @@ oscTcInput.on("tc", (tc: string) => {
   broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
 
+// Wire USB-MIDI (server-seitiges MTC) → cueEngine über ingestTc (Dedup + Rewind-Reset)
+usbMidiInput.on("tc", (tc: string) => ingestTc(tc, "mtc-usb"));
+
 cueEngine.on("cueFire", (event) => {
   console.log(`[Engine] CUE FIRE: ${event.cue.title} @ ${event.tc}`);
   broadcast(event);
@@ -155,6 +159,19 @@ function loadInitialShow() {
   if (show) {
     cueEngine.loadShow(show);
     console.log(`[Startup] Auto-loaded show "${show.name}"`);
+    // Browserunabhängiger MTC: konfiguriertes USB-MIDI-Port automatisch öffnen.
+    // Ist das Gerät beim Boot noch nicht da, alle 5 s erneut versuchen.
+    if (show.tcSource === "usb-mtc" && show.midiPort) {
+      const tryStart = () => {
+        if (usbMidiInput.isRunning()) return;
+        if (usbMidiInput.start(show.midiPort)) {
+          console.log(`[Startup] USB-MIDI auto-started on "${show.midiPort}"`);
+        } else {
+          setTimeout(tryStart, 5000);
+        }
+      };
+      tryStart();
+    }
   }
 }
 

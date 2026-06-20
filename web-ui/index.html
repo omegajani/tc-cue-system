@@ -965,11 +965,21 @@
       <input id="f-checklist-time" type="time" value="19:00" />
     </div>
     <div class="form-row">
+      <label>Gewerk</label>
+      <select id="f-cl-gewerk" onchange="renderChecklistGewerkPositions()"></select>
+    </div>
+    <div class="form-row" id="f-cl-positions-row" style="display:none;">
+      <label>Positionen <span style="text-transform:none;letter-spacing:0;color:var(--muted);">(keine = ganzes Gewerk / Meister)</span></label>
+      <div id="f-cl-positions" class="cue-positions-grid"></div>
+    </div>
+    <div class="form-row">
       <label>Listenpunkte</label>
       <div id="f-checklist-items" class="checklist-item-editor"></div>
       <button class="checklist-item-add" type="button" onclick="addChecklistItemField()">+ Listenpunkt hinzufügen</button>
     </div>
     <div class="modal-actions">
+      <button class="btn btn-danger" id="f-checklist-delete" style="display:none" onclick="deleteChecklist(document.getElementById('f-checklist-id').value)">Löschen</button>
+      <div style="flex:1"></div>
       <button class="btn" onclick="closeChecklistModal()">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveChecklist()">Speichern</button>
     </div>
@@ -1503,8 +1513,10 @@ function renderLiveChecklists(currentCue = _lastCurrentCue) {
     if (due) _triggeredChecklistIds.add(checklist.id);
   }
   if (triggeredBefore !== [..._triggeredChecklistIds].sort().join(',')) _liveCueRenderSignature = '';
+  const _id = getLoginIdentity();
   const visible = (show.checklists || []).filter(checklist =>
     _triggeredChecklistIds.has(checklist.id) && checklist.items.some(item => !item.checked)
+    && cueVisibleToIdentity(checklist, _id)
   );
   wrap.classList.toggle('show', visible.length > 0);
   const signature = JSON.stringify(visible.map(checklist => [
@@ -1575,7 +1587,7 @@ function renderLiveCues(cur, next, tcString) {
     identity ? [identity.level, identity.gewerk, identity.position] : null,
     cues.map(cue => [cue.id, cue.tc, cue.title, cue.message, cue.color]),
     (show?.positions || []).map(position => [position.id, position.name, position.startTc, position.endTc]),
-    (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.items.map(item => [item.id, item.text, item.checked])]),
+    (show?.checklists || []).map(checklist => [checklist.id, checklist.title, checklist.trigger, checklist.gewerk, checklist.positions, checklist.items.map(item => [item.id, item.text, item.checked])]),
     [..._triggeredChecklistIds].sort(),
     previewCount,
     cur?.id,
@@ -1590,7 +1602,8 @@ function renderLiveCues(cur, next, tcString) {
   const previousScrollTop = list.scrollTop;
   const shouldFollow = !_pickerBrowsing;
   const queuedChecklists = (show?.checklists || []).filter(checklist =>
-    !_triggeredChecklistIds.has(checklist.id) || checklist.items.every(item => item.checked)
+    (!_triggeredChecklistIds.has(checklist.id) || checklist.items.every(item => item.checked))
+    && cueVisibleToIdentity(checklist, identity)
   );
   const entries = [
     ...cues.map((cue, index) => ({ type: 'cue', cue, cueIndex: index, sort: tcStringToSeconds(cue.tc) })),
@@ -1902,10 +1915,13 @@ async function loadAdmin() {
 }
 
 function renderEditOverview(show) {
+  const id = getLoginIdentity();
+  const cues = (show?.cues || []).filter(c => itemEditableByIdentity(c, id));
+  const checklists = (show?.checklists || []).filter(c => itemEditableByIdentity(c, id));
   document.getElementById('edit-show-name').textContent = show?.name || 'Keine Show geladen';
   document.getElementById('edit-count-positions').textContent = show?.positions?.length || 0;
-  document.getElementById('edit-count-cues').textContent = show?.cues?.length || 0;
-  document.getElementById('edit-count-checklists').textContent = show?.checklists?.length || 0;
+  document.getElementById('edit-count-cues').textContent = cues.length;
+  document.getElementById('edit-count-checklists').textContent = checklists.length;
 }
 
 function previewSelectedShow() {
@@ -2148,11 +2164,13 @@ async function deletePosition(positionId) {
 // ════════════════════════════════════════════════════════════════════════════
 function renderCueTable(show) {
   const wrap = document.getElementById('cue-table-wrap');
-  if (!show.cues || show.cues.length === 0) {
-    wrap.innerHTML = '<p class="empty-hint">Noch keine Cues. Klicke "+ Cue hinzufügen".</p>';
+  const id = getLoginIdentity();
+  const editable = (show.cues || []).filter(c => itemEditableByIdentity(c, id));
+  if (!editable.length) {
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Cues in deinem Bereich. Klicke „+ Cue".</p>';
     return;
   }
-  const rows = [...show.cues]
+  const rows = [...editable]
     .sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc))
     .map((c, i) => `
     <tr onclick="openCueModal('${c.id}')">
@@ -2215,8 +2233,25 @@ async function openCueModal(cueId) {
     renderCueGewerkPositions();
     document.getElementById('f-cue-delete').style.display = 'none';
   }
+  applyIdentityToCueModal(!cueId);
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
+}
+
+// Cue-Modal an die Rolle anpassen: Gewerk/Position automatisch setzen + sperren.
+// Admin/Bootstrap: alles frei. Position: Gewerk+eigene Position fix (read-only).
+// Meister: Gewerk fix, Positionen frei wählbar.
+function applyIdentityToCueModal(isNew) {
+  const id = getLoginIdentity();
+  const gsel = document.getElementById('f-gewerk');
+  gsel.disabled = false;
+  if (!id || id.level === 'admin') return;
+  if (isNew) { gsel.value = id.gewerk; if (id.level === 'position') _editingCuePositions = [id.position]; }
+  gsel.disabled = true;
+  renderCueGewerkPositions();
+  if (id.level === 'position') {
+    document.querySelectorAll('#f-positions .cue-pos-chip input').forEach(inp => { inp.disabled = true; });
+  }
 }
 
 // Gewerk-/Positions-Zuordnung im Cue-Modal
@@ -2289,9 +2324,10 @@ function checklistTriggerLabel(checklist, show) {
 
 function renderChecklistAdmin(show) {
   const wrap = document.getElementById('checklist-wrap');
-  const checklists = show.checklists || [];
+  const id = getLoginIdentity();
+  const checklists = (show.checklists || []).filter(cl => itemEditableByIdentity(cl, id));
   if (!checklists.length) {
-    wrap.innerHTML = '<p class="empty-hint">Noch keine Checklists angelegt.</p>';
+    wrap.innerHTML = '<p class="empty-hint">Noch keine Aufgabenlisten in deinem Bereich.</p>';
     return;
   }
   wrap.innerHTML = `<div class="checklist-cards">${checklists.map(checklist => {
@@ -2299,7 +2335,7 @@ function renderChecklistAdmin(show) {
       <div class="checklist-card">
         <div>
           <div class="checklist-card-title">${esc(checklist.title)}</div>
-          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))} · ${checklist.items.length} Punkte</div>
+          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))} · ${checklist.items.length} Punkte · ${gewerkTagHtml(checklist)}</div>
         </div>
         <div class="toolbar">
           <button class="btn btn-small" onclick="openChecklistModal('${checklist.id}')">Bearbeiten</button>
@@ -2325,8 +2361,49 @@ function openChecklistModal(checklistId) {
   document.getElementById('f-checklist-time').value = checklist?.trigger?.time || '19:00';
   renderChecklistItemEditor(checklist?.items?.length ? checklist.items : [{ text: '', checked: false }]);
   updateChecklistTriggerFields();
+  // Gewerk/Positionen (wie beim Cue)
+  _editingChecklistPositions = Array.isArray(checklist?.positions) ? checklist.positions : [];
+  populateChecklistGewerkSelect();
+  document.getElementById('f-cl-gewerk').value = checklist?.gewerk || '';
+  renderChecklistGewerkPositions();
+  applyIdentityToChecklistModal(!checklistId);
+  document.getElementById('f-checklist-delete').style.display = checklist ? '' : 'none';
   document.getElementById('checklist-modal-overlay').classList.add('show');
   document.getElementById('f-checklist-title').focus();
+}
+
+// Gewerk-/Positions-Zuordnung im Checklist-Modal (Spiegel der Cue-Logik)
+let _editingChecklistPositions = [];
+function populateChecklistGewerkSelect() {
+  document.getElementById('f-cl-gewerk').innerHTML =
+    '<option value="">— Allgemein (alle sehen)</option>' +
+    GEWERKE.map(g => `<option value="${g.id}">${esc(g.label)}</option>`).join('');
+}
+function renderChecklistGewerkPositions() {
+  const gewerkId = document.getElementById('f-cl-gewerk').value;
+  const row = document.getElementById('f-cl-positions-row');
+  const wrap = document.getElementById('f-cl-positions');
+  const g = GEWERKE.find(x => x.id === gewerkId);
+  if (!g) { row.style.display = 'none'; wrap.innerHTML = ''; return; }
+  row.style.display = '';
+  wrap.innerHTML = g.positions.map(pos => {
+    const checked = _editingChecklistPositions.includes(pos);
+    return `<label class="cue-pos-chip ${checked ? 'checked' : ''}">
+      <input type="checkbox" value="${esc(pos)}" ${checked ? 'checked' : ''}
+        onchange="this.closest('.cue-pos-chip').classList.toggle('checked', this.checked)" />${esc(pos)}</label>`;
+  }).join('');
+}
+function applyIdentityToChecklistModal(isNew) {
+  const id = getLoginIdentity();
+  const gsel = document.getElementById('f-cl-gewerk');
+  gsel.disabled = false;
+  if (!id || id.level === 'admin') return;
+  if (isNew) { gsel.value = id.gewerk; if (id.level === 'position') _editingChecklistPositions = [id.position]; }
+  gsel.disabled = true;
+  renderChecklistGewerkPositions();
+  if (id.level === 'position') {
+    document.querySelectorAll('#f-cl-positions .cue-pos-chip input').forEach(inp => { inp.disabled = true; });
+  }
 }
 
 function closeChecklistModal() {
@@ -2390,8 +2467,11 @@ async function saveChecklist() {
     : type === 'time'
       ? { type, time: document.getElementById('f-checklist-time').value }
       : { type };
-  if (id) await api('PUT', `/api/shows/${currentShowId}/checklists/${id}`, { title, trigger, items });
-  else await api('POST', `/api/shows/${currentShowId}/checklists`, { title, trigger, items });
+  const gewerk = document.getElementById('f-cl-gewerk').value;
+  const positions = [...document.querySelectorAll('#f-cl-positions input:checked')].map(i => i.value);
+  const body = { title, trigger, items, gewerk, positions };
+  if (id) await api('PUT', `/api/shows/${currentShowId}/checklists/${id}`, body);
+  else await api('POST', `/api/shows/${currentShowId}/checklists`, body);
   closeChecklistModal();
   await reloadCurrentShow();
   markUnsavedEdits();
@@ -3188,14 +3268,25 @@ function isAccessGated() {
   return !!(getAccessConfig().adminPassword || '').trim();
 }
 
-// Ist ein Cue für die gegebene Identität sichtbar? (clientseitige Filterung)
+// Ist ein Cue/eine Liste für die gegebene Identität SICHTBAR? (Live-Filter)
+// Liest nur .gewerk/.positions → funktioniert für Cue und Checklist gleichermaßen.
 function cueVisibleToIdentity(cue, id) {
   if (!id || id.level === 'admin') return true;   // Admin / kein Login → alles
-  if (!cue.gewerk) return true;                    // allgemeiner Cue → für alle
+  if (!cue.gewerk) return true;                    // allgemein → für alle
   if (cue.gewerk !== id.gewerk) return false;      // anderes Gewerk → verbergen
-  if (id.level === 'meister') return true;         // Meister → alle Cues seines Gewerks
+  if (id.level === 'meister') return true;         // Meister → alles seines Gewerks
   const pos = Array.isArray(cue.positions) ? cue.positions : [];
   return pos.length === 0 || pos.includes(id.position); // Position: leer = ganzes Gewerk
+}
+
+// Darf die Identität diesen Cue/diese Liste BEARBEITEN? (Edit-Scope, strenger)
+// Position: nur explizit die eigene Position; Meister: ganzes Gewerk; Admin: alles.
+function itemEditableByIdentity(item, id) {
+  if (!id || id.level === 'admin') return true;
+  if (item.gewerk !== id.gewerk) return false;     // allgemein/fremdes Gewerk → nein
+  if (id.level === 'meister') return true;
+  const pos = Array.isArray(item.positions) ? item.positions : [];
+  return pos.includes(id.position);                // Position: nur die eigene
 }
 
 // ── Login-Schritte ───────────────────────────────────────────────────────
@@ -3357,25 +3448,29 @@ function applyIdentity(identity, persist) {
     label.textContent = `${g ? g.label : identity.gewerk} · ${identity.level === 'meister' ? 'Meister' : identity.position}`;
   }
   applyTabGating();
-  if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
+  if (currentShowId) {
+    _liveCueRenderSignature = ''; // Rollenwechsel → Live-Liste zwingend neu filtern/rendern
+    renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
+    renderLiveChecklists(_lastCurrentCue);
+  }
 }
 
 // Nicht-Admins sehen nur den Live-Tab (sobald Zugriffsschutz aktiv ist)
 function applyTabGating() {
-  const showAll = !isAccessGated() || (_identity && _identity.level === 'admin');
-  const gated = ['edit', 'show', 'settings'];
+  const isAdmin = _identity && _identity.level === 'admin';
+  const open = !isAccessGated() || isAdmin;
+  // Nicht-Admins (Position/Meister) dürfen Live + Edit (Edit ist gescopt);
+  // Show + Einstellungen bleiben dem Admin vorbehalten.
+  const hidden = open ? [] : ['show', 'settings'];
   document.querySelectorAll('nav button[data-view]').forEach(btn => {
     const view = btn.getAttribute('data-view');
-    btn.style.display = (gated.includes(view) && !showAll) ? 'none' : '';
+    btn.style.display = hidden.includes(view) ? 'none' : '';
   });
   // Falls aktuell ein gesperrter Tab offen ist → auf Live wechseln
-  if (!showAll) {
-    const activeBtn = document.querySelector('nav button.active');
-    const activeView = activeBtn?.getAttribute('data-view');
-    if (activeView && gated.includes(activeView)) {
-      const liveBtn = document.querySelector('nav button[data-view="live"]');
-      if (liveBtn) showView('live', liveBtn);
-    }
+  const activeView = document.querySelector('nav button.active')?.getAttribute('data-view');
+  if (activeView && hidden.includes(activeView)) {
+    const liveBtn = document.querySelector('nav button[data-view="live"]');
+    if (liveBtn) showView('live', liveBtn);
   }
 }
 

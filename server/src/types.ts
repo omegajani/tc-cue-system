@@ -43,6 +43,9 @@ export interface Checklist {
   title: string;
   trigger: ChecklistTrigger;
   items: ChecklistItem[];
+  // Rollenzuordnung (clientseitige Filterung, wie bei Cue):
+  gewerk?: string;       // 'licht'|'ton'|…; undefined = allgemein (alle sehen)
+  positions?: string[];  // Crew-Positionen im Gewerk; leer = ganzes Gewerk
 }
 
 export interface Show {

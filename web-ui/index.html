@@ -113,6 +113,26 @@
     #live-position:not(.show) #live-position-name, #live-position:not(.show) #live-position-remaining { color: var(--muted); }
     #ltc-decoded-tc, #mtc-decoded-tc { display:inline-block; min-width:13ch; text-align:right; white-space:nowrap; }
 
+    /* Songliste/Playlist – rahmenlos, rechts, volle Höhe, Teleprompter-Optik */
+    #playlist-toggle { position:fixed; top:62px; right:16px; z-index:20; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:99px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:rgba(255,255,255,.8); font-family:var(--ql-font-ui,inherit); font-size:11.5px; cursor:pointer; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all .15s; }
+    #playlist-toggle:hover { background:rgba(255,255,255,.12); color:#fff; border-color:rgba(255,255,255,.28); }
+    #playlist-toggle.on { border-color:rgba(245,158,11,.45); color:var(--accent-soft,#fbbf24); }
+    #live-playlist { position:fixed; top:52px; right:0; bottom:0; width:300px; z-index:10; overflow:hidden; pointer-events:none;
+      -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 24%,#000 76%,transparent 100%);
+      mask-image:linear-gradient(180deg,transparent 0,#000 24%,#000 76%,transparent 100%); }
+    #live-playlist.hidden { display:none; }
+    #playlist-track { position:absolute; top:0; right:0; left:0; display:flex; flex-direction:column; align-items:flex-end; gap:2px; padding:0 26px; transition:transform .45s cubic-bezier(.22,.61,.36,1); }
+    .pl-row { text-align:right; padding:7px 0; line-height:1.18; color:#fff; max-width:100%; transition:opacity .3s, color .3s; }
+    .pl-row .pl-name { font-size:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+    .pl-row.done { opacity:.4; }
+    .pl-row.done .pl-check { color:var(--green,#22c55e); margin-left:5px; font-size:12px; }
+    .pl-row.upcoming { opacity:.55; }
+    .pl-row.current { opacity:1; padding:12px 0; }
+    .pl-row.current .pl-name { font-size:25px; font-weight:600; line-height:1.12; white-space:normal; color:var(--pl-accent,#fff); }
+    .pl-row.current .pl-sub { display:block; font-size:11.5px; font-weight:400; color:rgba(255,255,255,.55); margin-top:3px; }
+    /* Live-Karte bei sichtbarer Liste rechts ausparen, damit sie nicht darunter rutscht */
+    #view-live.playlist-on { padding-right:300px; }
+
     /* Cue picker list */
     #live-cue-list { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.22) transparent; padding:0 2px; scroll-padding-top:0; display:flex; flex-direction:column; gap:9px; perspective:900px; scroll-snap-type:y mandatory; }
     #live-cue-list:after { content:''; flex:0 0 calc(100% - 104px); }
@@ -372,6 +392,9 @@
       #live-position-content { padding:14px 15px 18px; }
       .live-cue-row { grid-template-columns:78px 8px minmax(0,1fr) auto; padding:10px 12px; gap:9px; }
       .live-cue-time, .live-cue-tc { width:78px; min-width:78px; }
+      /* Songliste ist eine reine PC-Funktion */
+      #live-playlist, #playlist-toggle { display:none !important; }
+      #view-live.playlist-on { padding-right:0; }
     }
 
     /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
@@ -1032,6 +1055,8 @@
 
 <!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
 <div id="view-live" class="view active">
+  <button id="playlist-toggle" onclick="togglePlaylist()"><span aria-hidden="true">♫</span> <span id="playlist-toggle-label">Songs</span></button>
+  <aside id="live-playlist" class="hidden"><div id="playlist-track"></div></aside>
   <div id="live-picker-shell">
     <div id="live-glass-header">
       <div id="live-show-name">–</div>
@@ -1423,6 +1448,7 @@ function handleEvent(evt) {
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
     renderCurrentPosition(evt.currentPosition, tc);
     renderLiveChecklists(evt.currentCue);
+    if (_playlistVisible) renderPlaylist();
   }
   if (evt.type === 'CUE_FIRE') {
     playAlarm();
@@ -1501,6 +1527,7 @@ window.addEventListener('resize', () => {
       const text = el?.dataset.marqueeText;
       if (text != null) { delete el.dataset.marqueeText; setMarqueeText(el, text); }
     }
+    if (_playlistVisible) recenterPlaylist();
   }, 200);
 });
 
@@ -1509,6 +1536,81 @@ function formatRemainingTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
+}
+
+// ── Songliste/Playlist (PC) ─────────────────────────────────────────────────
+// Rahmenloses Teleprompter-Panel rechts: alle Songs der Show, aktueller zentriert
+// und hervorgehoben. Rein clientseitig aus show.positions; optional einblendbar.
+const PLAYLIST_KEY = 'ql-playlist-visible';
+let _playlistVisible = false;
+let _playlistSig = '';
+
+function playlistSortedPositions() {
+  const show = allShows.find(s => s.id === currentShowId);
+  return [...((show && show.positions) || [])].sort((a, b) => tcStringToSeconds(a.startTc) - tcStringToSeconds(b.startTc));
+}
+
+// Gewerk-Farbe des eingeloggten Nutzers, Fallback Accent (Admin/Bootstrap).
+function playlistAccentColor() {
+  const id = getLoginIdentity();
+  const g = id && id.gewerk ? GEWERKE.find(x => x.id === id.gewerk) : null;
+  if (g) return g.color;
+  const acc = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  return acc || '#f59e0b';
+}
+
+function renderPlaylist() {
+  const track = document.getElementById('playlist-track');
+  if (!track) return;
+  const positions = playlistSortedPositions();
+  if (!positions.length) { track.innerHTML = ''; _playlistSig = ''; return; }
+  const now = tcStringToSeconds(_lastTcString);
+  // Aktueller Index: laufender Song, sonst der zuletzt begonnene.
+  let curIdx = positions.findIndex(p => now >= tcStringToSeconds(p.startTc) && now < tcStringToSeconds(p.endTc));
+  if (curIdx === -1) for (let i = 0; i < positions.length; i++) if (now >= tcStringToSeconds(positions[i].startTc)) curIdx = i;
+  const remainingFor = i => Math.max(0, Math.ceil(tcStringToSeconds(positions[i].endTc) - now));
+  const sig = positions.length + '|' + curIdx;
+  if (sig !== _playlistSig) {
+    _playlistSig = sig;
+    track.style.setProperty('--pl-accent', playlistAccentColor());
+    track.innerHTML = positions.map((p, i) => {
+      const state = i < curIdx ? 'done' : i === curIdx ? 'current' : 'upcoming';
+      const sub = state === 'current' && curIdx >= 0 ? `<span class="pl-sub">läuft · noch ${formatRemainingTime(remainingFor(i))}</span>` : '';
+      const check = state === 'done' ? '<span class="pl-check">✓</span>' : '';
+      return `<div class="pl-row ${state}"><span class="pl-name">${esc(p.name)}${check}</span>${sub}</div>`;
+    }).join('');
+    recenterPlaylist();
+  } else if (curIdx >= 0) {
+    // Index unverändert → nur Restzeit der aktuellen Zeile nachführen.
+    const sub = track.querySelector('.pl-row.current .pl-sub');
+    if (sub) sub.textContent = `läuft · noch ${formatRemainingTime(remainingFor(curIdx))}`;
+  }
+}
+
+// Track so verschieben, dass die aktuelle Zeile auf der Panel-Mitte sitzt.
+function recenterPlaylist() {
+  const panel = document.getElementById('live-playlist');
+  const track = document.getElementById('playlist-track');
+  if (!panel || !track) return;
+  const cur = track.querySelector('.pl-row.current') || track.querySelector('.pl-row');
+  if (!cur) return;
+  const offset = panel.clientHeight / 2 - (cur.offsetTop + cur.offsetHeight / 2);
+  track.style.transform = `translateY(${offset}px)`;
+}
+
+function applyPlaylistVisibility(visible) {
+  _playlistVisible = visible;
+  document.getElementById('live-playlist').classList.toggle('hidden', !visible);
+  document.getElementById('playlist-toggle').classList.toggle('on', visible);
+  document.getElementById('playlist-toggle-label').textContent = visible ? 'Songs ausblenden' : 'Songs';
+  document.getElementById('view-live').classList.toggle('playlist-on', visible);
+  if (visible) { _playlistSig = ''; renderPlaylist(); }
+}
+
+function togglePlaylist() {
+  const next = !_playlistVisible;
+  try { localStorage.setItem(PLAYLIST_KEY, next ? '1' : '0'); } catch (_) {}
+  applyPlaylistVisibility(next);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1965,6 +2067,7 @@ async function loadAdmin() {
     renderCueTable(activeShow);
     renderChecklistAdmin(activeShow);
     renderCrewPositions(activeShow);
+    if (_playlistVisible) { _playlistSig = ''; renderPlaylist(); }
   } else {
     renderEditOverview(null);
     renderCrewPositions(null);
@@ -3601,6 +3704,7 @@ function applyIdentity(identity, persist) {
     renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
     renderLiveChecklists(_lastCurrentCue);
     renderCrewPositions(allShows.find(s => s.id === currentShowId)); // Rolle bestimmt Sichtbarkeit/Umfang der Crew-Positionen-Card
+    if (_playlistVisible) { _playlistSig = ''; renderPlaylist(); } // Gewerk-Farbe kann sich geändert haben
   }
 }
 
@@ -3675,6 +3779,10 @@ loginInit();
   }
   // Login-Gate erst jetzt entscheiden (braucht die geladene access-Config der Show)
   resolveLoginGate();
+  // Songliste-Sichtbarkeit aus localStorage wiederherstellen
+  let plVisible = false;
+  try { plVisible = localStorage.getItem(PLAYLIST_KEY) === '1'; } catch (_) {}
+  applyPlaylistVisibility(plVisible);
 })();
 </script>
 </body>

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { rtpMidiInput } from "../tc/rtpMidiInput.js";
 import { oscTcInput } from "../tc/oscTcInput.js";
 import { usbMidiInput } from "../tc/usbMidiInput.js";
+import { artnetTcInput } from "../tc/artnetTcInput.js";
 
 const router = Router();
 
@@ -21,6 +22,10 @@ router.get("/status", (_req, res) => {
     usbMidi: {
       running: usbMidiInput.isRunning(),
       portName: usbMidiInput.getPortName(),
+    },
+    artnet: {
+      running: artnetTcInput.isRunning(),
+      port: artnetTcInput.getPort(),
     },
   });
 });
@@ -74,6 +79,20 @@ router.post("/osc/start", (req, res) => {
 // POST /api/midi/osc/stop
 router.post("/osc/stop", (_req, res) => {
   oscTcInput.stop();
+  res.json({ ok: true });
+});
+
+// POST /api/midi/artnet/start — Art-Net Timecode UDP-Listener (Port 6454)
+router.post("/artnet/start", (req, res) => {
+  const { port = 6454 } = req.body as { port?: number };
+  if (artnetTcInput.isRunning()) return res.json({ ok: true, already: true });
+  artnetTcInput.start(port);
+  res.json({ ok: true, port });
+});
+
+// POST /api/midi/artnet/stop
+router.post("/artnet/stop", (_req, res) => {
+  artnetTcInput.stop();
   res.json({ ok: true });
 });
 

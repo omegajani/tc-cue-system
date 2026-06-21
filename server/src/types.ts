@@ -1,4 +1,4 @@
-export type TCSource = "ltc" | "mtc" | "usb-mtc" | "rtpmidi" | "osc" | "simulator";
+export type TCSource = "ltc" | "mtc" | "usb-mtc" | "rtpmidi" | "osc" | "artnet" | "simulator";
 export type FallbackMode = "stop" | "continue" | "loop";
 
 export interface Cue {

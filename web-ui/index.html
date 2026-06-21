@@ -762,18 +762,6 @@
     </div>
   </div>
 
-  <!-- Simulator -->
-  <div class="sp-section" id="simulator-section">
-    <h3>Simulator <span id="sim-state" style="margin-left:6px;"></span></h3>
-    <div class="sim-controls">
-      <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
-      <button class="btn" onclick="simPause()">⏸ Pause</button>
-      <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
-      <input type="text" id="seek-input" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
-      <button class="btn" onclick="simSeek()">Seek →</button>
-    </div>
-  </div>
-
   <!-- TC Input -->
   <div class="sp-section">
     <h3>TC Input <span id="tc-source-status" style="color:var(--green);font-size:10px;margin-left:6px;"></span></h3>
@@ -786,8 +774,20 @@
         <option value="usb-midi">USB MIDI (Server, ohne Browser)</option>
         <option value="rtpmidi">AppleMIDI / rtpMIDI (Netzwerk)</option>
         <option value="osc">OSC Timecode (UDP)</option>
+        <option value="artnet">Art-Net Timecode (UDP 6454)</option>
         <option value="server-ltc">Server LTC (Raspberry Pi)</option>
       </select>
+    </div>
+    <!-- Simulator (Transport) -->
+    <div id="simulator-group" style="display:none;margin-top:8px;">
+      <div class="sp-row"><div class="sp-label">Transport <span id="sim-state" style="margin-left:6px;font-size:11px;color:var(--muted);"></span></div></div>
+      <div class="sim-controls" style="margin-top:6px;">
+        <button class="btn btn-primary" onclick="simStart()">▶ Start</button>
+        <button class="btn" onclick="simPause()">⏸ Pause</button>
+        <button class="btn btn-danger" onclick="simStop()">■ Stop</button>
+        <input type="text" id="seek-input" inputmode="numeric" placeholder="00:00:00:00" oninput="formatTimecodeInput(this)" />
+        <button class="btn" onclick="simSeek()">Seek →</button>
+      </div>
     </div>
     <div id="audio-device-group" style="display:none;">
       <div class="sp-row" style="margin-top:8px;">
@@ -804,13 +804,6 @@
           <option value="mix">Mix (L+R)</option>
         </select>
       </div>
-      <div id="audio-start-group" class="sp-row">
-        <div class="sp-label"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-small" onclick="startBrowserLTC()">▶ LTC starten</button>
-          <button class="btn btn-danger btn-small" onclick="stopBrowserLTC()">■ Stoppen</button>
-        </div>
-      </div>
     </div>
     <div id="ltc-monitor" style="display:none;margin-top:10px;">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -825,16 +818,9 @@
     <div id="midi-device-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">MIDI-Gerät</div>
-        <select id="midi-device-select" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+        <select id="midi-device-select" onchange="startBrowserMTC()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
           <option value="">– Zugriff erlauben –</option>
         </select>
-      </div>
-      <div class="sp-row" style="margin-top:6px;">
-        <div class="sp-label"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-small" onclick="startBrowserMTC()">▶ MTC starten</button>
-          <button class="btn btn-danger btn-small" onclick="stopBrowserMTC()">■ Stoppen</button>
-        </div>
       </div>
     </div>
     <div id="mtc-monitor" style="display:none;margin-top:10px;">
@@ -851,20 +837,13 @@
     <div id="rtpmidi-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">Port</div>
-        <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535"
+        <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535" onchange="startRtpMidi()"
           style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
       </div>
       <div class="sp-row">
         <div class="sp-label">Session-Name</div>
-        <input type="text" id="rtpmidi-name" value="TC Cue System"
+        <input type="text" id="rtpmidi-name" value="TC Cue System" onchange="startRtpMidi()"
           style="width:160px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
-      </div>
-      <div class="sp-row" style="margin-top:6px;">
-        <div class="sp-label"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-small" onclick="startRtpMidi()">▶ Starten</button>
-          <button class="btn btn-danger btn-small" onclick="stopRtpMidi()">■ Stoppen</button>
-        </div>
       </div>
       <div id="rtpmidi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
         Status: –
@@ -897,15 +876,8 @@
     <div id="osc-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">UDP-Port</div>
-        <input type="number" id="osc-port" value="9000" min="1024" max="65535"
+        <input type="number" id="osc-port" value="9000" min="1024" max="65535" onchange="startOsc()"
           style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
-      </div>
-      <div class="sp-row" style="margin-top:6px;">
-        <div class="sp-label"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-small" onclick="startOsc()">▶ Starten</button>
-          <button class="btn btn-danger btn-small" onclick="stopOsc()">■ Stoppen</button>
-        </div>
       </div>
       <div id="osc-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
         Status: –
@@ -914,6 +886,17 @@
         Akzeptiert: <code style="color:var(--accent)">/tc "HH:MM:SS:FF"</code><br>
         Adressen: /tc · /timecode · /clock/tc · /mtc · /smpte<br>
         Format: String oder 4 Int-Args (H M S F)
+      </div>
+    </div>
+
+    <!-- Art-Net Timecode -->
+    <div id="artnet-group" style="display:none;margin-top:8px;">
+      <div id="artnet-status" style="font-size:11px;color:var(--muted);">
+        Status: –
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Empfängt Art-Net <code style="color:var(--accent)">ArtTimeCode</code>-Pakete (OpCode 0x9700) auf UDP-Port <b>6454</b>.<br>
+        Der Server lauscht automatisch – einfach diese Quelle wählen.
       </div>
     </div>
   </div>
@@ -2932,15 +2915,22 @@ function onTcSourceChange(val) {
   document.getElementById('usb-midi-group').style.display      = val === 'usb-midi'    ? '' : 'none';
   document.getElementById('rtpmidi-group').style.display       = val === 'rtpmidi'     ? '' : 'none';
   document.getElementById('osc-group').style.display           = val === 'osc'         ? '' : 'none';
-  document.getElementById('simulator-section').style.display   = val === 'simulator'   ? '' : 'none';
+  document.getElementById('artnet-group').style.display        = val === 'artnet'      ? '' : 'none';
+  document.getElementById('simulator-group').style.display     = val === 'simulator'   ? '' : 'none';
+  // Buttonlos: jede Quelle aktiviert sich bei Auswahl selbst, beim Verlassen stoppt sie.
+  // Browser-Quellen: bei Auswahl Geräte anfordern → Start erfolgt bei Gerätewahl (User-Geste).
   if (val !== 'browser-ltc') stopBrowserLTC();
   if (val === 'browser-ltc') requestAudioDevices();
   if (val !== 'browser-mtc') stopBrowserMTC();
   if (val === 'browser-mtc') requestMidiDevices();
   if (val !== 'usb-midi') stopUsbMidi();
   if (val === 'usb-midi') selectUsbMidiSource();
-  if (val === 'rtpmidi') loadRtpMidiStatus();
-  if (val === 'osc') loadOscStatus();
+  if (val !== 'rtpmidi') stopRtpMidi();
+  if (val === 'rtpmidi') startRtpMidi();
+  if (val !== 'osc') stopOsc();
+  if (val === 'osc') startOsc();
+  if (val !== 'artnet') stopArtnet();
+  if (val === 'artnet') startArtnet();
   saveShowTcSettings(val);
 }
 
@@ -2963,8 +2953,9 @@ async function requestAudioDevices() {
   }
 }
 
-function onAudioDeviceChange() { saveShowTcSettings('browser-ltc'); }
-function onAudioChannelChange() { saveShowTcSettings('browser-ltc'); }
+// Gerät/Kanal gewählt = User-Geste → LTC-Dekodierung direkt (neu) starten (buttonlos).
+function onAudioDeviceChange() { saveShowTcSettings('browser-ltc'); startBrowserLTC(); }
+function onAudioChannelChange() { saveShowTcSettings('browser-ltc'); startBrowserLTC(); }
 
 async function saveShowTcSettings(source) {
   if (!currentShowId) return;
@@ -2974,7 +2965,7 @@ async function saveShowTcSettings(source) {
   const channel  = document.getElementById('audio-channel-select')?.value || 'left';
   const midiPort = document.getElementById('usb-midi-port')?.value || undefined;
   // Map UI source names to TCSource type
-  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'usb-midi': 'usb-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator', 'server-ltc': 'ltc' };
+  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'usb-midi': 'usb-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'artnet': 'artnet', 'simulator': 'simulator', 'server-ltc': 'ltc' };
   const tcSource = tcSourceMap[source] || source;
   const updated = await api('PUT', `/api/shows/${currentShowId}`, {
     ...show, tcSource, audioDevice: deviceId, audioChannel: channel, midiPort,
@@ -3099,7 +3090,7 @@ function drawLevelMeter(analyser) {
 // Restore TC source settings when a show is loaded
 function restoreTcSourceUI(show) {
   if (!show) return;
-  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'usb-mtc': 'usb-midi', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'simulator': 'simulator' };
+  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'usb-mtc': 'usb-midi', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'artnet': 'artnet', 'simulator': 'simulator' };
   const src = tcSourceMap[show.tcSource] || 'simulator';
   document.getElementById('tc-source-select').value = src;
   onTcSourceChange(src);
@@ -3392,6 +3383,35 @@ async function startOsc() {
 async function stopOsc() {
   await api('POST', '/api/midi/osc/stop').catch(() => {});
   loadOscStatus();
+  document.getElementById('tc-source-status').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ART-NET TIMECODE SERVER-SIDE CONTROL
+// ════════════════════════════════════════════════════════════════════════════
+let artnetPollInterval = null;
+
+async function loadArtnetStatus() {
+  const data = await api('GET', '/api/midi/status').catch(() => null);
+  if (!data || !data.artnet) return;
+  const el = document.getElementById('artnet-status');
+  const a = data.artnet;
+  el.innerHTML = a.running
+    ? `<span style="color:var(--green)">● Aktiv</span> · UDP Port ${a.port}`
+    : `<span style="color:var(--muted)">○ Gestoppt</span>`;
+}
+
+async function startArtnet() {
+  await api('POST', '/api/midi/artnet/start', { port: 6454 }).catch(() => {});
+  loadArtnetStatus();
+  document.getElementById('tc-source-status').textContent = 'Läuft';
+  if (!artnetPollInterval) artnetPollInterval = setInterval(loadArtnetStatus, 3000);
+}
+
+async function stopArtnet() {
+  if (artnetPollInterval) { clearInterval(artnetPollInterval); artnetPollInterval = null; }
+  await api('POST', '/api/midi/artnet/stop').catch(() => {});
+  loadArtnetStatus();
   document.getElementById('tc-source-status').textContent = '';
 }
 

@@ -16,6 +16,7 @@ import midiRouter from "./api/midi.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
 import { oscTcInput } from "./tc/oscTcInput.js";
 import { usbMidiInput } from "./tc/usbMidiInput.js";
+import { artnetTcInput } from "./tc/artnetTcInput.js";
 
 const app = express();
 const PORT = 3000;
@@ -131,6 +132,9 @@ oscTcInput.on("tc", (tc: string) => {
 // Wire USB-MIDI (server-seitiges MTC) → cueEngine über ingestTc (Dedup + Rewind-Reset)
 usbMidiInput.on("tc", (tc: string) => ingestTc(tc, "mtc-usb"));
 
+// Wire Art-Net Timecode → cueEngine über ingestTc (Dedup + Rewind-Reset)
+artnetTcInput.on("tc", (tc: string) => ingestTc(tc, "artnet"));
+
 cueEngine.on("cueFire", (event) => {
   console.log(`[Engine] CUE FIRE: ${event.cue.title} @ ${event.tc}`);
   broadcast(event);
@@ -172,6 +176,11 @@ function loadInitialShow() {
       };
       tryStart();
     }
+    // Server-seitige Netzwerk-Quellen ebenfalls headless beim Boot starten
+    // (Default-Ports; keine Browser-/Geräteinteraktion nötig).
+    if (show.tcSource === "rtpmidi") rtpMidiInput.start();
+    else if (show.tcSource === "osc") oscTcInput.start();
+    else if (show.tcSource === "artnet") artnetTcInput.start();
   }
 }
 

@@ -6,6 +6,10 @@ export class CueEngine extends EventEmitter {
   private show: Show | null = null;
   private sortedCues: Cue[] = [];
   private sortedPositions: ShowPosition[] = [];
+  // Vorberechnete Frame-Werte (parallel zu sortedCues/sortedPositions), damit
+  // processTc pro Tick (25–30×/s) nicht alle TCs neu parsen muss.
+  private cueFrames: number[] = [];
+  private positionFrames: Array<{ start: number; end: number }> = [];
   private firedCueIds = new Set<string>();
   private previousCue: Cue | null = null;
   private currentCue: Cue | null = null;
@@ -26,6 +30,12 @@ export class CueEngine extends EventEmitter {
     ).sort(
       (a, b) => parseTc(a.startTc).totalFrames - parseTc(b.startTc).totalFrames
     );
+    // Frames einmalig vorberechnen (parallel zu den sortierten Arrays)
+    this.cueFrames = this.sortedCues.map((cue) => parseTc(cue.tc).totalFrames);
+    this.positionFrames = this.sortedPositions.map((p) => ({
+      start: parseTc(p.startTc).totalFrames,
+      end: parseTc(p.endTc).totalFrames,
+    }));
     this.firedCueIds.clear();
     this.currentCue = null;
     this.nextCue = this.sortedCues[0] ?? null;
@@ -60,6 +70,8 @@ export class CueEngine extends EventEmitter {
     this.show = null;
     this.sortedCues = [];
     this.sortedPositions = [];
+    this.cueFrames = [];
+    this.positionFrames = [];
     this.firedCueIds.clear();
     this.currentCue = null;
     this.nextCue = null;
@@ -78,22 +90,21 @@ export class CueEngine extends EventEmitter {
     if (!this.show) return;
 
     const nowFrames = parseTc(tc).totalFrames;
-    this.currentPosition = this.sortedPositions.find((position) => {
-      const startFrames = parseTc(position.startTc).totalFrames;
-      const endFrames = parseTc(position.endTc).totalFrames;
-      return nowFrames >= startFrames && nowFrames <= endFrames;
-    }) ?? null;
+    let pos: ShowPosition | null = null;
+    for (let i = 0; i < this.sortedPositions.length; i++) {
+      const pf = this.positionFrames[i];
+      if (nowFrames >= pf.start && nowFrames <= pf.end) { pos = this.sortedPositions[i]; break; }
+    }
+    this.currentPosition = pos;
 
-    for (const cue of this.sortedCues) {
-      const cueFrames = parseTc(cue.tc).totalFrames;
-
+    for (let i = 0; i < this.sortedCues.length; i++) {
+      const cue = this.sortedCues[i];
       // Fire cue
-      if (!this.firedCueIds.has(cue.id) && nowFrames >= cueFrames) {
+      if (!this.firedCueIds.has(cue.id) && nowFrames >= this.cueFrames[i]) {
         this.firedCueIds.add(cue.id);
         this.previousCue = this.currentCue;
         this.currentCue = cue;
-        const idx = this.sortedCues.indexOf(cue);
-        this.nextCue = this.sortedCues[idx + 1] ?? null;
+        this.nextCue = this.sortedCues[i + 1] ?? null;
         const event: CueFireEvent = {
           type: "CUE_FIRE",
           tc,

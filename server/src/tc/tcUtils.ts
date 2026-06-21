@@ -9,16 +9,21 @@ export function setFPS(fps: number) {
 
 export function getFPS(): number { return _fps; }
 
+// Ganzzahlige Frame-Rate für Frame-Zählung/Formatierung. 29.97 wird als 30
+// behandelt (Non-Drop-Frame) – nicht-ganzzahlige fps würden sonst formatTc
+// brechen (totalFrames % 29.97) und fraktionale Frame-Werte erzeugen.
+function fpsInt(): number { return Math.round(_fps); }
+
 export function parseTc(tc: string): TCFrames {
   const parts = tc.split(":").map(Number);
   if (parts.length !== 4 || parts.some((part) => !Number.isFinite(part))) {
     throw new Error(`Invalid TC: ${tc}`);
   }
   const [hours, minutes, seconds, frames] = parts;
-  if (hours < 0 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59 || frames < 0 || frames >= _fps) {
+  const fps = fpsInt();
+  if (hours < 0 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59 || frames < 0 || frames >= fps) {
     throw new Error(`Invalid TC: ${tc}`);
   }
-  const fps = _fps;
   return {
     hours, minutes, seconds, frames,
     totalFrames: hours * 3600 * fps + minutes * 60 * fps + seconds * fps + frames,
@@ -26,7 +31,7 @@ export function parseTc(tc: string): TCFrames {
 }
 
 export function formatTc(totalFrames: number): string {
-  const fps = _fps;
+  const fps = fpsInt();
   const frames = totalFrames % fps;
   const totalSecs = Math.floor(totalFrames / fps);
   const seconds = totalSecs % 60;
@@ -37,5 +42,5 @@ export function formatTc(totalFrames: number): string {
 }
 
 export function tcToSeconds(tc: string): number {
-  return parseTc(tc).totalFrames / _fps;
+  return parseTc(tc).totalFrames / fpsInt();
 }

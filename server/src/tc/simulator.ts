@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { formatTc, parseTc } from "./tcUtils.js";
+import { formatTc, parseTc, getFPS } from "./tcUtils.js";
 
 export type SimulatorState = "stopped" | "running" | "paused";
 
@@ -7,7 +7,6 @@ export class TCSimulator extends EventEmitter {
   private state: SimulatorState = "stopped";
   private currentFrames: number = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
-  private readonly frameInterval = 1000 / 25; // 25fps
 
   getState(): SimulatorState {
     return this.state;
@@ -23,10 +22,13 @@ export class TCSimulator extends EventEmitter {
     }
     if (this.state === "running") return;
     this.state = "running";
+    // Frame-Intervall aus der aktuellen FPS ableiten, damit der TC in Echtzeit
+    // läuft (vorher fix 25fps → bei 30fps zu langsam).
+    const frameInterval = 1000 / Math.round(getFPS());
     this.intervalId = setInterval(() => {
       this.currentFrames++;
       this.emit("tc", formatTc(this.currentFrames));
-    }, this.frameInterval);
+    }, frameInterval);
   }
 
   pause() {

@@ -35,6 +35,11 @@ router.post("/show", (req, res) => {
       title: cue.title,
       message: cue.message,
       color: cue.color,
+      // Rollen-/Reset-Felder beim Import erhalten (sonst gehen Gewerk-/Positions-
+      // Zuweisungen und Show-Reset-Flags verloren)
+      resetShow: cue.resetShow ?? false,
+      gewerk: cue.gewerk || undefined,
+      positions: Array.isArray(cue.positions) && cue.positions.length ? cue.positions : undefined,
     })),
     positions: (show.positions ?? []).map((position) => ({ ...position, id: randomUUID() })),
     checklists: (show.checklists ?? []).map((checklist) => ({

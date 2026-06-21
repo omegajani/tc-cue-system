@@ -27,11 +27,24 @@ function ensureDataFile(name: string): void {
 }
 
 function readJson<T>(name: string): T[] {
+  ensureDataFile(name);
+  const target = filePath(name);
+  let raw: string;
   try {
-    ensureDataFile(name);
-    const raw = fs.readFileSync(filePath(name), "utf-8");
+    raw = fs.readFileSync(target, "utf-8");
+  } catch {
+    return []; // Datei (noch) nicht vorhanden
+  }
+  try {
     return JSON.parse(raw) as T[];
   } catch {
+    // Beschädigte Datei NICHT stillschweigend als leer behandeln (würde beim
+    // nächsten Schreiben überschrieben → Datenverlust). Stattdessen sichern.
+    try {
+      const backup = `${target}.corrupt-${Date.now()}`;
+      fs.copyFileSync(target, backup);
+      console.error(`[Store] "${name}.json" ist beschädigt – Sicherung unter ${backup}`);
+    } catch { /* ignore */ }
     return [];
   }
 }
@@ -43,7 +56,12 @@ function writeJson<T>(name: string, data: T[]): void {
     const now = new Date().toISOString();
     for (const show of data as unknown as Array<{ savedAt?: string }>) show.savedAt = now;
   }
-  fs.writeFileSync(filePath(name), JSON.stringify(data, null, 2), "utf-8");
+  // Atomar schreiben: erst in temp-Datei, dann umbenennen. Ein Crash mitten im
+  // Schreiben kann so die einzige Datenquelle nicht korrumpieren.
+  const target = filePath(name);
+  const tmp = `${target}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf-8");
+  fs.renameSync(tmp, target);
 }
 
 // Shows
@@ -72,10 +90,14 @@ export function getShow(id: string): Show | undefined {
   return getShows().find((s) => s.id === id);
 }
 
-/** Nur In-Memory – Persistenz erst per flushShows(). */
+/** Nur In-Memory – Persistenz erst per flushShows().
+ *  Ersetzt eine bestehende Show an ihrer Position (keine Reihenfolge-Änderung),
+ *  neue Shows werden angehängt. */
 export function upsertShow(show: Show): void {
-  const all = getShows().filter((s) => s.id !== show.id);
-  cache = [...all, show];
+  const all = getShows();
+  const idx = all.findIndex((s) => s.id === show.id);
+  if (idx === -1) cache = [...all, show];
+  else { const next = [...all]; next[idx] = show; cache = next; }
 }
 
 /** Nur In-Memory – Persistenz erst per flushShows(). */

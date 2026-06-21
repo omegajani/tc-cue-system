@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>TC Cue System</title>
   <style>
     @font-face {
@@ -64,6 +64,10 @@
 
     /* ── STATUS BAR ─────────────────────────────────────────────────── */
     #status-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: nowrap; }
+    /* iOS-Notch/Statusleiste: oberen + seitlichen Sicherheitsabstand freihalten,
+       der Surface-Hintergrund füllt dabei die Notch-Zone. */
+    #status-bar { padding-top: calc(7px + env(safe-area-inset-top)); padding-left: calc(20px + env(safe-area-inset-left)); padding-right: calc(20px + env(safe-area-inset-right)); }
+    nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
     #tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }

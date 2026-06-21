@@ -69,7 +69,7 @@
     #tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #tc-dot.connected { background: var(--green); }
     #hdr-center { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; }
-    #hdr-song { min-width: 0; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    #hdr-song { min-width: 0; max-width: 64vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
     #hdr-song .marquee-track { display: inline-flex; }
     #hdr-song.marquee { text-overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); }
     #hdr-song.marquee .marquee-track { animation: live-marquee var(--marquee-duration, 12s) linear infinite; }
@@ -395,6 +395,14 @@
       /* Songliste ist eine reine PC-Funktion */
       #live-playlist, #playlist-toggle { display:none !important; }
       #view-live.playlist-on { padding-right:0; }
+      /* Tab-Zeile + Gewerk-Badge enger packen; bei vielen Tabs (Admin) horizontal
+         scrollbar statt überlaufen. Badge bleibt bei Platz rechtsbündig. */
+      nav { overflow-x:auto; scrollbar-width:none; }
+      nav::-webkit-scrollbar { display:none; }
+      nav button { padding:11px 13px; font-size:12px; flex:0 0 auto; white-space:nowrap; }
+      #hdr-gewerk { gap:5px; padding:0 10px 0 8px; min-width:0; flex:0 0 auto; }
+      #hdr-gewerk-label { max-width:34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      #hdr-song { max-width:56vw; }
     }
 
     /* ── LOGIN SCREEN ───────────────────────────────────────────────── */
@@ -457,7 +465,7 @@
     .login-enter-btn:disabled { opacity:.5; cursor:not-allowed; background:var(--ql-surface); color:var(--ql-muted); }
     .login-enter-btn:not(:disabled) { background:var(--ql-green-tint); color:var(--ql-green-on); }
     /* Gewerk badge in status bar */
-    #hdr-gewerk { display:none; align-items:center; gap:7px; flex-shrink:0; }
+    #hdr-gewerk { display:none; align-items:center; gap:7px; flex-shrink:0; margin-left:auto; align-self:center; padding:0 18px 0 14px; }
     #hdr-gewerk.show { display:flex; }
     #hdr-gewerk-dot { width:7px; height:7px; border-radius:50%; }
     #hdr-gewerk-label { color:var(--text); font-size:12px; }
@@ -553,11 +561,6 @@
 <div id="status-bar">
   <span id="ws-dot" title="Server-Verbindung: getrennt"></span>
   <span id="tc-dot" title="Timecode-Signal: noch kein Signal empfangen"></span>
-  <div id="hdr-gewerk">
-    <span id="hdr-gewerk-dot"></span>
-    <span id="hdr-gewerk-label"></span>
-    <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
-  </div>
   <div id="hdr-center">
     <span id="hdr-song"></span>
     <span id="hdr-remaining"></span>
@@ -572,6 +575,11 @@
   <button data-view="edit" onclick="showView('edit',this)">Edit</button>
   <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
+  <div id="hdr-gewerk">
+    <span id="hdr-gewerk-dot"></span>
+    <span id="hdr-gewerk-label"></span>
+    <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
+  </div>
 </nav>
 
 <!-- ── SHOW VIEW ──────────────────────────────────────────────────────── -->

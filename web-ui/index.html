@@ -1415,6 +1415,34 @@ function updateTcDot() {
       : 'Timecode-Signal: kein Signal (TC steht)';
 }
 
+// Badge für Panel-Status, wenn der Listener gebunden ist: unterscheidet
+// „Signal aktiv" (TC kommt) von „Empfangsbereit" (gebunden, aber kein TC).
+function tcSignalBadge() {
+  return _tcRunning
+    ? '<span style="color:var(--green)">● Signal aktiv</span>'
+    : '<span style="color:var(--accent)">◌ Empfangsbereit · kein Signal</span>';
+}
+
+// Header-Status der TC-Input-Sektion: spiegelt das ECHTE Signal (_tcRunning),
+// nicht nur, dass ein Listener gebunden ist.
+function updateTcSourceStatus() {
+  const el = document.getElementById('tc-source-status');
+  if (!el) return;
+  if (_tcRunning) { el.textContent = '● Signal aktiv'; el.style.color = 'var(--green)'; }
+  else if (_everReceivedTc) { el.textContent = '○ kein Signal'; el.style.color = 'var(--muted)'; }
+  else { el.textContent = ''; }
+}
+
+// Status-Panel der aktuell gewählten Quelle neu zeichnen (z. B. wenn das Signal
+// kommt/geht), ohne auf den 3-s-Poll zu warten.
+function refreshActiveSourceStatus() {
+  const v = document.getElementById('tc-source-select')?.value;
+  if (v === 'rtpmidi') loadRtpMidiStatus();
+  else if (v === 'usb-midi') loadUsbMidiStatus();
+  else if (v === 'osc') loadOscStatus();
+  else if (v === 'artnet') loadArtnetStatus();
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════════════════════
@@ -1424,8 +1452,10 @@ function handleEvent(evt) {
   if (evt.type === 'TC_UPDATE') {
     _lastTcUpdateAt = Date.now();
     _everReceivedTc = true;
+    const wasRunning = _tcRunning;
     _tcRunning = true;
     updateTcDot();
+    if (!wasRunning) { updateTcSourceStatus(); refreshActiveSourceStatus(); }
     document.getElementById('tc-display').textContent = displayTc;
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);
@@ -1625,6 +1655,8 @@ function startTcWatchdog() {
     if (running !== _tcRunning) {
       _tcRunning = running;
       updateTcDot();
+      updateTcSourceStatus();
+      refreshActiveSourceStatus();
       updateLiveCueCountdown(_lastNextCue, _lastTcString);
     }
   }, 250);
@@ -3043,8 +3075,6 @@ async function startBrowserLTC() {
         stat.style.color = 'var(--muted)';
       }
     }, 40);
-
-    document.getElementById('tc-source-status').textContent = 'Läuft';
   } catch (e) {
     document.getElementById('tc-source-status').textContent = 'Fehler: ' + e.message;
     console.error('[LTC]', e);
@@ -3062,7 +3092,7 @@ function stopBrowserLTC() {
   document.getElementById('ltc-decode-status').textContent = 'Gestoppt';
   document.getElementById('ltc-decode-status').style.color = 'var(--muted)';
   document.getElementById('ltc-decoded-tc').textContent = '';
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 function drawLevelMeter(analyser) {
@@ -3178,8 +3208,6 @@ function startBrowserMTC() {
       stat.style.color = 'var(--muted)';
     }
   }, 100);
-
-  document.getElementById('tc-source-status').textContent = 'Läuft';
 }
 
 function postMtcTick(tc) {
@@ -3204,7 +3232,7 @@ function stopBrowserMTC() {
   if (stat) { stat.textContent = 'Gestoppt'; stat.style.color = 'var(--muted)'; }
   const tcEl = document.getElementById('mtc-decoded-tc');
   if (tcEl) tcEl.textContent = '';
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3260,7 +3288,7 @@ async function loadRtpMidiStatus() {
   const r = data.rtpMidi;
   if (r.running) {
     const peers = r.peers.length ? r.peers.map(p => p.name || p.address).join(', ') : 'Keine';
-    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · Port ${r.port} · Session: ${esc(r.name)}<br>Verbundene Peers: ${esc(peers)}`;
+    el.innerHTML = `${tcSignalBadge()} · Port ${r.port} · Session: ${esc(r.name)}<br>Verbundene Peers: ${esc(peers)}`;
   } else {
     el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
   }
@@ -3271,7 +3299,6 @@ async function startRtpMidi() {
   const name = document.getElementById('rtpmidi-name').value || 'TC Cue System';
   await api('POST', '/api/midi/rtpmidi/start', { port, name }).catch(() => {});
   loadRtpMidiStatus();
-  document.getElementById('tc-source-status').textContent = 'Läuft';
   if (!rtpMidiPollInterval) rtpMidiPollInterval = setInterval(loadRtpMidiStatus, 3000);
 }
 
@@ -3279,7 +3306,7 @@ async function stopRtpMidi() {
   if (rtpMidiPollInterval) { clearInterval(rtpMidiPollInterval); rtpMidiPollInterval = null; }
   await api('POST', '/api/midi/rtpmidi/stop').catch(() => {});
   loadRtpMidiStatus();
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3307,8 +3334,7 @@ async function loadUsbMidiStatus() {
   const el = document.getElementById('usb-midi-status');
   const u = data.usbMidi;
   if (u.running) {
-    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · ${esc(u.portName || '')}`;
-    document.getElementById('tc-source-status').textContent = 'Läuft';
+    el.innerHTML = `${tcSignalBadge()} · ${esc(u.portName || '')}`;
   } else {
     el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
   }
@@ -3355,7 +3381,7 @@ async function stopUsbMidi() {
   if (usbMidiPollInterval) { clearInterval(usbMidiPollInterval); usbMidiPollInterval = null; }
   await api('POST', '/api/midi/usb/stop').catch(() => {});
   loadUsbMidiStatus();
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3367,7 +3393,7 @@ async function loadOscStatus() {
   const el = document.getElementById('osc-status');
   const o = data.osc;
   if (o.running) {
-    el.innerHTML = `<span style="color:var(--green)">● Aktiv</span> · UDP Port ${o.port}`;
+    el.innerHTML = `${tcSignalBadge()} · UDP Port ${o.port}`;
   } else {
     el.innerHTML = `<span style="color:var(--muted)">○ Gestoppt</span>`;
   }
@@ -3377,13 +3403,12 @@ async function startOsc() {
   const port = parseInt(document.getElementById('osc-port').value) || 9000;
   await api('POST', '/api/midi/osc/start', { port }).catch(() => {});
   loadOscStatus();
-  document.getElementById('tc-source-status').textContent = 'Läuft';
 }
 
 async function stopOsc() {
   await api('POST', '/api/midi/osc/stop').catch(() => {});
   loadOscStatus();
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3397,14 +3422,13 @@ async function loadArtnetStatus() {
   const el = document.getElementById('artnet-status');
   const a = data.artnet;
   el.innerHTML = a.running
-    ? `<span style="color:var(--green)">● Aktiv</span> · UDP Port ${a.port}`
+    ? `${tcSignalBadge()} · UDP Port ${a.port}`
     : `<span style="color:var(--muted)">○ Gestoppt</span>`;
 }
 
 async function startArtnet() {
   await api('POST', '/api/midi/artnet/start', { port: 6454 }).catch(() => {});
   loadArtnetStatus();
-  document.getElementById('tc-source-status').textContent = 'Läuft';
   if (!artnetPollInterval) artnetPollInterval = setInterval(loadArtnetStatus, 3000);
 }
 
@@ -3412,7 +3436,7 @@ async function stopArtnet() {
   if (artnetPollInterval) { clearInterval(artnetPollInterval); artnetPollInterval = null; }
   await api('POST', '/api/midi/artnet/stop').catch(() => {});
   loadArtnetStatus();
-  document.getElementById('tc-source-status').textContent = '';
+  updateTcSourceStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════════

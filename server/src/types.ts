@@ -62,6 +62,9 @@ export interface Show {
   audioChannel?: "left" | "right" | "mix";
   midiPort?: string; // gewähltes USB-MIDI-Eingangsport (Name) für Auto-Start
   access?: ShowAccess;
+  // Crew-Positionen je Gewerk (z. B. ton: ["FOH","Monitor"]). Überschreibt die
+  // UI-Defaults; fehlt ein Gewerk hier, gelten die im Client hinterlegten Standards.
+  gewerkPositions?: Record<string, string[]>;
   savedAt?: string;  // ISO-Zeitstempel des letzten Speicherns – „neuestes gewinnt" beim Repo-Sync
 }
 

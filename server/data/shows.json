@@ -385,6 +385,13 @@
     },
     "midiPort": "",
     "audioDevice": "111C074C696CA76513B2E070468EC2F4B44034E7",
-    "savedAt": "2026-06-20T09:55:38.166Z"
+    "savedAt": "2026-06-21T05:19:57.098Z",
+    "gewerkPositions": {
+      "ton": [
+        "Monitor",
+        "FOH",
+        "Radioraum"
+      ]
+    }
   }
 ]

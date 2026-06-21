@@ -455,6 +455,18 @@
     .cue-pos-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; cursor:pointer; user-select:none; transition:all .12s; }
     .cue-pos-chip input { width:14px; height:14px; accent-color:var(--accent); margin:0; }
     .cue-pos-chip.checked { border-color:var(--accent); background:rgba(245,158,11,.1); color:var(--accent-soft); }
+    /* Crew-Positionen-Verwaltung (Edit-Tab) */
+    .crew-pos-gewerk { padding:14px 0; border-bottom:1px solid var(--border); }
+    .crew-pos-gewerk:first-child { padding-top:0; }
+    .crew-pos-gewerk:last-child { border-bottom:0; padding-bottom:0; }
+    .crew-pos-head { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); margin-bottom:11px; }
+    .crew-pos-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:11px; }
+    .crew-pos-chip { display:inline-flex; align-items:center; gap:7px; padding:6px 6px 6px 12px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; }
+    .crew-pos-remove { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; border:none; background:rgba(255,255,255,.06); color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0; transition:all .12s; }
+    .crew-pos-remove:hover { background:rgba(248,113,113,.2); color:#f87171; }
+    .crew-pos-add { display:flex; gap:8px; }
+    .crew-pos-add input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 11px; border-radius:8px; font-family:inherit; font-size:13px; }
+    .crew-pos-add input:focus { outline:none; border-color:var(--accent); }
     /* Gewerk-Tag unter dem Cue-Titel */
     .cell-gewerk-inline { margin-top:3px; }
     .gewerk-tag { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text); }
@@ -1116,6 +1128,21 @@
     </div>
     <div class="edit-section-body">
       <div id="checklist-wrap"><p class="empty-hint">Keine Show ausgewählt.</p></div>
+    </div>
+  </div>
+
+  <div class="section edit-card" data-edit-section="crew-positions" id="crew-positions-card" style="display:none;">
+    <div class="section-header">
+      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('crew-positions')">
+        <span class="edit-section-chevron">⌄</span>
+        <span class="edit-section-title">
+          <h2>Crew-Positionen</h2>
+          <span class="edit-card-description">Positionen je Gewerk – stehen danach im Login und bei der Cue-/Listen-Zuweisung zur Auswahl.</span>
+        </span>
+      </button>
+    </div>
+    <div class="edit-section-body">
+      <div id="crew-positions-wrap"></div>
     </div>
   </div>
 
@@ -1937,8 +1964,10 @@ async function loadAdmin() {
     renderPositionTable(activeShow);
     renderCueTable(activeShow);
     renderChecklistAdmin(activeShow);
+    renderCrewPositions(activeShow);
   } else {
     renderEditOverview(null);
+    renderCrewPositions(null);
     document.getElementById('position-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
     document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
     document.getElementById('checklist-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
@@ -1955,6 +1984,69 @@ function renderEditOverview(show) {
   document.getElementById('edit-count-positions').textContent = show?.positions?.length || 0;
   document.getElementById('edit-count-cues').textContent = cues.length;
   document.getElementById('edit-count-checklists').textContent = checklists.length;
+}
+
+// Welche Gewerke darf die aktuelle Identität bei den Crew-Positionen verwalten?
+// Admin (oder Bootstrap ohne Gate) → alle; Meister → nur das eigene; Position → keine.
+function crewPositionsEditableGewerke() {
+  const id = getLoginIdentity();
+  if (!isAccessGated() || !id || id.level === 'admin') return GEWERKE.map(g => g.id);
+  if (id.level === 'meister') return id.gewerk ? [id.gewerk] : [];
+  return [];
+}
+
+function renderCrewPositions(show) {
+  const card = document.getElementById('crew-positions-card');
+  const wrap = document.getElementById('crew-positions-wrap');
+  if (!card || !wrap) return;
+  const gewerke = crewPositionsEditableGewerke();
+  if (!show || !gewerke.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  wrap.innerHTML = gewerke.map(gid => {
+    const g = GEWERKE.find(x => x.id === gid);
+    if (!g) return '';
+    const positions = positionsForGewerk(gid);
+    const chips = positions.length
+      ? positions.map((p, i) => `<span class="crew-pos-chip">${esc(p)}<button type="button" class="crew-pos-remove" title="Entfernen" onclick="removeCrewPositionAt('${gid}', ${i})">×</button></span>`).join('')
+      : '<span class="empty-hint" style="font-size:12px;">Noch keine Positionen.</span>';
+    return `
+      <div class="crew-pos-gewerk">
+        <div class="crew-pos-head"><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</div>
+        <div class="crew-pos-chips">${chips}</div>
+        <div class="crew-pos-add">
+          <input id="crew-pos-input-${gid}" type="text" placeholder="Neue Position…" onkeydown="if(event.key==='Enter'){event.preventDefault();addCrewPosition('${gid}');}" />
+          <button type="button" class="btn btn-primary" onclick="addCrewPosition('${gid}')">+ Hinzufügen</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Ändert die Crew-Positionen eines Gewerks (Seed = aktuelle Liste, damit auch
+// das Entfernen von Standard-Positionen funktioniert), speichert die Show per
+// PUT und rendert die abhängige UI neu.
+async function mutateGewerkPositions(gewerkId, fn) {
+  const show = allShows.find(s => s.id === currentShowId);
+  if (!show) return;
+  const gp = { ...(show.gewerkPositions || {}) };
+  const current = Array.isArray(gp[gewerkId]) ? [...gp[gewerkId]] : [...positionsForGewerk(gewerkId)];
+  gp[gewerkId] = fn(current);
+  show.gewerkPositions = gp;
+  renderCrewPositions(show);
+  await api('PUT', `/api/shows/${show.id}`, { ...show, gewerkPositions: gp }).catch(() => {});
+  const idx = allShows.findIndex(s => s.id === show.id);
+  if (idx >= 0) allShows[idx] = show;
+}
+
+function addCrewPosition(gewerkId) {
+  const input = document.getElementById('crew-pos-input-' + gewerkId);
+  const name = (input?.value || '').trim();
+  if (!name) return;
+  mutateGewerkPositions(gewerkId, list =>
+    list.some(p => p.toLowerCase() === name.toLowerCase()) ? list : [...list, name]);
+}
+
+function removeCrewPositionAt(gewerkId, index) {
+  mutateGewerkPositions(gewerkId, list => list.filter((_, i) => i !== index));
 }
 
 function previewSelectedShow() {
@@ -2313,7 +2405,7 @@ function renderCueGewerkPositions() {
   const g = GEWERKE.find(x => x.id === gewerkId);
   if (!g) { row.style.display = 'none'; wrap.innerHTML = ''; return; }
   row.style.display = '';
-  wrap.innerHTML = g.positions.map(pos => {
+  wrap.innerHTML = positionsForGewerk(gewerkId).map(pos => {
     const checked = _editingCuePositions.includes(pos);
     return `<label class="cue-pos-chip ${checked ? 'checked' : ''}">
       <input type="checkbox" value="${esc(pos)}" ${checked ? 'checked' : ''}
@@ -2431,7 +2523,7 @@ function renderChecklistGewerkPositions() {
   const g = GEWERKE.find(x => x.id === gewerkId);
   if (!g) { row.style.display = 'none'; wrap.innerHTML = ''; return; }
   row.style.display = '';
-  wrap.innerHTML = g.positions.map(pos => {
+  wrap.innerHTML = positionsForGewerk(gewerkId).map(pos => {
     const checked = _editingChecklistPositions.includes(pos);
     return `<label class="cue-pos-chip ${checked ? 'checked' : ''}">
       <input type="checkbox" value="${esc(pos)}" ${checked ? 'checked' : ''}
@@ -3297,6 +3389,17 @@ const GEWERKE = [
   { id: 'video',  label: 'Video',  glyph: '▦', color: '#ec4899', positions: ['Projektion'] },
 ];
 
+// Crew-Positionen eines Gewerks: aus der geladenen Show (show.gewerkPositions),
+// sonst die in GEWERKE hinterlegten Standardwerte. Eine in der Show gespeicherte
+// Liste ist maßgeblich (erlaubt Hinzufügen UND Entfernen von Positionen).
+function positionsForGewerk(gewerkId) {
+  const show = allShows.find(s => s.id === currentShowId);
+  const custom = show && show.gewerkPositions && show.gewerkPositions[gewerkId];
+  if (Array.isArray(custom)) return custom;
+  const g = GEWERKE.find(x => x.id === gewerkId);
+  return g ? g.positions : [];
+}
+
 let _loginGewerk = null;       // freigeschaltetes Gewerk (id) während der Auswahl
 let _loginLevel = null;        // 'position' | 'meister' während der Auswahl
 let _loginPosition = null;     // gewählte Crew-Position
@@ -3401,7 +3504,7 @@ function loginUnlockGewerk(id, mode = 'bootstrap') {
       </span>
       <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
     </button>` : '';
-  const posBtns = showPositions ? g.positions.map(pos => `
+  const posBtns = showPositions ? positionsForGewerk(id).map(pos => `
     <button class="login-position-btn" onclick="loginSelectPosition(this,'${esc(pos)}')">
       ${esc(pos)}
       <span class="login-position-radio"><span class="radio-dot" style="background:${g.color};"></span></span>
@@ -3497,6 +3600,7 @@ function applyIdentity(identity, persist) {
     _liveCueRenderSignature = ''; // Rollenwechsel → Live-Liste zwingend neu filtern/rendern
     renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
     renderLiveChecklists(_lastCurrentCue);
+    renderCrewPositions(allShows.find(s => s.id === currentShowId)); // Rolle bestimmt Sichtbarkeit/Umfang der Crew-Positionen-Card
   }
 }
 

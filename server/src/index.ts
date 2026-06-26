@@ -13,6 +13,7 @@ import showsRouter from "./api/shows.js";
 import simulatorRouter from "./api/simulator.js";
 import importExportRouter from "./api/importExport.js";
 import midiRouter from "./api/midi.js";
+import updateRouter from "./api/update.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
 import { oscTcInput } from "./tc/oscTcInput.js";
 import { usbMidiInput } from "./tc/usbMidiInput.js";
@@ -37,6 +38,7 @@ app.use("/api/shows", showsRouter);
 app.use("/api/simulator", simulatorRouter);
 app.use("/api/io", importExportRouter);
 app.use("/api/midi", midiRouter);
+app.use("/api/update", updateRouter);
 
 // Shared TC ingestion helper — deduplicates and feeds cueEngine + broadcasts.
 // Zentrale, robuste Eintrittsstelle für ALLE Quellen: ungültige TC-Strings (z. B.

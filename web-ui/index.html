@@ -371,6 +371,10 @@
     .sp-row:last-child { margin-bottom:0; }
     .sp-label { font-size:12px; color:var(--text); flex:1; }
     .sp-hint { font-size:10px; color:var(--muted); display:block; margin-top:2px; }
+    .update-badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.4px; background:rgba(251,191,36,.18); color:#fbbf24; border:1px solid rgba(251,191,36,.35); margin-left:8px; vertical-align:middle; }
+    .update-badge.ok { background:rgba(52,211,153,.12); color:#34d399; border-color:rgba(52,211,153,.3); }
+    .update-log { margin-top:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:monospace; font-size:11px; color:var(--muted); max-height:160px; overflow-y:auto; white-space:pre-wrap; display:none; }
+    .update-log.visible { display:block; }
     .sp-row input[type=range] { width:110px; accent-color:#34c759; }
     .sp-row select { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
     .sp-row input[type=text], .sp-row textarea { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
@@ -944,6 +948,30 @@
     <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
   </div>
 
+  <!-- Software-Update -->
+  <div class="sp-section settings-wide">
+    <h3>Software-Update <span id="update-badge"></span></h3>
+    <div class="sp-row">
+      <div class="sp-label">Version
+        <span class="sp-hint" id="update-local-hash">Prüfe…</span>
+      </div>
+      <button class="btn btn-small" id="update-check-btn" onclick="checkForUpdates(true)">Jetzt prüfen</button>
+    </div>
+    <div id="update-available-row" style="display:none">
+      <div class="sp-row" style="margin-top:4px">
+        <div class="sp-label" id="update-info-text"></div>
+        <button class="btn btn-primary btn-small" id="update-install-btn" onclick="installUpdate()">Installieren</button>
+      </div>
+    </div>
+    <div id="update-restart-row" style="display:none">
+      <div class="sp-row" style="margin-top:4px">
+        <div class="sp-label" style="color:var(--green)">Update installiert — Server neu starten um es zu aktivieren.</div>
+        <button class="btn btn-primary btn-small" onclick="restartServer()">Neu starten</button>
+      </div>
+    </div>
+    <div class="update-log" id="update-log"></div>
+  </div>
+
   <div class="settings-wide">
     <button class="btn btn-small" onclick="resetAllSettings()" style="color:var(--red);border-color:var(--red);">Einstellungen zurücksetzen</button>
   </div>
@@ -1307,6 +1335,7 @@ function openSettings() {
   // TC source
   restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
   loadNetworkInfo();
+  if (!_updateInstalled) checkForUpdates();
 }
 
 function onSettingChange() {
@@ -1379,6 +1408,115 @@ function resetAllSettings() {
   localStorage.removeItem(SETTINGS_KEY);
   openSettings();
   applySettings(SETTING_DEFAULTS);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SOFTWARE UPDATE
+// ════════════════════════════════════════════════════════════════════════════
+let _updateInstalled = false;
+
+async function checkForUpdates(manual = false) {
+  const badge    = document.getElementById('update-badge');
+  const hashEl   = document.getElementById('update-local-hash');
+  const availRow = document.getElementById('update-available-row');
+  const infoText = document.getElementById('update-info-text');
+  const checkBtn = document.getElementById('update-check-btn');
+
+  badge.textContent = '';
+  hashEl.textContent = 'Prüfe auf Updates…';
+  if (checkBtn) checkBtn.disabled = true;
+
+  try {
+    const data = await api('GET', '/api/update/check');
+
+    hashEl.textContent = `Aktueller Stand: ${data.localHash}`;
+
+    if (data.upToDate) {
+      badge.className = 'update-badge ok';
+      badge.textContent = '✓ Aktuell';
+      availRow.style.display = 'none';
+    } else {
+      badge.className = 'update-badge';
+      badge.textContent = `${data.commitCount} Update${data.commitCount !== 1 ? 's'  : ''} verfügbar`;
+      const date = new Date(data.remoteDate).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+      infoText.textContent = `${data.commitCount} neuer Commit${data.commitCount !== 1 ? 's' : ''} (${date}): ${data.remoteMessage}`;
+      availRow.style.display = '';
+    }
+  } catch (err) {
+    hashEl.textContent = manual ? `Fehler: ${err.message ?? err}` : 'Keine Verbindung zu GitHub';
+    badge.textContent = '';
+  } finally {
+    if (checkBtn) checkBtn.disabled = false;
+  }
+}
+
+async function installUpdate() {
+  const installBtn  = document.getElementById('update-install-btn');
+  const log         = document.getElementById('update-log');
+  const availRow    = document.getElementById('update-available-row');
+  const restartRow  = document.getElementById('update-restart-row');
+
+  installBtn.disabled = true;
+  installBtn.textContent = 'Installiere…';
+  log.textContent = '';
+  log.classList.add('visible');
+
+  const appendLog = (line) => {
+    log.textContent += line + '\n';
+    log.scrollTop = log.scrollHeight;
+  };
+
+  try {
+    const response = await fetch('/api/update/install', { method: 'POST' });
+    if (response.status === 409) { appendLog('⚠ Update läuft bereits.'); return; }
+    if (!response.ok) { appendLog(`✗ HTTP ${response.status}`); return; }
+
+    const reader  = response.body.getReader();
+    const decoder = new TextDecoder();
+    let   buf     = '';
+    let   success = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split('\n');
+      buf = parts.pop() ?? '';
+      for (const line of parts) {
+        if (line.startsWith('data: ')) {
+          try { appendLog(JSON.parse(line.slice(6))); } catch { appendLog(line.slice(6)); }
+        } else if (line.startsWith('event: done')) {
+          success = true;
+        } else if (line.startsWith('event: error')) {
+          success = false;
+        }
+      }
+    }
+
+    if (success) {
+      _updateInstalled = true;
+      availRow.style.display = 'none';
+      restartRow.style.display = '';
+    }
+  } catch (err) {
+    appendLog(`✗ Verbindungsfehler: ${err.message ?? err}`);
+  } finally {
+    installBtn.disabled = false;
+    installBtn.textContent = 'Installieren';
+  }
+}
+
+async function restartServer() {
+  const restartRow = document.getElementById('update-restart-row');
+  try {
+    await api('POST', '/api/update/restart');
+    restartRow.innerHTML = '<div class="sp-label" style="color:var(--muted)">Server wird neu gestartet… Seite in 8 Sekunden neu laden.</div>';
+    setTimeout(() => location.reload(), 8000);
+  } catch {
+    // expected — server is shutting down, fetch will fail
+    restartRow.innerHTML = '<div class="sp-label" style="color:var(--muted)">Server wird neu gestartet… Seite in 8 Sekunden neu laden.</div>';
+    setTimeout(() => location.reload(), 8000);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════

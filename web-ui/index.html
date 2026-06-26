@@ -730,6 +730,15 @@
       </select>
     </div>
     <div class="sp-row">
+      <div class="sp-label">Aufgabenlisten
+        <span class="sp-hint">Wann Listen in der Cue-Liste aufgeklappt werden</span>
+      </div>
+      <select id="s-checklist-expand" onchange="onSettingChange()">
+        <option value="active-only">Nur nächste geöffnet</option>
+        <option value="always">Immer geöffnet</option>
+      </select>
+    </div>
+    <div class="sp-row">
       <div class="sp-label">Bildschirmflash
         <span class="sp-hint">Lässt den Bildschirm bei einem ausgelösten Cue kurz aufleuchten</span>
       </div>
@@ -1207,14 +1216,15 @@ function updateSaveDirtyIndicator() {
 const SETTINGS_KEY = 'tc-cue-settings';
 const EDIT_SECTIONS_KEY = 'tc-cue-edit-sections';
 const SETTING_DEFAULTS = {
-  showFrames:      true,
-  liveBigTc:       true,
-  liveFontSize:    'normal',
-  nextCuePreviews: 0,
-  screenFlash:     false,
-  autoResetOnStop: true,
-  alarmEnabled:    true,
-  alarmVolume:     80,
+  showFrames:       true,
+  liveBigTc:        true,
+  liveFontSize:     'normal',
+  nextCuePreviews:  0,
+  screenFlash:      false,
+  autoResetOnStop:  true,
+  alarmEnabled:     true,
+  alarmVolume:      80,
+  checklistExpand:  'active-only',
 };
 
 function loadSettings() {
@@ -1238,6 +1248,7 @@ function getCurrentSettingsFromUI() {
     autoResetOnStop:  document.getElementById('s-auto-reset').checked,
     alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
     alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
+    checklistExpand:  document.getElementById('s-checklist-expand').value,
   };
 }
 
@@ -1251,6 +1262,7 @@ function applySettings(s) {
   liveTc.style.display = '';
   window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
   window._screenFlash = !!s.screenFlash;
+  window._checklistExpand = s.checklistExpand || 'active-only';
   _liveCueRenderSignature = '';
   if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   // TC format label update for current display
@@ -1274,6 +1286,7 @@ function openSettings() {
   document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
   document.getElementById('s-alarm-volume').value = s.alarmVolume;
   document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
+  document.getElementById('s-checklist-expand').value = s.checklistExpand || 'active-only';
 
   // Engine settings
   const show = allShows.find(s => s.id === currentShowId);
@@ -1806,16 +1819,23 @@ function renderLiveCues(cur, next, tcString) {
     ...cues.map((cue, index) => ({ type: 'cue', cue, cueIndex: index, sort: tcStringToSeconds(cue.tc) })),
     ...queuedChecklists.map(checklist => ({ type: 'checklist', checklist, sort: checklistSortPosition(checklist, allCues) })),
   ].sort((a, b) => a.sort - b.sort || (a.type === 'cue' ? -1 : 1));
+  const checklistMode = window._checklistExpand || 'active-only';
+  const currentSortPos = cur ? tcStringToSeconds(cur.tc) : -Infinity;
+  const nextSortPos = next ? tcStringToSeconds(next.tc) : Infinity;
+  const activeChecklistEntry = checklistMode === 'active-only'
+    ? entries.find(e => e.type === 'checklist' && !e.checklist.items.every(i => i.checked) && e.sort >= currentSortPos && e.sort < nextSortPos)
+    : null;
+  const activeChecklistId = activeChecklistEntry?.checklist.id ?? null;
+
   list.innerHTML = entries.map(entry => {
     if (entry.type === 'checklist') {
       const checklist = entry.checklist;
       const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
       const hasOpen = checklist.items.some(item => !item.checked);
-      // Standard: Listen mit offenen Punkten sind aufgeklappt. Glyphen-Toggle
-      // setzt einen expliziten Override (auf-/zugeklappt).
       const expanded = _expandedChecklistIds.has(checklist.id) ? true
         : _collapsedChecklistIds.has(checklist.id) ? false
-        : hasOpen;
+        : checklistMode === 'always' ? hasOpen
+        : checklist.id === activeChecklistId;
       return `
         <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''} ${expanded ? 'expanded' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
           <div class="live-cue-time">

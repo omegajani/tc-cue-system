@@ -730,6 +730,12 @@
       </select>
     </div>
     <div class="sp-row">
+      <div class="sp-label">Show-Modus
+        <span class="sp-hint">Cues im Live-Tab nicht anklickbar (verhindert versehentliches Öffnen)</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="s-show-mode" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
       <div class="sp-label">Aufgabenlisten
         <span class="sp-hint">Wann Listen in der Cue-Liste aufgeklappt werden</span>
       </div>
@@ -1225,6 +1231,7 @@ const SETTING_DEFAULTS = {
   alarmEnabled:     true,
   alarmVolume:      80,
   checklistExpand:  'active-only',
+  showMode:         true,
 };
 
 function loadSettings() {
@@ -1249,6 +1256,7 @@ function getCurrentSettingsFromUI() {
     alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
     alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
     checklistExpand:  document.getElementById('s-checklist-expand').value,
+    showMode:         document.getElementById('s-show-mode').checked,
   };
 }
 
@@ -1263,6 +1271,7 @@ function applySettings(s) {
   window._nextCuePreviews = Number(s.nextCuePreviews) || 0;
   window._screenFlash = !!s.screenFlash;
   window._checklistExpand = s.checklistExpand || 'active-only';
+  window._showMode = s.showMode !== false;
   _liveCueRenderSignature = '';
   if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   // TC format label update for current display
@@ -1287,6 +1296,7 @@ function openSettings() {
   document.getElementById('s-alarm-volume').value = s.alarmVolume;
   document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
   document.getElementById('s-checklist-expand').value = s.checklistExpand || 'active-only';
+  document.getElementById('s-show-mode').checked = s.showMode !== false;
 
   // Engine settings
   const show = allShows.find(s => s.id === currentShowId);
@@ -1739,7 +1749,7 @@ function renderLiveChecklists(currentCue = _lastCurrentCue) {
   wrap.innerHTML = visible.map(checklist => {
     const done = checklist.items.length > 0 && checklist.items.every(item => item.checked);
     return `
-    <div class="live-checklist ${done ? 'done' : ''}" onclick="openChecklistModal('${checklist.id}')">
+    <div class="live-checklist ${done ? 'done' : ''}" onclick="window._showMode||openChecklistModal('${checklist.id}')">
       <div class="live-checklist-header">
         <div class="live-checklist-heading">
           <div class="live-checklist-kicker">${done ? 'Aufgabenliste erledigt' : 'Aufgabenliste'}</div>
@@ -1837,7 +1847,7 @@ function renderLiveCues(cur, next, tcString) {
         : checklistMode === 'always' ? hasOpen
         : checklist.id === activeChecklistId;
       return `
-        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''} ${expanded ? 'expanded' : ''}" data-checklist-id="${checklist.id}" onclick="openChecklistModal('${checklist.id}')">
+        <div class="live-cue-row live-checklist-queue ${done ? 'done' : ''} ${expanded ? 'expanded' : ''}" data-checklist-id="${checklist.id}" onclick="window._showMode||openChecklistModal('${checklist.id}')">
           <div class="live-cue-time">
             <div class="live-cue-song">Aufgabenliste</div>
             <div class="live-checklist-queue-trigger">${done ? 'Erledigt' : esc(checklistTriggerLabel(checklist, show))}</div>
@@ -1864,7 +1874,7 @@ function renderLiveCues(cur, next, tcString) {
     const depth = Math.min(3, Math.abs(index - focusIndex));
     const classes = ['live-cue-row', isCurrent ? 'current' : '', isNext ? 'next' : '', previewCueIds.has(cue.id) ? 'preview-visible' : '', isPast ? 'past' : '', depth ? `depth-${depth}` : ''].filter(Boolean).join(' ');
     return `
-      <div class="${classes}" data-cue-id="${cue.id}" style="--cue-color:${cue.color}" onclick="openCueModal('${cue.id}')">
+      <div class="${classes}" data-cue-id="${cue.id}" style="--cue-color:${cue.color}" onclick="window._showMode||openCueModal('${cue.id}')">
         <div class="live-cue-time">
           ${state ? `<div class="live-cue-state">${state}</div>` : '<div class="live-cue-state">&nbsp;</div>'}
           <div class="live-cue-tc">${cue.tc}</div>

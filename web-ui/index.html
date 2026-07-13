@@ -98,6 +98,11 @@
     nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
     nav button:hover:not(.active) { color: var(--text); }
 
+    /* ── Audio-Scharfschaltung ──────────────────────────────────────── */
+    #audio-arm { display: block; width: 100%; border: none; border-bottom: 1px solid rgba(245,158,11,.35); background: rgba(245,158,11,.14); color: var(--accent); padding: 9px 16px; font: 600 12px inherit; letter-spacing: .3px; cursor: pointer; text-align: center; }
+    #audio-arm:hover { background: rgba(245,158,11,.22); }
+    #audio-arm[hidden] { display: none; }
+
     /* ── VIEWS ──────────────────────────────────────────────────────── */
     .view { display: none; padding: 20px 24px; }
     .view.active { display: block; }
@@ -498,6 +503,20 @@
     .login-admin-link:hover { color:var(--ql-text); border-color:var(--ql-accent); }
     .login-position-btn.meister { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.06); }
     .login-position-meta { display:block; font-size:11px; font-weight:400; color:var(--ql-muted); margin-top:2px; }
+    /* Cue modal: TC aus Song setzen (verschachteltes Menü) */
+    .songpick { position:relative; margin-top:6px; }
+    .songpick-menu { position:absolute; left:0; top:calc(100% + 4px); z-index:50; min-width:230px; max-height:320px; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:9px; box-shadow:0 12px 34px rgba(0,0,0,.45); padding:5px; }
+    .songpick-empty { padding:8px 10px; color:var(--muted); font-size:12px; }
+    .songpick-item { display:flex; align-items:center; gap:8px; width:100%; padding:7px 9px; border:none; border-radius:6px; background:none; color:var(--text); font:inherit; font-size:12px; text-align:left; cursor:pointer; }
+    .songpick-item:hover { background:rgba(255,255,255,.06); }
+    .songpick-item .songpick-caret { flex:0 0 auto; color:var(--muted); transition:transform .12s; }
+    .songpick-item.open .songpick-caret { transform:rotate(90deg); }
+    .songpick-item .songpick-name { flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .songpick-sub { display:none; padding:2px 0 6px 22px; }
+    .songpick-sub.open { display:block; }
+    .songpick-anchor { display:block; width:100%; padding:6px 9px; border:none; border-radius:6px; background:none; color:var(--muted); font:inherit; font-size:12px; text-align:left; cursor:pointer; }
+    .songpick-anchor:hover { background:rgba(245,158,11,.12); color:var(--accent-soft); }
+    .songpick-anchor .songpick-tc { float:right; font-size:11px; opacity:.7; letter-spacing:.5px; }
     /* Cue modal: Positionen-Checkboxen */
     .cue-positions-grid { display:flex; flex-wrap:wrap; gap:8px; }
     .cue-pos-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; cursor:pointer; user-select:none; transition:all .12s; }
@@ -598,6 +617,10 @@
     <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
   </div>
 </nav>
+
+<!-- Audio-Scharfschaltung: Browser blockieren Ton bis zur ersten Nutzer-Geste.
+     Solange nicht entsperrt, weist dieses Banner darauf hin. -->
+<button id="audio-arm" hidden onclick="unlockAlarmAudio(true)">🔔 Alarm-Ton aktivieren – zum Scharfschalten tippen</button>
 
 <!-- ── SHOW VIEW ──────────────────────────────────────────────────────── -->
 <div id="view-show" class="view">
@@ -987,6 +1010,10 @@
       <div class="form-row">
         <label>TC (HH:MM:SS:FF)</label>
         <input id="f-tc" type="text" inputmode="numeric" placeholder="00:01:23:12" oninput="formatTimecodeInput(this)" />
+        <div class="songpick" id="songpick">
+          <button type="button" class="btn btn-small" onclick="toggleSongPick(event)">Aus Song… ▾</button>
+          <div class="songpick-menu" id="songpick-menu" hidden></div>
+        </div>
       </div>
       <div class="form-row">
         <label>Farbe</label>
@@ -1304,6 +1331,7 @@ function applySettings(s) {
   if (currentShowId) renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
   // TC format label update for current display
   updateTcDisplayFormat(s.showFrames);
+  updateAudioArmBanner();
 }
 
 function updateTcDisplayFormat(showFrames) {
@@ -2226,6 +2254,94 @@ function formatTimecodeInput(input) {
   if (formatted !== input.value && formatted.includes(':')) input.value = formatted;
 }
 
+// ── TC aus Song setzen (verschachteltes Menü im Cue-Editor) ──────────────────
+function _cueShowFps() {
+  const show = allShows.find(s => s.id === currentShowId);
+  return Number(show && show.fps) || 25;
+}
+function tcToFrames(tc, fps) {
+  const F = Math.round(fps);
+  const [h, m, s, f] = String(tc).split(':').map(Number);
+  return ((h * 3600 + m * 60 + s) * F) + (f || 0);
+}
+function framesToTc(frames, fps) {
+  const F = Math.round(fps);
+  frames = Math.max(0, Math.round(frames));
+  const f = frames % F; let rem = Math.floor(frames / F);
+  const s = rem % 60; rem = Math.floor(rem / 60);
+  const m = rem % 60; const h = Math.floor(rem / 60);
+  return [h, m, s, f].map(v => String(v).padStart(2, '0')).join(':');
+}
+function midpointTc(a, b, fps) {
+  return framesToTc(Math.round((tcToFrames(a, fps) + tcToFrames(b, fps)) / 2), fps);
+}
+
+function toggleSongPick(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('songpick-menu');
+  if (menu.hidden) { buildSongPickMenu(); menu.hidden = false; }
+  else { closeSongPick(); }
+}
+
+function closeSongPick() {
+  const menu = document.getElementById('songpick-menu');
+  if (menu) menu.hidden = true;
+}
+
+function buildSongPickMenu() {
+  const menu = document.getElementById('songpick-menu');
+  const fps = _cueShowFps();
+  const songs = playlistSortedPositions().filter(p => p.startTc && p.endTc);
+  if (!songs.length) {
+    menu.innerHTML = '<div class="songpick-empty">Keine Songs in dieser Show.</div>';
+    return;
+  }
+  menu.innerHTML = songs.map(p => {
+    const anchors = [
+      ['start', 'Anfang', p.startTc],
+      ['mid', 'Mitte', midpointTc(p.startTc, p.endTc, fps)],
+      ['end', 'Ende', p.endTc],
+    ];
+    return `
+      <button type="button" class="songpick-item" onclick="toggleSongPickSub(this)">
+        <span class="songpick-caret">▸</span><span class="songpick-name">${esc(p.name || 'Song')}</span>
+      </button>
+      <div class="songpick-sub">
+        ${anchors.map(([k, label, tc]) =>
+          `<button type="button" class="songpick-anchor" onclick="pickSongTc('${p.id}','${k}')">${label}<span class="songpick-tc">${tc}</span></button>`
+        ).join('')}
+      </div>`;
+  }).join('');
+}
+
+function toggleSongPickSub(itemEl) {
+  const sub = itemEl.nextElementSibling;
+  const isOpen = sub.classList.contains('open');
+  // andere Untermenüs schließen
+  itemEl.parentElement.querySelectorAll('.songpick-sub.open').forEach(s => s.classList.remove('open'));
+  itemEl.parentElement.querySelectorAll('.songpick-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) { sub.classList.add('open'); itemEl.classList.add('open'); }
+}
+
+function pickSongTc(positionId, anchor) {
+  const song = playlistSortedPositions().find(p => p.id === positionId);
+  if (!song) return;
+  const fps = _cueShowFps();
+  const tc = anchor === 'start' ? song.startTc
+    : anchor === 'end' ? song.endTc
+    : midpointTc(song.startTc, song.endTc, fps);
+  const field = document.getElementById('f-tc');
+  field.value = formatTimecodeValue(tc);
+  closeSongPick();
+  field.focus();
+}
+
+// Klick außerhalb schließt das Song-Menü.
+document.addEventListener('click', (e) => {
+  const sp = document.getElementById('songpick');
+  if (sp && !sp.contains(e.target)) closeSongPick();
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 // SIMULATOR
 // ════════════════════════════════════════════════════════════════════════════
@@ -2678,6 +2794,7 @@ async function openCueModal(cueId) {
     document.getElementById('f-cue-delete').style.display = 'none';
   }
   applyIdentityToCueModal(!cueId);
+  closeSongPick();
   overlay.classList.add('show');
   document.getElementById('f-tc').focus();
 }
@@ -2722,6 +2839,7 @@ function renderCueGewerkPositions() {
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('show');
+  closeSongPick();
 }
 
 async function saveCue() {
@@ -3043,6 +3161,8 @@ function triggerScreenFlash(force = false) {
 }
 
 let _alarmAudio = null;
+let _audioUnlocked = false;   // wurde die Browser-Autoplay-Sperre schon aufgehoben?
+
 async function playAlarm(force = false) {
   const settings = loadSettings();
   if (!force && !settings.alarmEnabled) return false;
@@ -3053,12 +3173,56 @@ async function playAlarm(force = false) {
     _alarmAudio.volume = (force && volume === 0) ? 0.8 : volume;
     _alarmAudio.currentTime = 0;
     await _alarmAudio.play();
+    _audioUnlocked = true;
+    updateAudioArmBanner();
     return true;
   } catch (e) {
+    // Blockiert (meist Autoplay-Sperre, keine Nutzer-Geste) → Banner zeigen,
+    // damit der Operator den Ton mit einem Tap scharfschalten kann.
     console.warn('[Alarm] Playback failed:', e);
+    updateAudioArmBanner();
     return false;
   }
 }
+
+// Hebt die Browser-Audio-Sperre auf, indem der Alarm einmal (stumm) angespielt
+// wird – muss aus einer Nutzer-Geste heraus laufen. fromButton=true gibt eine
+// kurze hörbare Bestätigung.
+async function unlockAlarmAudio(fromButton) {
+  try {
+    if (!_alarmAudio) _alarmAudio = new Audio('alert.mp3');
+    const prevVol = _alarmAudio.volume;
+    _alarmAudio.volume = 0;
+    _alarmAudio.currentTime = 0;
+    await _alarmAudio.play();
+    _alarmAudio.pause();
+    _alarmAudio.currentTime = 0;
+    _alarmAudio.volume = prevVol;
+    _audioUnlocked = true;
+    _removeAudioGestureListeners();
+    updateAudioArmBanner();
+    if (fromButton) playAlarm(true); // hörbare Bestätigung nur bei manuellem Tap
+  } catch (_) { /* noch gesperrt – Banner bleibt sichtbar */ }
+}
+
+// Banner sichtbar, solange Audio gesperrt UND Alarm aktiviert ist.
+function updateAudioArmBanner() {
+  const el = document.getElementById('audio-arm');
+  if (!el) return;
+  const enabled = loadSettings().alarmEnabled;
+  el.hidden = _audioUnlocked || !enabled;
+}
+
+function _onFirstGesture() { unlockAlarmAudio(false); }
+function _removeAudioGestureListeners() {
+  document.removeEventListener('pointerdown', _onFirstGesture);
+  document.removeEventListener('keydown', _onFirstGesture);
+  document.removeEventListener('touchstart', _onFirstGesture);
+}
+// Jede erste Nutzer-Geste hebt die Audio-Sperre auf (deckt normalen Klick-Betrieb ab).
+document.addEventListener('pointerdown', _onFirstGesture);
+document.addEventListener('keydown', _onFirstGesture);
+document.addEventListener('touchstart', _onFirstGesture);
 
 async function testAlarm() {
   const feedback = document.getElementById('alarm-test-feedback');

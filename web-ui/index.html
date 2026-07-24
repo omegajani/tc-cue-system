@@ -2145,6 +2145,8 @@ function findNextFollowRow(list) {
   return nextRow;
 }
 
+let _followScrollEndCleanup = null;
+
 function followLiveCurrentCue(smooth = true, preferNext = false) {
   // preferNext: nach dem Scrollen auf den nächsten (anstehenden) Cue snappen
   // statt zurück auf den bereits abgefeuerten aktuellen Cue.
@@ -2161,13 +2163,39 @@ function followLiveCurrentCue(smooth = true, preferNext = false) {
   const listTop = list.getBoundingClientRect().top;
   const rowTop = row.getBoundingClientRect().top;
   const targetTop = Math.max(0, list.scrollTop + rowTop - listTop);
+
+  // Vorherigen Scrollend-Listener/Timeout aufräumen, falls ein neuer Follow-Aufruf
+  // eine noch laufende Animation überholt (kein doppeltes Feuern).
+  if (_followScrollEndCleanup) { _followScrollEndCleanup(); _followScrollEndCleanup = null; }
+
   _suppressPickerScroll = true;
   list.scrollTo({ top: targetTop, behavior: smooth ? 'smooth' : 'auto' });
   updateLivePickerSelection();
-  setTimeout(() => {
+
+  const release = () => {
     _suppressPickerScroll = false;
     updateLivePickerSelection();
-  }, smooth ? 450 : 50);
+  };
+
+  // Die Dauer einer 'smooth'-Scroll-Animation lässt sich nicht zuverlässig raten
+  // (abhängig von Distanz/Browser-Physik) – ein zu kurzes Timeout hebt die
+  // Suppress-Sperre auf, während die Animation noch läuft; ihre eigenen letzten
+  // scroll-Events werden dann fälschlich als manuelles Browsen gewertet und der
+  // Picker verliert den Fokus auf den aktuellen Cue (Issue #9). Das native
+  // 'scrollend'-Event feuert exakt beim tatsächlichen Ende der Animation.
+  if (smooth && 'onscrollend' in window) {
+    let done = false;
+    const onScrollEnd = () => { if (done) return; done = true; cleanup(); release(); };
+    // Sicherheitsnetz: falls 'scrollend' aus irgendeinem Grund nie feuert,
+    // die Sperre spätestens nach 1500ms lösen statt dauerhaft hängen zu bleiben.
+    const safetyTimer = setTimeout(() => { if (done) return; done = true; cleanup(); release(); }, 1500);
+    const cleanup = () => { list.removeEventListener('scrollend', onScrollEnd); clearTimeout(safetyTimer); };
+    list.addEventListener('scrollend', onScrollEnd);
+    _followScrollEndCleanup = () => { if (!done) { done = true; cleanup(); } };
+  } else {
+    const timer = setTimeout(release, smooth ? 450 : 50);
+    _followScrollEndCleanup = () => clearTimeout(timer);
+  }
 }
 
 function onLivePickerScroll() {

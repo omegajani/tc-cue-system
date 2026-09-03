@@ -4,6 +4,11 @@ import { WSEvent } from "./types.js";
 
 let wss: WebSocketServer;
 let heartbeat: ReturnType<typeof setInterval> | null = null;
+// Letzter gesendeter TC-Stand. Wird einem frisch verbundenen Client sofort
+// nachgereicht, damit er nicht bis zum nächsten TC_UPDATE einen veralteten
+// Stand anzeigt (relevant nach Reconnect, z. B. wenn ein Handy aufwacht, und
+// wenn gerade gar kein TC läuft).
+let lastTcUpdate: WSEvent | null = null;
 
 // Tote Clients (z. B. schlafende Handys) erkennen: per Ping/Pong; antwortet ein
 // Client zwei Intervalle nicht, wird die Verbindung terminiert, damit sich keine
@@ -20,6 +25,10 @@ export function initWS(server: Server) {
     ws.on("error", (err) => console.warn("[WS] client error:", err.message));
     console.log("[WS] Client connected");
     ws.on("close", () => console.log("[WS] Client disconnected"));
+    // Aktuellen Stand nachreichen (als Snapshot markiert → kein Live-Signal)
+    if (lastTcUpdate) {
+      try { ws.send(JSON.stringify({ ...lastTcUpdate, snapshot: true })); } catch { /* ignore */ }
+    }
   });
   wss.on("error", (err) => console.error("[WS] server error:", err.message));
 
@@ -35,6 +44,7 @@ export function initWS(server: Server) {
 }
 
 export function broadcast(event: WSEvent) {
+  if (event.type === "TC_UPDATE") lastTcUpdate = event;
   if (!wss) return;
   const msg = JSON.stringify(event);
   wss.clients.forEach((client) => {

@@ -1609,6 +1609,31 @@ function connect() {
   ws.onmessage = e => handleEvent(JSON.parse(e.data));
 }
 
+// Sperrt man das Handy, friert das OS die Seite ein und die TCP-Verbindung hinter
+// dem WebSocket stirbt still (half-open): kein FIN/RST erreicht das Gerät, also
+// feuert 'onclose' nie und der Reconnect-Pfad wird nie ausgelöst – der TC bliebe
+// auf dem Stand vom Sperren stehen. Beim Zurückkehren daher NICHT auf readyState
+// vertrauen, sondern die Verbindung grundsätzlich frisch aufbauen.
+let _lastForcedReconnect = 0;
+function forceReconnect() {
+  const now = Date.now();
+  if (now - _lastForcedReconnect < 1000) return; // Schutz vor Reconnect-Stürmen
+  _lastForcedReconnect = now;
+  clearTimeout(reconnectTimer);
+  if (ws) {
+    // Handler lösen, damit das folgende close() keinen konkurrierenden
+    // Reconnect-Timer plant und keine Events mehr des alten Sockets ankommen.
+    ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null;
+    try { ws.close(); } catch (_) {}
+  }
+  connect();
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) forceReconnect(); });
+// nur echter bfcache-Restore (v. a. iOS) – nicht der normale Erstaufruf
+window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); });
+window.addEventListener('online', forceReconnect);   // WLAN nach dem Aufwachen zurück
+
 function setWsStatus(ok) {
   const dot = document.getElementById('ws-dot');
   dot.className = ok ? 'connected' : '';
@@ -1660,12 +1685,17 @@ function handleEvent(evt) {
   const tc = evt.tc;
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
   if (evt.type === 'TC_UPDATE') {
-    _lastTcUpdateAt = Date.now();
-    _everReceivedTc = true;
-    const wasRunning = _tcRunning;
-    _tcRunning = true;
-    updateTcDot();
-    if (!wasRunning) { updateTcSourceStatus(); refreshActiveSourceStatus(); }
+    // Snapshot = der beim (Neu-)Verbinden nachgereichte letzte Stand. Er wird
+    // gerendert, gilt aber NICHT als Live-Signal – sonst würde ein alter Stand
+    // fälschlich „TC läuft" melden. Die Liveness bleibt Sache des Watchdogs.
+    if (!evt.snapshot) {
+      _lastTcUpdateAt = Date.now();
+      _everReceivedTc = true;
+      const wasRunning = _tcRunning;
+      _tcRunning = true;
+      updateTcDot();
+      if (!wasRunning) { updateTcSourceStatus(); refreshActiveSourceStatus(); }
+    }
     document.getElementById('tc-display').textContent = displayTc;
     document.getElementById('live-tc').textContent = displayTc;
     renderLiveCues(evt.currentCue, evt.nextCue, tc);

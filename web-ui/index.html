@@ -79,6 +79,7 @@
     nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
     #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #ws-dot.connected { background: var(--green); }
+    #ws-dot.connecting { background: var(--accent); }
     #tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
     #tc-dot.connected { background: var(--green); }
     #hdr-center { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; }
@@ -1597,35 +1598,72 @@ function applyEditSectionState() {
 // ════════════════════════════════════════════════════════════════════════════
 // WEBSOCKET
 // ════════════════════════════════════════════════════════════════════════════
+// Nach dem Aufwachen aus tiefem Schlaf ist das Funkmodul oft noch nicht wieder
+// assoziiert. Ein dann gestarteter Handshake bleibt in CONNECTING HÄNGEN – der
+// Browser wartet auf seinen eigenen Connect-Timeout (zig Sekunden bis Minuten)
+// und feuert solange WEDER onerror NOCH onclose. Ohne eigenen Timeout würde also
+// nie ein neuer Versuch geplant und der TC bliebe stehen.
+const WS_CONNECT_TIMEOUT = 4000;
+const WS_RETRY_MIN = 1000, WS_RETRY_MAX = 5000;
+let wsGeneration = 0, connectTimer = null, wsRetryDelay = WS_RETRY_MIN;
+
 function connect() {
-  ws = new WebSocket(`ws://${location.host}`);
-  ws.onopen  = () => {
-    setWsStatus(true);
-    clearTimeout(reconnectTimer);
+  const gen = ++wsGeneration;            // alles Ältere gilt ab jetzt als veraltet
+  clearTimeout(reconnectTimer);
+  clearTimeout(connectTimer);
+  // Vorherigen Socket sauber abhängen und schließen (kein Doppel-Socket).
+  if (ws) {
+    ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null;
+    try { ws.close(); } catch (_) {}
+  }
+
+  const sock = new WebSocket(`ws://${location.host}`);
+  ws = sock;
+  setWsStatus('connecting');
+
+  connectTimer = setTimeout(() => {
+    if (gen !== wsGeneration) return;
+    if (sock.readyState === WebSocket.CONNECTING) {
+      try { sock.close(); } catch (_) {}  // Hänger abbrechen …
+      scheduleReconnect(gen);             // … und es gleich erneut versuchen
+    }
+  }, WS_CONNECT_TIMEOUT);
+
+  // Handler an DIESEN Socket gebunden (nicht an die globale ws-Variable) und
+  // per Generation abgesichert – so kann ein alter Socket weder den neuen
+  // schließen noch einen überflüssigen Reconnect planen.
+  sock.onopen = () => {
+    if (gen !== wsGeneration) return;
+    clearTimeout(connectTimer);
+    wsRetryDelay = WS_RETRY_MIN;
+    setWsStatus('open');
     if (document.getElementById('view-settings').classList.contains('active')) loadNetworkInfo();
   };
-  ws.onclose = () => { setWsStatus(false); reconnectTimer = setTimeout(connect, 2000); };
-  ws.onerror = () => ws.close();
-  ws.onmessage = e => handleEvent(JSON.parse(e.data));
+  sock.onclose = () => {
+    if (gen !== wsGeneration) return;
+    clearTimeout(connectTimer);
+    setWsStatus('closed');
+    scheduleReconnect(gen);
+  };
+  sock.onerror = () => { try { sock.close(); } catch (_) {} };
+  sock.onmessage = e => { if (gen === wsGeneration) handleEvent(JSON.parse(e.data)); };
+}
+
+function scheduleReconnect(gen) {
+  if (gen !== wsGeneration) return;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(connect, wsRetryDelay);
+  wsRetryDelay = Math.min(WS_RETRY_MAX, wsRetryDelay * 2);
 }
 
 // Sperrt man das Handy, friert das OS die Seite ein und die TCP-Verbindung hinter
 // dem WebSocket stirbt still (half-open): kein FIN/RST erreicht das Gerät, also
-// feuert 'onclose' nie und der Reconnect-Pfad wird nie ausgelöst – der TC bliebe
-// auf dem Stand vom Sperren stehen. Beim Zurückkehren daher NICHT auf readyState
-// vertrauen, sondern die Verbindung grundsätzlich frisch aufbauen.
-let _lastForcedReconnect = 0;
+// feuert 'onclose' nie – der TC bliebe auf dem Stand vom Sperren stehen. Beim
+// Zurückkehren daher NICHT auf readyState vertrauen, sondern grundsätzlich neu
+// verbinden. Mehrfaches Auslösen (visibilitychange + online) ist unschädlich:
+// connect() hängt den vorherigen Socket ab und erhöht die Generation.
 function forceReconnect() {
-  const now = Date.now();
-  if (now - _lastForcedReconnect < 1000) return; // Schutz vor Reconnect-Stürmen
-  _lastForcedReconnect = now;
-  clearTimeout(reconnectTimer);
-  if (ws) {
-    // Handler lösen, damit das folgende close() keinen konkurrierenden
-    // Reconnect-Timer plant und keine Events mehr des alten Sockets ankommen.
-    ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null;
-    try { ws.close(); } catch (_) {}
-  }
+  wsRetryDelay = WS_RETRY_MIN;   // beim Aufwachen sofort wieder schnell versuchen
   connect();
 }
 
@@ -1634,10 +1672,14 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) forc
 window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); });
 window.addEventListener('online', forceReconnect);   // WLAN nach dem Aufwachen zurück
 
-function setWsStatus(ok) {
+// Drei Zustände statt zwei: im Live-Betrieb (v. a. am Handy) soll erkennbar sein,
+// ob die App gerade neu verbindet oder wirklich getrennt ist.
+function setWsStatus(state) {
   const dot = document.getElementById('ws-dot');
-  dot.className = ok ? 'connected' : '';
-  dot.title = ok ? 'Server-Verbindung: verbunden' : 'Server-Verbindung: getrennt';
+  dot.className = state === 'open' ? 'connected' : state === 'connecting' ? 'connecting' : '';
+  dot.title = state === 'open' ? 'Server-Verbindung: verbunden'
+    : state === 'connecting' ? 'Server-Verbindung: verbinde…'
+    : 'Server-Verbindung: getrennt';
 }
 
 function updateTcDot() {

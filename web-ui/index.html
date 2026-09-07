@@ -3324,6 +3324,13 @@ document.addEventListener('pointerdown', _onFirstGesture);
 document.addEventListener('keydown', _onFirstGesture);
 document.addEventListener('touchstart', _onFirstGesture);
 
+// Infoscreen/Kiosk: dort gibt es keine Nutzer-Geste – oft nicht einmal eine Maus.
+// Erlaubt der Browser Autoplay (auf einem Kiosk-Rechner per Einstellung gesetzt),
+// gelingt das stille Anspielen schon hier, der Ton ist sofort scharf und das
+// Banner erscheint gar nicht. Ist Autoplay gesperrt (Handy, normaler Browser),
+// schlägt es folgenlos fehl und alles bleibt wie bisher.
+unlockAlarmAudio(false);
+
 async function testAlarm() {
   const feedback = document.getElementById('alarm-test-feedback');
   const played = await playAlarm(true);

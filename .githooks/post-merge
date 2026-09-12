@@ -7,7 +7,12 @@ root="$(git rev-parse --show-toplevel)"
 node "$root/scripts/sync-show.mjs" >/dev/null 2>&1 || true
 # Läuft der Server als systemd-User-Dienst, neu starten, damit die Show geladen
 # wird (no-op auf Rechnern ohne diesen Dienst, z. B. dem Entwicklungs-Mac).
-if command -v systemctl >/dev/null 2>&1; then
+# Ausnahme: Kommt der Pull aus der In-App-Update-Funktion (server/src/api/update.ts),
+# hat die bereits ihren eigenen, expliziten Neustart-Schritt – ein Neustart hier
+# würde stattdessen den gerade laufenden „git pull" killen (systemd beendet beim
+# Neustart die komplette Cgroup, inklusive des Git-Prozesses, der diesen Hook
+# gerade ausführt), was fälschlich als Fehler gemeldet wird.
+if [ -z "$TC_CUE_SKIP_AUTO_RESTART" ] && command -v systemctl >/dev/null 2>&1; then
   systemctl --user try-restart tc-cue-system >/dev/null 2>&1 || true
 fi
 exit 0

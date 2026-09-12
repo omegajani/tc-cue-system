@@ -1107,6 +1107,37 @@
       <input id="f-checklist-time" type="time" value="19:00" />
     </div>
     <div class="form-row">
+      <label>Automatisch schließen</label>
+      <select id="f-checklist-autoclose" onchange="updateChecklistAutoCloseFields()">
+        <option value="none">Nie (manuell abhaken)</option>
+        <option value="tc">Zu einem Timecode</option>
+        <option value="position">Bei einem Song</option>
+        <option value="countdown">Countdown nach Einblenden</option>
+      </select>
+    </div>
+    <div class="form-row" id="checklist-autoclose-tc-row" style="display:none;">
+      <label>Timecode</label>
+      <input id="f-checklist-autoclose-tc" type="text" inputmode="numeric" placeholder="00:01:23:12" oninput="formatTimecodeInput(this)" />
+    </div>
+    <div class="form-2col" id="checklist-autoclose-position-row" style="display:none;">
+      <div class="form-row">
+        <label>Song</label>
+        <select id="f-checklist-autoclose-position"></select>
+      </div>
+      <div class="form-row">
+        <label>Zeitpunkt</label>
+        <select id="f-checklist-autoclose-anchor">
+          <option value="start">Anfang</option>
+          <option value="mid">Mitte</option>
+          <option value="end">Ende</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" id="checklist-autoclose-countdown-row" style="display:none;">
+      <label>Sekunden nach Einblenden</label>
+      <input id="f-checklist-autoclose-countdown" type="number" inputmode="numeric" min="1" step="1" placeholder="60" />
+    </div>
+    <div class="form-row">
       <label>Gewerk</label>
       <select id="f-cl-gewerk" onchange="renderChecklistGewerkPositions()"></select>
     </div>
@@ -1260,6 +1291,8 @@ let allShows = [];
 let _triggeredChecklistIds = new Set();
 let _expandedChecklistIds = new Set();
 let _collapsedChecklistIds = new Set();
+let _checklistTriggeredAtTc = new Map(); // checklist id -> Show-TC (Sekunden) beim Einblenden, für Countdown-Auto-Schluss
+let _autoClosedChecklistIds = new Set(); // verhindert wiederholte Auto-Schluss-Requests für dieselbe Checklist
 let _unsavedEdits = false; // Edit-Seite geändert, aber noch nicht via „Speichern" auf Platte geschrieben
 
 function markUnsavedEdits() {
@@ -1752,6 +1785,8 @@ function handleEvent(evt) {
   }
   if (evt.type === 'SHOW_RESET') {
     _triggeredChecklistIds = new Set();
+    _checklistTriggeredAtTc = new Map();
+    _autoClosedChecklistIds = new Set();
     _lastCurrentCue = null;
     const show = allShows.find(s => s.id === currentShowId);
     if (show) {
@@ -1954,6 +1989,28 @@ function toggleChecklistExpand(id, iconEl) {
   else { _collapsedChecklistIds.add(id); _expandedChecklistIds.delete(id); }
 }
 
+// Ziel-TC (Show-Sekunden) für den Auto-Schluss einer Checklist, oder null wenn
+// kein Auto-Schluss konfiguriert ist bzw. (Countdown) noch kein Einblende-
+// Zeitpunkt bekannt ist.
+function resolveChecklistAutoCloseSeconds(checklist, show, triggeredAtSeconds) {
+  const ac = checklist.autoClose;
+  if (!ac || ac.type === 'none') return null;
+  if (ac.type === 'tc') return tcStringToSeconds(ac.tc);
+  if (ac.type === 'position') {
+    const position = (show.positions || []).find(p => p.id === ac.positionId);
+    if (!position) return null;
+    const start = tcStringToSeconds(position.startTc);
+    const end = tcStringToSeconds(position.endTc);
+    if (ac.anchor === 'end') return end;
+    if (ac.anchor === 'mid') return (start + end) / 2;
+    return start;
+  }
+  if (ac.type === 'countdown') {
+    return triggeredAtSeconds != null ? triggeredAtSeconds + Math.max(0, ac.seconds || 0) : null;
+  }
+  return null;
+}
+
 function renderLiveChecklists(currentCue = _lastCurrentCue) {
   const wrap = document.getElementById('live-checklists');
   const show = allShows.find(show => show.id === currentShowId);
@@ -1961,6 +2018,7 @@ function renderLiveChecklists(currentCue = _lastCurrentCue) {
   const cues = [...(show.cues || [])].sort((a, b) => tcStringToSeconds(a.tc) - tcStringToSeconds(b.tc));
   const firstCue = cues[0];
   const now = new Date().toTimeString().slice(0, 5);
+  const nowTcSeconds = tcStringToSeconds(_lastTcString || '00:00:00:00');
   const triggeredBefore = [..._triggeredChecklistIds].sort().join(',');
   for (const checklist of show.checklists || []) {
     const trigger = checklist.trigger || { type: 'before-first-cue' };
@@ -1969,7 +2027,10 @@ function renderLiveChecklists(currentCue = _lastCurrentCue) {
       : trigger.type === 'after-cue'
         ? !!currentCue && tcStringToSeconds(currentCue.tc) >= tcStringToSeconds(cues.find(cue => cue.id === trigger.cueId)?.tc || '99:00:00:00')
         : now >= trigger.time;
-    if (due) _triggeredChecklistIds.add(checklist.id);
+    if (due) {
+      if (!_triggeredChecklistIds.has(checklist.id)) _checklistTriggeredAtTc.set(checklist.id, nowTcSeconds);
+      _triggeredChecklistIds.add(checklist.id);
+    }
   }
   if (triggeredBefore !== [..._triggeredChecklistIds].sort().join(',')) _liveCueRenderSignature = '';
   const _id = getLoginIdentity();
@@ -1977,6 +2038,14 @@ function renderLiveChecklists(currentCue = _lastCurrentCue) {
     _triggeredChecklistIds.has(checklist.id) && checklist.items.some(item => !item.checked)
     && cueVisibleToIdentity(checklist, _id)
   );
+  for (const checklist of visible) {
+    if (_autoClosedChecklistIds.has(checklist.id)) continue;
+    const target = resolveChecklistAutoCloseSeconds(checklist, show, _checklistTriggeredAtTc.get(checklist.id));
+    if (target != null && nowTcSeconds >= target) {
+      _autoClosedChecklistIds.add(checklist.id);
+      completeChecklist(checklist.id);
+    }
+  }
   wrap.classList.toggle('show', visible.length > 0);
   const signature = JSON.stringify(visible.map(checklist => [
     checklist.id,
@@ -2985,6 +3054,20 @@ function checklistTriggerLabel(checklist, show) {
   return `Nach Cue „${cue?.title || 'Gelöschter Cue'}"`;
 }
 
+const CHECKLIST_ANCHOR_LABEL = { start: 'Anfang', mid: 'Mitte', end: 'Ende' };
+
+function checklistAutoCloseLabel(checklist, show) {
+  const ac = checklist.autoClose;
+  if (!ac || ac.type === 'none') return null;
+  if (ac.type === 'tc') return `Auto-Schluss um ${ac.tc}`;
+  if (ac.type === 'position') {
+    const position = (show.positions || []).find(p => p.id === ac.positionId);
+    return `Auto-Schluss bei „${position?.name || 'gelöschter Song'}" (${CHECKLIST_ANCHOR_LABEL[ac.anchor] || 'Anfang'})`;
+  }
+  if (ac.type === 'countdown') return `Auto-Schluss ${ac.seconds}s nach Einblenden`;
+  return null;
+}
+
 function renderChecklistAdmin(show) {
   const wrap = document.getElementById('checklist-wrap');
   const id = getLoginIdentity();
@@ -2998,7 +3081,7 @@ function renderChecklistAdmin(show) {
       <div class="checklist-card">
         <div>
           <div class="checklist-card-title">${esc(checklist.title)}</div>
-          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))} · ${checklist.items.length} Punkte · ${gewerkTagHtml(checklist)}</div>
+          <div class="checklist-card-meta">${esc(checklistTriggerLabel(checklist, show))}${checklistAutoCloseLabel(checklist, show) ? ' · ' + esc(checklistAutoCloseLabel(checklist, show)) : ''} · ${checklist.items.length} Punkte · ${gewerkTagHtml(checklist)}</div>
         </div>
         <div class="toolbar">
           <button class="btn btn-small" onclick="openChecklistModal('${checklist.id}')">Bearbeiten</button>
@@ -3022,8 +3105,18 @@ function openChecklistModal(checklistId) {
     .join('');
   document.getElementById('f-checklist-cue').value = checklist?.trigger?.cueId || sortedCues[0]?.id || '';
   document.getElementById('f-checklist-time').value = checklist?.trigger?.time || '19:00';
+  const sortedPositions = [...(show?.positions || [])].sort((a, b) => tcStringToSeconds(a.startTc) - tcStringToSeconds(b.startTc));
+  document.getElementById('f-checklist-autoclose').value = checklist?.autoClose?.type || 'none';
+  document.getElementById('f-checklist-autoclose-tc').value = checklist?.autoClose?.tc || '';
+  document.getElementById('f-checklist-autoclose-position').innerHTML = sortedPositions
+    .map(position => `<option value="${position.id}">${esc(position.name)}</option>`)
+    .join('');
+  document.getElementById('f-checklist-autoclose-position').value = checklist?.autoClose?.positionId || sortedPositions[0]?.id || '';
+  document.getElementById('f-checklist-autoclose-anchor').value = checklist?.autoClose?.anchor || 'start';
+  document.getElementById('f-checklist-autoclose-countdown').value = checklist?.autoClose?.seconds || 60;
   renderChecklistItemEditor(checklist?.items?.length ? checklist.items : [{ text: '', checked: false }]);
   updateChecklistTriggerFields();
+  updateChecklistAutoCloseFields();
   // Gewerk/Positionen (wie beim Cue)
   _editingChecklistPositions = Array.isArray(checklist?.positions) ? checklist.positions : [];
   populateChecklistGewerkSelect();
@@ -3079,6 +3172,13 @@ function updateChecklistTriggerFields() {
   document.getElementById('checklist-trigger-time-row').style.display = type === 'time' ? '' : 'none';
 }
 
+function updateChecklistAutoCloseFields() {
+  const type = document.getElementById('f-checklist-autoclose').value;
+  document.getElementById('checklist-autoclose-tc-row').style.display = type === 'tc' ? '' : 'none';
+  document.getElementById('checklist-autoclose-position-row').style.display = type === 'position' ? '' : 'none';
+  document.getElementById('checklist-autoclose-countdown-row').style.display = type === 'countdown' ? '' : 'none';
+}
+
 function renderChecklistItemEditor(items) {
   document.getElementById('f-checklist-items').innerHTML = items.map(item => `
     <div class="checklist-item-editor-row" data-id="${item.id || ''}" data-checked="${item.checked ? 'true' : 'false'}">
@@ -3130,9 +3230,21 @@ async function saveChecklist() {
     : type === 'time'
       ? { type, time: document.getElementById('f-checklist-time').value }
       : { type };
+  const autoCloseType = document.getElementById('f-checklist-autoclose').value;
+  const autoClose = autoCloseType === 'tc'
+    ? { type: autoCloseType, tc: document.getElementById('f-checklist-autoclose-tc').value }
+    : autoCloseType === 'position'
+      ? {
+          type: autoCloseType,
+          positionId: document.getElementById('f-checklist-autoclose-position').value,
+          anchor: document.getElementById('f-checklist-autoclose-anchor').value,
+        }
+      : autoCloseType === 'countdown'
+        ? { type: autoCloseType, seconds: Number(document.getElementById('f-checklist-autoclose-countdown').value) || 60 }
+        : { type: 'none' };
   const gewerk = document.getElementById('f-cl-gewerk').value;
   const positions = [...document.querySelectorAll('#f-cl-positions input:checked')].map(i => i.value);
-  const body = { title, trigger, items, gewerk, positions };
+  const body = { title, trigger, autoClose, items, gewerk, positions };
   if (id) await api('PUT', `/api/shows/${currentShowId}/checklists/${id}`, body);
   else await api('POST', `/api/shows/${currentShowId}/checklists`, body);
   closeChecklistModal();
@@ -3173,6 +3285,8 @@ async function deleteChecklist(checklistId) {
   if (!confirm('Checklist wirklich löschen?')) return;
   await api('DELETE', `/api/shows/${currentShowId}/checklists/${checklistId}`);
   _triggeredChecklistIds.delete(checklistId);
+  _checklistTriggeredAtTc.delete(checklistId);
+  _autoClosedChecklistIds.delete(checklistId);
   await reloadCurrentShow();
   markUnsavedEdits();
 }

@@ -1752,13 +1752,14 @@ function handleEvent(evt) {
   }
   if (evt.type === 'SHOW_RESET') {
     _triggeredChecklistIds = new Set();
+    _lastCurrentCue = null;
     const show = allShows.find(s => s.id === currentShowId);
     if (show) {
       const reset = { ...show, checklists: (show.checklists || []).map(cl => ({ ...cl, items: cl.items.map(item => ({ ...item, checked: false })) })) };
       const idx = allShows.findIndex(s => s.id === currentShowId);
       if (idx !== -1) allShows[idx] = reset;
     }
-    renderLiveChecklists(_lastCurrentCue);
+    renderLiveChecklists(null);
   }
 }
 

@@ -75,9 +75,9 @@ router.post("/install", (req, res) => {
     _updating = false;
   };
 
-  const spawnLines = (cmd: string, args: string[], cwd: string) =>
+  const spawnLines = (cmd: string, args: string[], cwd: string, env?: NodeJS.ProcessEnv) =>
     new Promise<void>((resolve, reject) => {
-      const proc = spawn(cmd, args, { cwd });
+      const proc = spawn(cmd, args, { cwd, env: env ? { ...process.env, ...env } : undefined });
       const onData = (d: Buffer) =>
         d.toString().split("\n").forEach(send);
       proc.stdout.on("data", onData);
@@ -98,7 +98,26 @@ router.post("/install", (req, res) => {
       } catch { /* non-fatal */ }
 
       send("→ git pull origin main");
-      await spawnLines("git", ["pull", "origin", "main"], ROOT_DIR);
+      try {
+        // TC_CUE_SKIP_AUTO_RESTART: der post-merge-Hook soll den Dienst hier NICHT
+        // selbst neu starten – das würde genau diesen git-Prozess killen (systemd
+        // beendet beim Neustart die komplette Cgroup). Der explizite Neustart-
+        // Schritt unten übernimmt das stattdessen.
+        await spawnLines("git", ["pull", "origin", "main"], ROOT_DIR, { TC_CUE_SKIP_AUTO_RESTART: "1" });
+      } catch (pullErr) {
+        // Trotz des Env-Flags kann der git-Prozess durch einen externen Neustart
+        // (z. B. ein anderer Rechner pullt gleichzeitig, oder ein manueller
+        // Dienst-Neustart) per Signal beendet werden, NACHDEM der Pull inhaltlich
+        // schon durchgelaufen ist – Node meldet dann exit code "null" statt 0,
+        // obwohl das Repo bereits aktuell ist. Vor dem Melden eines Fehlers daher
+        // den tatsächlichen Stand gegen origin/main prüfen.
+        const [localHash, remoteHash] = await Promise.all([
+          git(["rev-parse", "HEAD"]),
+          git(["rev-parse", "origin/main"]),
+        ]).catch(() => [null, null] as const);
+        if (!localHash || localHash !== remoteHash) throw pullErr;
+        send("(Hinweis: git wurde während des Pulls unterbrochen, der Stand ist aber aktuell.)");
+      }
 
       if (pkgChanged) {
         send("→ npm install (package.json geändert)");

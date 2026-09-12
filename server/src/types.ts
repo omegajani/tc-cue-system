@@ -32,6 +32,16 @@ export type ChecklistTrigger =
   | { type: "after-cue"; cueId: string }
   | { type: "time"; time: string };
 
+// Optionales automatisches Abhaken/Schließen einer Checklist, unabhängig vom
+// Einblende-Trigger oben. "position" bezieht sich auf einen Song/Abschnitt
+// (ShowPosition) der Show, "countdown" zählt ab dem Moment, in dem die
+// Checklist eingeblendet wird (Show-TC, nicht Wanduhr).
+export type ChecklistAutoClose =
+  | { type: "none" }
+  | { type: "tc"; tc: string }
+  | { type: "position"; positionId: string; anchor: "start" | "mid" | "end" }
+  | { type: "countdown"; seconds: number };
+
 export interface ChecklistItem {
   id: string;
   text: string;
@@ -43,6 +53,7 @@ export interface Checklist {
   title: string;
   trigger: ChecklistTrigger;
   items: ChecklistItem[];
+  autoClose?: ChecklistAutoClose;
   // Rollenzuordnung (clientseitige Filterung, wie bei Cue):
   gewerk?: string;       // 'licht'|'ton'|…; undefined = allgemein (alle sehen)
   positions?: string[];  // Crew-Positionen im Gewerk; leer = ganzes Gewerk

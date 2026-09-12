@@ -1,10 +1,28 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
-import { Checklist, Cue, Show, ShowPosition } from "../types.js";
+import { Checklist, ChecklistAutoClose, Cue, Show, ShowPosition } from "../types.js";
 import { getShows, getShow, upsertShow, deleteShow, flushShows } from "../engine/store.js";
 import { cueEngine } from "../engine/cueEngine.js";
 
 const router = Router();
+
+function normalizeAutoClose(raw: unknown): ChecklistAutoClose | undefined {
+  const ac = raw as Partial<ChecklistAutoClose> | null | undefined;
+  if (!ac || !ac.type || ac.type === "none") return undefined;
+  if (ac.type === "tc" && typeof (ac as { tc?: unknown }).tc === "string" && (ac as { tc: string }).tc) {
+    return { type: "tc", tc: (ac as { tc: string }).tc };
+  }
+  if (ac.type === "position" && typeof (ac as { positionId?: unknown }).positionId === "string" && (ac as { positionId: string }).positionId) {
+    const anchorRaw = (ac as { anchor?: unknown }).anchor;
+    const anchor = anchorRaw === "mid" || anchorRaw === "end" ? anchorRaw : "start";
+    return { type: "position", positionId: (ac as { positionId: string }).positionId, anchor };
+  }
+  if (ac.type === "countdown") {
+    const seconds = Number((ac as { seconds?: unknown }).seconds);
+    if (Number.isFinite(seconds) && seconds > 0) return { type: "countdown", seconds };
+  }
+  return undefined;
+}
 
 router.get("/", (_req, res) => {
   res.json(getShows());
@@ -159,6 +177,7 @@ router.post("/:id/checklists", (req, res) => {
     id: randomUUID(),
     title: req.body.title,
     trigger: req.body.trigger,
+    autoClose: normalizeAutoClose(req.body.autoClose),
     gewerk: req.body.gewerk || undefined,
     positions: Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined,
     items: (req.body.items ?? []).map((item: { text: string; checked?: boolean }) => ({
@@ -182,6 +201,7 @@ router.put("/:id/checklists/:checklistId", (req, res) => {
     ...prev,
     ...req.body,
     id: req.params.checklistId,
+    autoClose: req.body.autoClose !== undefined ? normalizeAutoClose(req.body.autoClose) : prev.autoClose,
     gewerk: req.body.gewerk !== undefined ? (req.body.gewerk || undefined) : prev.gewerk,
     positions: req.body.positions !== undefined
       ? (Array.isArray(req.body.positions) && req.body.positions.length ? req.body.positions : undefined)

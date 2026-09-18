@@ -133,9 +133,11 @@
     #ltc-decoded-tc, #mtc-decoded-tc { display:inline-block; min-width:13ch; text-align:right; white-space:nowrap; }
 
     /* Songliste/Playlist – rahmenlos, rechts, volle Höhe, Teleprompter-Optik */
-    #playlist-toggle { position:fixed; top:62px; right:16px; z-index:20; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:99px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:rgba(255,255,255,.8); font-family:var(--ql-font-ui,inherit); font-size:11.5px; cursor:pointer; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all .15s; }
-    #playlist-toggle:hover { background:rgba(255,255,255,.12); color:#fff; border-color:rgba(255,255,255,.28); }
-    #playlist-toggle.on { border-color:rgba(245,158,11,.45); color:var(--accent-soft,#fbbf24); }
+    /* Songs-Schalter: kleines ♫ in der Tab-Zeile (nur PC, nur Live-Tab) */
+    #playlist-toggle { background:none; border:none; padding:4px 6px; margin-right:4px; font-size:14px; line-height:1; color:var(--muted); cursor:pointer; font-family:inherit; transition:color .15s; }
+    #playlist-toggle:hover { color:var(--text); }
+    #playlist-toggle.on { color:var(--pl-accent,var(--accent)); }
+    body[data-view]:not([data-view="live"]) #playlist-toggle { display:none; }
     #live-playlist { position:fixed; top:52px; right:0; bottom:0; width:300px; z-index:10; overflow:hidden;
       touch-action:none; user-select:none; -webkit-user-select:none; cursor:grab;
       -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 24%,#000 76%,transparent 100%);
@@ -428,7 +430,8 @@
       nav { overflow-x:auto; scrollbar-width:none; }
       nav::-webkit-scrollbar { display:none; }
       nav button { padding:11px 13px; font-size:12px; flex:0 0 auto; white-space:nowrap; }
-      #hdr-gewerk { gap:5px; padding:0 10px 0 8px; min-width:0; flex:0 0 auto; }
+      #nav-right { padding-right:4px; }
+      #hdr-gewerk { gap:5px; padding:0 6px 0 8px; min-width:0; flex:0 0 auto; }
       #hdr-gewerk-label { max-width:34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       #hdr-song { max-width:56vw; }
     }
@@ -493,7 +496,8 @@
     .login-enter-btn:disabled { opacity:.5; cursor:not-allowed; background:var(--ql-surface); color:var(--ql-muted); }
     .login-enter-btn:not(:disabled) { background:var(--ql-green-tint); color:var(--ql-green-on); }
     /* Gewerk badge in status bar */
-    #hdr-gewerk { display:none; align-items:center; gap:7px; flex-shrink:0; margin-left:auto; align-self:center; padding:0 18px 0 14px; }
+    #nav-right { margin-left:auto; display:flex; align-items:center; align-self:center; flex-shrink:0; padding-right:12px; }
+    #hdr-gewerk { display:none; align-items:center; gap:7px; flex-shrink:0; padding:0 6px 0 8px; }
     #hdr-gewerk.show { display:flex; }
     #hdr-gewerk-dot { width:7px; height:7px; border-radius:50%; }
     #hdr-gewerk-label { color:var(--text); font-size:12px; }
@@ -617,10 +621,13 @@
   <button data-view="edit" onclick="showView('edit',this)">Edit</button>
   <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
-  <div id="hdr-gewerk">
-    <span id="hdr-gewerk-dot"></span>
-    <span id="hdr-gewerk-label"></span>
-    <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
+  <div id="nav-right">
+    <button id="playlist-toggle" onclick="togglePlaylist()" title="Songliste ein/aus" aria-label="Songliste ein/aus" aria-pressed="false">♫</button>
+    <div id="hdr-gewerk">
+      <span id="hdr-gewerk-dot"></span>
+      <span id="hdr-gewerk-label"></span>
+      <button id="hdr-gewerk-switch" onclick="loginSwitch()">wechseln</button>
+    </div>
   </div>
 </nav>
 
@@ -1166,7 +1173,6 @@
 
 <!-- ── LIVE VIEW ───────────────────────────────────────────────────────── -->
 <div id="view-live" class="view active">
-  <button id="playlist-toggle" onclick="togglePlaylist()"><span aria-hidden="true">♫</span> <span id="playlist-toggle-label">Songs</span></button>
   <aside id="live-playlist" class="hidden"><div id="playlist-track"></div></aside>
   <div id="live-picker-shell">
     <div id="live-glass-header">
@@ -1590,6 +1596,7 @@ async function restartServer() {
 // VIEW SWITCHING
 // ════════════════════════════════════════════════════════════════════════════
 function showView(name, btn) {
+  document.body.dataset.view = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
@@ -1918,6 +1925,7 @@ function renderPlaylist() {
   if (sig !== _playlistSig) {
     _playlistSig = sig;
     track.style.setProperty('--pl-accent', playlistAccentColor());
+    document.getElementById('playlist-toggle')?.style.setProperty('--pl-accent', playlistAccentColor());
     track.innerHTML = positions.map((p, i) => {
       const state = i < curIdx ? 'done' : i === curIdx ? 'current' : 'upcoming';
       const sub = state === 'current' && curIdx >= 0 ? `<span class="pl-sub">läuft · noch ${formatRemainingTime(remainingFor(i))}</span>` : '';
@@ -2028,8 +2036,10 @@ function resetPlaylistScroll() {
 function applyPlaylistVisibility(visible) {
   _playlistVisible = visible;
   document.getElementById('live-playlist').classList.toggle('hidden', !visible);
-  document.getElementById('playlist-toggle').classList.toggle('on', visible);
-  document.getElementById('playlist-toggle-label').textContent = visible ? 'Songs ausblenden' : 'Songs';
+  const toggle = document.getElementById('playlist-toggle');
+  toggle.classList.toggle('on', visible);
+  toggle.setAttribute('aria-pressed', visible ? 'true' : 'false');
+  toggle.style.setProperty('--pl-accent', playlistAccentColor());
   document.getElementById('view-live').classList.toggle('playlist-on', visible);
   resetPlaylistScroll();
   if (visible) { _playlistSig = ''; renderPlaylist(); }

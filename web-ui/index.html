@@ -1601,6 +1601,7 @@ function showView(name, btn) {
   if (name === 'live') {
     _pickerBrowsing = false;
     requestAnimationFrame(() => followLiveCurrentCue(false));
+    if (_playlistVisible) requestAnimationFrame(recenterPlaylist);
   }
 }
 
@@ -1858,7 +1859,6 @@ window.addEventListener('resize', () => {
       const text = el?.dataset.marqueeText;
       if (text != null) { delete el.dataset.marqueeText; setMarqueeText(el, text); }
     }
-    if (_playlistVisible) recenterPlaylist();
   }, 200);
 });
 
@@ -1923,11 +1923,36 @@ function recenterPlaylist() {
   const panel = document.getElementById('live-playlist');
   const track = document.getElementById('playlist-track');
   if (!panel || !track) return;
+  // Panel unsichtbar (anderer Tab aktiv, Liste ausgeblendet): Messwerte wären 0
+  // und würden die Liste auf den Anfang zurücksetzen (#34). Der ResizeObserver
+  // unten zentriert neu, sobald das Panel wieder sichtbar ist.
+  if (!panel.clientHeight) return;
   const cur = track.querySelector('.pl-row.current') || track.querySelector('.pl-row');
   if (!cur) return;
   const offset = panel.clientHeight / 2 - (cur.offsetTop + cur.offsetHeight / 2);
   track.style.transform = `translateY(${offset}px)`;
 }
+
+// Neu zentrieren, sobald sich die Geometrie ändert: Rückkehr in die Live-Ansicht
+// (Panel 0 → volle Höhe), nachgeladene Schrift, Zeilenumbruch, Fenstergröße.
+(function observePlaylistGeometry() {
+  const panel = document.getElementById('live-playlist');
+  const track = document.getElementById('playlist-track');
+  if (!panel || !track) return;
+  let raf = 0;
+  const schedule = () => {
+    if (raf || !_playlistVisible) return;
+    raf = requestAnimationFrame(() => { raf = 0; recenterPlaylist(); });
+  };
+  if (typeof ResizeObserver === 'function') {
+    const ro = new ResizeObserver(schedule);
+    ro.observe(panel);
+    ro.observe(track);
+  } else {
+    window.addEventListener('resize', schedule);
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+})();
 
 function applyPlaylistVisibility(visible) {
   _playlistVisible = visible;

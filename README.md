@@ -14,8 +14,12 @@ alle Geräte im lokalen Netzwerk — vom FOH-Rechner bis zum Handy auf der Bühn
 - **Rollenbasierte Ansichten**: jedes Gewerk (Licht/Ton/Bühne/Regie/Video) und
   jede Crew-Position (z. B. Ton → FOH/Monitor/Radioraum) sieht nur die eigenen
   Cues. **Meister** sehen alle Cues ihres Gewerks, **Admin** sieht und bearbeitet
-  alles. Anmeldung per **Passwort** (Konfiguration: Show-Tab → „Zugriff / Passwörter").
-  Crew-Positionen pflegen Meister/Admin im Edit-Tab.
+  alles. Anmeldung per **Passwort** (Konfiguration: Einstellungen → Programm →
+  „Team & Zugang"). Crew-Positionen pflegen Admin und Meister (eigenes Gewerk)
+  ebenfalls dort.
+- **Alles speichert sofort**, dazu **Sicherungen** je Show (Show-Tab): von Hand oder
+  automatisch vor dem Löschen, vor Updates und höchstens stündlich vor Änderungen.
+  Auch gelöschte Shows lassen sich wiederherstellen.
 - **Songliste/Playlist** (Desktop, optional einblendbar) — rahmenlose
   Teleprompter-Ansicht, die zeigt, wo in der Show man sich befindet.
 - **Mehrere TC-Quellen** (siehe unten), inkl. **browserunabhängiger** Empfang
@@ -34,10 +38,28 @@ alle Geräte im lokalen Netzwerk — vom FOH-Rechner bis zum Handy auf der Bühn
 | OSC | `/tc`, `/timecode`, … (UDP) |
 | RTP-MIDI / AppleMIDI | Netzwerk-MIDI |
 
-Server-Quellen (USB-MIDI, Art-Net, OSC, RTP-MIDI) starten beim Booten automatisch,
-wenn sie als Quelle der geladenen Show gespeichert sind — kein Browser nötig.
+Die Quelle ist eine Programm-Einstellung (Einstellungen → Programm →
+Timecode-Eingang) und gilt unabhängig von der geladenen Show. Server-Quellen
+(USB-MIDI, Art-Net, OSC, RTP-MIDI) startet der Server selbst — auch beim Booten,
+mit den gespeicherten Ports, kein Browser nötig.
 Der Status im TC-Input zeigt das **echte Signal** an (Gestoppt / Empfangsbereit /
 Signal aktiv), nicht nur einen gebundenen Listener.
+
+## Einstellungen: was gilt wo?
+
+| Ebene | Gespeichert | Wer ändert | Inhalt |
+| --- | --- | --- | --- |
+| **Programm** | Server, `config.json` im Datenordner (nicht im Git) | Admin (Meister: eigene Crew-Positionen) | Timecode-Eingang inkl. Ports, Passwörter, Crew-Positionen, aktive Show |
+| **Show** | Server, `shows.json` (im Git) | Admin; Cues/Listen auch Meister/Positionen (gefiltert) | Name, Datum, Framerate, Songs, Cues, Aufgabenlisten |
+| **Dieses Gerät** | Browser (`localStorage`) | jede Person für sich | Anzeige, Schriftgröße, Cue-Vorschau, Show-Modus, Flash, Alarmton, Songliste, Anmeldung |
+
+Tabs: **Live · Cues · Show · Einstellungen**. Der Show-Tab ist bei aktivem
+Zugangsschutz dem Admin vorbehalten; „Einstellungen" sehen alle — Positionen und
+Meister nur den Bereich „Dieses Gerät" (Meister zusätzlich die eigenen
+Crew-Positionen).
+
+Die aktive Show merkt sich der Server; lädt der Admin eine andere Show, wechseln
+alle verbundenen Geräte automatisch mit.
 
 ## Auf einem neuen Mac oder Linux installieren
 
@@ -81,15 +103,21 @@ Das Update:
 4. installiert geänderte Pakete,
 5. startet die Web-App erneut, falls sie vorher lief.
 
-Lokale Shows liegen nicht im Git-Ordner und werden daher durch Updates nicht
+Lokale Daten liegen nicht im Git-Ordner und werden daher durch Updates nicht
 überschrieben:
 
 ```text
-macOS: ~/Library/Application Support/TC Cue System/shows.json
-Linux: ~/.tc-cue-system/shows.json
+macOS: ~/Library/Application Support/TC Cue System/
+Linux: ~/.tc-cue-system/
+
+  shows.json       Shows (Cues, Songs, Aufgabenlisten)
+  config.json      Programm-Einstellungen inkl. Passwörter
+  backups/         Sicherungen (backups/shows/<Show-ID>/… je Show)
 ```
 
-Automatische Sicherungen vor Updates liegen im Unterordner `backups`.
+Beim ersten Start einer Version mit `config.json` übernimmt der Server
+TC-Eingang, Passwörter und Crew-Positionen aus der ersten Show und entfernt sie
+aus `shows.json` (damit auch aus dem Git).
 
 ### Show-Daten im Repo (automatischer Abgleich)
 
@@ -116,8 +144,8 @@ erreichbar. Andere Geräte im gleichen Netzwerk verwenden die im Bereich
 
 Im Dauerbetrieb läuft der Server als systemd-User-Dienst (`tc-cue-system`); der
 `post-merge`-Hook startet ihn nach einem `git pull` automatisch neu. Beim Start
-lädt der Server die erste Show und öffnet die gespeicherte TC-Quelle selbst —
-ein Browser ist dafür nicht erforderlich.
+lädt der Server die zuletzt aktive Show und öffnet die gespeicherte TC-Quelle
+selbst — ein Browser ist dafür nicht erforderlich.
 
 ## Gemeinsam entwickeln
 

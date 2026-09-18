@@ -14,6 +14,12 @@ import simulatorRouter from "./api/simulator.js";
 import importExportRouter from "./api/importExport.js";
 import midiRouter from "./api/midi.js";
 import updateRouter from "./api/update.js";
+import configRouter from "./api/config.js";
+import backupsRouter from "./api/backups.js";
+import { getConfig } from "./engine/config.js";
+import { loadInitialShow } from "./engine/activeShow.js";
+import { applyTcConfig } from "./tc/tcSources.js";
+import { getShows, upsertShow, flushShows } from "./engine/store.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
 import { oscTcInput } from "./tc/oscTcInput.js";
 import { usbMidiInput } from "./tc/usbMidiInput.js";
@@ -39,6 +45,8 @@ app.use("/api/simulator", simulatorRouter);
 app.use("/api/io", importExportRouter);
 app.use("/api/midi", midiRouter);
 app.use("/api/update", updateRouter);
+app.use("/api/config", configRouter);
+app.use("/api/backups", backupsRouter);
 
 // Shared TC ingestion helper — deduplicates and feeds cueEngine + broadcasts.
 // Zentrale, robuste Eintrittsstelle für ALLE Quellen: ungültige TC-Strings (z. B.
@@ -99,11 +107,17 @@ app.get("/api/network", (_req, res) => {
   res.json({ ips, port: PORT, urls: ips.map(ip => `http://${ip}:${PORT}`) });
 });
 
-// FPS switch
+// FPS switch – Framerate gehört zur Show: wird an der aktiven Show gespeichert
 app.post("/api/engine/fps", (req, res) => {
-  const { fps } = req.body as { fps?: number };
+  const { fps } = req.body as { fps?: 24 | 25 | 29.97 | 30 };
   if (!fps || ![24, 25, 29.97, 30].includes(fps)) return res.status(400).json({ error: "fps must be 24|25|29.97|30" });
   setFPS(fps);
+  const active = cueEngine.getShow();
+  if (active && active.fps !== fps) {
+    active.fps = fps;
+    upsertShow(active);
+    flushShows();
+  }
   cueEngine.reset();
   // Reset sofort an die Clients spiegeln (sonst erst beim nächsten TC sichtbar)
   broadcast({ type: "TC_UPDATE", tc: "00:00:00:00", previousCue: null, currentCue: null, nextCue: cueEngine.getNextCue(), currentPosition: null });
@@ -158,6 +172,7 @@ cueEngine.on("cueFire", (event) => {
         })),
       };
       upsertShow(reset);
+      flushShows();
       cueEngine.updateShowData(reset);
       console.log(`[Engine] SHOW RESET triggered by cue "${event.cue.title}"`);
     }
@@ -165,39 +180,23 @@ cueEngine.on("cueFire", (event) => {
   }
 });
 
-import { getShows, upsertShow } from "./engine/store.js";
+// Programm-Konfiguration vor allem anderen laden (migriert beim ersten Start
+// die früher show-bezogenen Einstellungen aus shows.json).
+getConfig();
 
-function loadInitialShow() {
-  const show = getShows()[0];
-  if (show) {
-    cueEngine.loadShow(show);
-    console.log(`[Startup] Auto-loaded show "${show.name}"`);
-    // Browserunabhängiger MTC: konfiguriertes USB-MIDI-Port automatisch öffnen.
-    // Ist das Gerät beim Boot noch nicht da, alle 5 s erneut versuchen.
-    if (show.tcSource === "usb-mtc" && show.midiPort) {
-      const tryStart = () => {
-        if (usbMidiInput.isRunning()) return;
-        if (usbMidiInput.start(show.midiPort)) {
-          console.log(`[Startup] USB-MIDI auto-started on "${show.midiPort}"`);
-        } else {
-          setTimeout(tryStart, 5000);
-        }
-      };
-      tryStart();
-    }
-    // Server-seitige Netzwerk-Quellen ebenfalls headless beim Boot starten
-    // (Default-Ports; keine Browser-/Geräteinteraktion nötig).
-    if (show.tcSource === "rtpmidi") rtpMidiInput.start();
-    else if (show.tcSource === "osc") oscTcInput.start();
-    else if (show.tcSource === "artnet") artnetTcInput.start();
-  }
+function boot() {
+  const show = loadInitialShow();
+  if (show) console.log(`[Startup] Aktive Show "${show.name}" geladen (${getShows().length} Shows)`);
+  // Serverseitige TC-Empfänger headless starten (USB-MIDI mit Retry, Netzwerkquellen
+  // mit gespeicherten Ports). Browser-Quellen startet der jeweilige Browser.
+  applyTcConfig(getConfig().tc);
 }
 
 server.listen(PORT, () => {
   console.log(`\n🎭 TC Cue Server running on http://localhost:${PORT}`);
   console.log(`   WebSocket: ws://localhost:${PORT}`);
   console.log(`   Web UI:    http://localhost:${PORT}\n`);
-  loadInitialShow();
+  boot();
 
   // Advertise via Bonjour so iOS can discover without typing IP
   // Include IPv4 in TXT record so iOS can read it without NWConnection resolution

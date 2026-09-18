@@ -2,6 +2,7 @@ import { Router } from "express";
 import { randomUUID } from "crypto";
 import { Show } from "../types.js";
 import { getShow, upsertShow, getShows, flushShows } from "../engine/store.js";
+import { stripLegacyShowFields } from "../engine/config.js";
 
 const router = Router();
 
@@ -26,7 +27,8 @@ router.post("/show", (req, res) => {
 
   // Remap IDs to avoid collisions
   const newShowId = randomUUID();
-  const newShow: Show = {
+  // Programmweite Felder (TC-Eingang, Passwörter, Crew) aus alten Dateien nicht übernehmen
+  const newShow: Show = stripLegacyShowFields({
     ...show,
     id: newShowId,
     cues: (show.cues ?? []).map((cue) => ({
@@ -47,7 +49,7 @@ router.post("/show", (req, res) => {
       id: randomUUID(),
       items: checklist.items.map((item) => ({ ...item, id: randomUUID() })),
     })),
-  };
+  });
 
   upsertShow(newShow);
   flushShows();

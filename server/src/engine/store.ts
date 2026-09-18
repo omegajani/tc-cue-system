@@ -4,7 +4,7 @@ import path from "path";
 import { Show } from "../types.js";
 
 const SEED_DATA_DIR = path.join(process.cwd(), "data");
-const DATA_DIR = process.env.TC_CUE_DATA_DIR
+export const DATA_DIR = process.env.TC_CUE_DATA_DIR
   ? path.resolve(process.env.TC_CUE_DATA_DIR)
   : process.platform === "darwin"
     ? path.join(os.homedir(), "Library", "Application Support", "TC Cue System")
@@ -49,6 +49,15 @@ function readJson<T>(name: string): T[] {
   }
 }
 
+/** Schreibt eine Datei atomar (temp-Datei + rename): ein Crash mitten im
+ *  Schreiben kann so die bestehende Datei nicht korrumpieren. */
+export function writeFileAtomic(target: string, content: string): void {
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const tmp = `${target}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, content, "utf-8");
+  fs.renameSync(tmp, target);
+}
+
 function writeJson<T>(name: string, data: T[]): void {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   // Shows beim Schreiben mit Zeitstempel versehen → „neuestes gewinnt" beim Repo-Sync
@@ -56,18 +65,13 @@ function writeJson<T>(name: string, data: T[]): void {
     const now = new Date().toISOString();
     for (const show of data as unknown as Array<{ savedAt?: string }>) show.savedAt = now;
   }
-  // Atomar schreiben: erst in temp-Datei, dann umbenennen. Ein Crash mitten im
-  // Schreiben kann so die einzige Datenquelle nicht korrumpieren.
-  const target = filePath(name);
-  const tmp = `${target}.tmp-${process.pid}`;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf-8");
-  fs.renameSync(tmp, target);
+  writeFileAtomic(filePath(name), JSON.stringify(data, null, 2));
 }
 
 // Shows
-// In-Memory-Arbeitskopie: granulare Edits (upsertShow/deleteShow) mutieren nur
-// den Cache. Auf die Platte geschrieben wird erst per flushShows() (Speichern,
-// neue/gelöschte Show, Import, Live-Abhaken).
+// In-Memory-Arbeitskopie: upsertShow/deleteShow mutieren den Cache, flushShows()
+// schreibt ihn auf die Platte. Die API ruft nach jeder Änderung flushShows() auf
+// („alles speichert sofort").
 let cache: Show[] | null = null;
 
 export function getShows(): Show[] {
@@ -90,7 +94,7 @@ export function getShow(id: string): Show | undefined {
   return getShows().find((s) => s.id === id);
 }
 
-/** Nur In-Memory – Persistenz erst per flushShows().
+/** Nur In-Memory – danach flushShows() aufrufen.
  *  Ersetzt eine bestehende Show an ihrer Position (keine Reihenfolge-Änderung),
  *  neue Shows werden angehängt. */
 export function upsertShow(show: Show): void {
@@ -100,7 +104,7 @@ export function upsertShow(show: Show): void {
   else { const next = [...all]; next[idx] = show; cache = next; }
 }
 
-/** Nur In-Memory – Persistenz erst per flushShows(). */
+/** Nur In-Memory – danach flushShows() aufrufen. */
 export function deleteShow(id: string): void {
   cache = getShows().filter((s) => s.id !== id);
 }

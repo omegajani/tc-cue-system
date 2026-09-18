@@ -367,8 +367,6 @@
     .btn-danger { border-color: var(--red); color: var(--red); }
     .btn-accent { border-color: var(--accent); color: var(--accent); }
     .btn-small { padding: 3px 9px; font-size: 11px; }
-    #show-save-btn.dirty { position: relative; border-color: var(--accent); color: var(--accent); }
-    #show-save-btn.dirty:after { content: ''; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
     .btn-icon { padding: 3px 7px; font-size: 13px; }
 
     /* ── MONITOR ────────────────────────────────────────────────────── */
@@ -407,14 +405,14 @@
     @media (max-width: 760px) {
       .view { padding: 16px 12px; }
       /* iOS zoomt bei Fokus auf Felder mit <16px hinein – verhindern, damit Modals sichtbar bleiben */
-      .form-row input, .form-row select, .form-row textarea { font-size: 16px; }
+      .form-row input, .form-row select, .form-row textarea, #backup-label { font-size: 16px; }
       .settings-grid { grid-template-columns: 1fr; }
       .show-layout { grid-template-columns:1fr; }
       .show-library { position:static; }
       .show-fields { grid-template-columns:1fr; }
       .show-fields .show-field-wide { grid-column:auto; }
       .edit-overview { grid-template-columns:1fr; }
-      .edit-overview-counts { display:grid; grid-template-columns:repeat(3,1fr); }
+      .edit-overview-counts { display:grid; grid-template-columns:repeat(2,1fr); }
       .settings-wide { grid-column: auto; }
       #view-live { padding-top:0; }
       #live-picker-shell { height:calc(100vh - 92px); min-height:460px; }
@@ -560,6 +558,26 @@
     .access-gewerk-table input:focus { outline:none; border-color:var(--accent); }
     .access-admin input { min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
     .access-admin input:focus { outline:none; border-color:var(--accent); }
+    /* Einstellungen: Gruppen „Dieses Gerät" / „Programm" */
+    .settings-group { max-width:1180px; margin:0 auto 26px; }
+    .settings-group-title { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:15px; font-weight:650; letter-spacing:-.15px; margin:0 0 4px; }
+    .settings-group-hint { color:var(--muted); font-size:11.5px; line-height:1.5; margin:0 0 12px; }
+    .scope-badge { font-size:10px; font-weight:500; letter-spacing:.2px; padding:2px 8px; border-radius:99px; border:1px solid var(--border); color:var(--muted); }
+    .scope-badge.device { border-color:rgba(59,130,246,.35); color:#93c5fd; }
+    .scope-badge.program { border-color:rgba(245,158,11,.4); color:var(--accent-soft,#fbbf24); }
+    .sp-subhead { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:18px 0 10px; }
+    .identity-line { font-size:13px; color:var(--text); display:flex; align-items:center; gap:8px; }
+    /* Sicherungen */
+    #backup-label { min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-family:inherit; font-size:13px; }
+    #backup-label:focus { outline:none; border-color:var(--accent); }
+    .backup-list { display:grid; gap:6px; margin-top:12px; }
+    .backup-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); font-size:12px; }
+    .backup-row .backup-main { flex:1; min-width:0; }
+    .backup-row .backup-title { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .backup-row .backup-meta { color:var(--muted); font-size:10.5px; margin-top:2px; }
+    .backup-kind { font-size:9.5px; padding:1px 6px; border-radius:99px; border:1px solid var(--border); color:var(--muted); margin-right:6px; }
+    .backup-kind.manual { border-color:rgba(16,185,129,.4); color:var(--green); }
+    .backup-more { margin-top:8px; }
     .access-note { display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:10px 11px; border:1px solid rgba(59,130,246,.16); border-radius:9px; background:rgba(59,130,246,.045); color:var(--muted); font-size:10px; line-height:1.45; }
   </style>
 </head>
@@ -618,7 +636,7 @@
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <nav>
   <button class="active" data-view="live" onclick="showView('live',this)">Live</button>
-  <button data-view="edit" onclick="showView('edit',this)">Edit</button>
+  <button data-view="edit" onclick="showView('edit',this)">Cues</button>
   <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
   <div id="nav-right">
@@ -639,64 +657,72 @@
 <div id="view-show" class="view">
   <div class="page-heading">
     <h1>Show</h1>
-    <p>Shows laden, sichern und ihre grundlegenden Eigenschaften bearbeiten.</p>
+    <p>Shows verwalten, sichern und ihre Songs pflegen. Alle Änderungen werden sofort gespeichert.</p>
   </div>
   <div class="show-layout">
     <div class="show-card show-library">
-      <h2>Show laden/speichern</h2>
-      <p class="show-card-description">„Laden" aktiviert die Show für Live und startet einen neuen Durchlauf der Aufgabenlisten.</p>
+      <h2>Shows</h2>
+      <p class="show-card-description">„Laden" macht die Show für alle Geräte zur aktiven Show und startet einen neuen Durchlauf der Aufgabenlisten.</p>
       <select class="admin-select" id="show-select" onchange="previewSelectedShow()"></select>
       <div class="toolbar">
         <button class="btn btn-primary" onclick="loadSelectedShow()">Laden</button>
-        <button class="btn btn-primary" id="show-save-btn" onclick="saveSelectedShow()" title="Aktuelle Show in der App überschreiben">Speichern</button>
-        <button class="btn" onclick="exportSelectedShow()" title="Show als .json-Datei auf den Computer speichern">Speichern unter…</button>
-        <label class="btn btn-accent" style="cursor:pointer;" title="Show aus Datei laden">
-          Aus Datei laden ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
-        </label>
         <button class="btn btn-accent" onclick="openNewShowDialog()">+ Neue Show</button>
+        <button class="btn btn-danger" onclick="deleteSelectedShow()" title="Show löschen – vorher wird automatisch eine Sicherung angelegt">Löschen</button>
       </div>
-      <div id="show-save-feedback" class="show-feedback"></div>
       <div id="show-active-state"></div>
       <div class="show-summary">
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-positions">0</span><span class="show-summary-label">Songs</span></div>
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-cues">0</span><span class="show-summary-label">Cues</span></div>
         <div class="show-summary-item"><span class="show-summary-value" id="show-summary-checklists">0</span><span class="show-summary-label">Listen</span></div>
       </div>
+      <div class="toolbar" style="margin-top:14px;">
+        <button class="btn" onclick="exportSelectedShow()" title="Show als .json-Datei auf den Computer speichern">Als Datei exportieren ↓</button>
+        <label class="btn" style="cursor:pointer;" title="Show aus .json-Datei importieren (wird als neue Show angelegt)">
+          Aus Datei importieren ↑ <input type="file" id="import-file" accept=".json" onchange="importShow(this)" style="display:none;" />
+        </label>
+      </div>
       <div class="show-library-footer">
-        <span class="show-library-hint"><strong>Speichern</strong> schreibt in die App. <strong>Speichern unter…</strong> lädt eine .json-Datei herunter – damit (und „Aus Datei laden ↑") überträgst du Shows auf andere Rechner.</span>
+        <span class="show-library-hint">Export und Import übertragen Shows als .json-Datei auf andere Rechner. Ein Import wird als neue Show angelegt.</span>
       </div>
       <div id="import-feedback" class="show-feedback"></div>
     </div>
 
     <div class="show-main">
       <div class="show-card">
-        <h2>Showeinstellungen</h2>
-        <p class="show-card-description">Name, Aufführungsdatum und Verhalten beim Ausfall der Timecode-Quelle.</p>
+        <h2>Show-Daten</h2>
+        <p class="show-card-description">Gelten nur für diese Show und werden sofort gespeichert.</p>
         <div class="show-fields">
           <div class="form-row show-field-wide">
             <label>Name der Show</label>
-            <input id="show-name-input" type="text" placeholder="Name der Show" />
+            <input id="show-name-input" type="text" placeholder="Name der Show" onchange="saveShowData()" />
           </div>
           <div class="form-row">
             <label>Aufführungsdatum</label>
-            <input id="show-date-input" type="date" />
+            <input id="show-date-input" type="date" onchange="saveShowData()" />
           </div>
           <div class="form-row">
-            <label>Bei Timecode-Ausfall</label>
-            <select id="s-fallback">
-              <option value="stop">Timecode stoppen</option>
-              <option value="continue">Weiterlaufen lassen</option>
-              <option value="loop">Als Schleife weiterlaufen</option>
+            <label>Framerate des Timecodes</label>
+            <select id="show-fps-input" onchange="saveShowData()">
+              <option value="24">24 fps</option>
+              <option value="25">25 fps</option>
+              <option value="29.97">29.97 fps</option>
+              <option value="30">30 fps</option>
             </select>
           </div>
         </div>
+        <div id="show-save-feedback" class="show-feedback"></div>
       </div>
 
       <div class="show-card">
-        <h2>Zugriff / Passwörter</h2>
-        <p class="show-card-description">Pro Gewerk zwei Passwörter: das <strong>Positions-Passwort</strong> schaltet die Positions-Auswahl frei (sieht nur die eigene Position), das <strong>Meister-Passwort</strong> meldet direkt als Meister an (sieht alle Cues des Gewerks). Das Admin-Passwort schaltet alles frei.</p>
-        <div id="access-fields"></div>
-        <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Passwörter werden mit „Speichern" in der Show abgelegt.</div>
+        <h2>Sicherungen</h2>
+        <p class="show-card-description">Eine Sicherung hält einen Stand dieser Show fest, zu dem du zurückkehren kannst – etwa wenn aus Versehen etwas gelöscht wurde. Automatisch gesichert wird vor dem Löschen, vor Software-Updates und höchstens stündlich vor Änderungen.</p>
+        <div class="toolbar">
+          <input id="backup-label" type="text" placeholder="Name der Sicherung (optional)" style="flex:1;min-width:160px;" onkeydown="if(event.key==='Enter')createShowBackup()" />
+          <button class="btn btn-primary" onclick="createShowBackup()">Sicherung erstellen</button>
+        </div>
+        <div id="backup-feedback" class="show-feedback"></div>
+        <div id="backup-list" class="backup-list"></div>
+        <div id="deleted-shows"></div>
       </div>
     </div>
   </div>
@@ -729,13 +755,17 @@
 <div id="view-settings" class="view">
   <div class="page-heading">
     <h1>Einstellungen</h1>
-    <p>Technische Steuerung, Timecode-Quelle, Anzeige und Netzwerk.</p>
+    <p id="settings-intro">Oben stellst du nur dieses Gerät ein. Darunter liegen die Programm-Einstellungen, die für alle Geräte gelten.</p>
   </div>
+
+  <section class="settings-group">
+  <h2 class="settings-group-title">Dieses Gerät <span class="scope-badge device">nur in diesem Browser gespeichert</span></h2>
+  <p class="settings-group-hint">Jede Position stellt sich ihren Bildschirm selbst ein – andere Geräte bleiben unberührt.</p>
   <div class="settings-grid">
 
   <!-- Anzeige -->
   <div class="sp-section">
-    <h3>Live-Ansicht</h3>
+    <h3>Anzeige</h3>
     <div class="sp-row">
       <div class="sp-label">Frames anzeigen
         <span class="sp-hint">TC-Format: HH:MM:SS:FF statt HH:MM:SS</span>
@@ -743,8 +773,8 @@
       <label class="toggle"><input type="checkbox" id="s-show-frames" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
     <div class="sp-row">
-      <div class="sp-label">Großer TC-Zähler
-        <span class="sp-hint">Großen Timecode im Live-Panel anzeigen</span>
+      <div class="sp-label">Song- &amp; TC-Kopf
+        <span class="sp-hint">Kopfbereich mit aktuellem Song und großem Timecode im Live-Tab</span>
       </div>
       <label class="toggle"><input type="checkbox" id="s-live-big-tc" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
@@ -771,7 +801,7 @@
     </div>
     <div class="sp-row">
       <div class="sp-label">Show-Modus
-        <span class="sp-hint">Cues im Live-Tab nicht anklickbar (verhindert versehentliches Öffnen)</span>
+        <span class="sp-hint">Cues im Live-Tab nicht anklickbar (verhindert versehentliches Bearbeiten)</span>
       </div>
       <label class="toggle"><input type="checkbox" id="s-show-mode" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
     </div>
@@ -795,31 +825,9 @@
     </div>
   </div>
 
-  <!-- Engine -->
-  <div class="sp-section">
-    <h3>Engine</h3>
-    <div class="sp-row">
-      <div class="sp-label">Framerate
-        <span class="sp-hint">Frames pro Sekunde des TC-Signals</span>
-      </div>
-      <select id="s-fps" onchange="onFpsChange(this.value)">
-        <option value="24">24 fps</option>
-        <option value="25" selected>25 fps</option>
-        <option value="29.97">29.97 fps</option>
-        <option value="30">30 fps</option>
-      </select>
-    </div>
-    <div class="sp-row">
-      <div class="sp-label">Auto-Reset bei Stop
-        <span class="sp-hint">Cues zurücksetzen wenn Simulator gestoppt wird</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="s-auto-reset" onchange="onSettingChange()" /><span class="toggle-slider"></span></label>
-    </div>
-  </div>
-
   <!-- Audio -->
   <div class="sp-section">
-    <h3>Audio</h3>
+    <h3>Ton &amp; Alarm</h3>
     <div class="sp-row">
       <div class="sp-label">Alarmton
         <span class="sp-hint">Spielt bei jedem ausgelösten Cue denselben Alarmton</span>
@@ -838,9 +846,33 @@
     </div>
   </div>
 
-  <!-- TC Input -->
+  <!-- Anmeldung -->
   <div class="sp-section">
-    <h3>TC Input <span id="tc-source-status" style="color:var(--green);font-size:10px;margin-left:6px;"></span></h3>
+    <h3>Anmeldung</h3>
+    <div class="sp-row">
+      <div class="sp-label">Angemeldet als
+        <span class="sp-hint" id="settings-identity">–</span>
+      </div>
+      <button class="btn btn-small" onclick="loginSwitch()">Wechseln</button>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">Gerät zurücksetzen
+        <span class="sp-hint">Anzeige und Ton dieses Geräts auf Standard zurücksetzen</span>
+      </div>
+      <button class="btn btn-small btn-danger" onclick="resetAllSettings()">Zurücksetzen</button>
+    </div>
+  </div>
+  </div>
+  </section>
+
+  <section class="settings-group" id="settings-program">
+  <h2 class="settings-group-title">Programm <span class="scope-badge program">gilt für alle Geräte</span></h2>
+  <p class="settings-group-hint">Wird auf dem Server gespeichert und gilt unabhängig von der geladenen Show.</p>
+  <div class="settings-grid">
+
+  <!-- Timecode-Eingang -->
+  <div class="sp-section" id="tc-input-card">
+    <h3>Timecode-Eingang <span id="tc-source-status" style="color:var(--green);font-size:10px;margin-left:6px;"></span></h3>
     <div class="sp-row">
       <div class="sp-label">Quelle</div>
       <select id="tc-source-select" onchange="onTcSourceChange(this.value)">
@@ -851,7 +883,6 @@
         <option value="rtpmidi">AppleMIDI / rtpMIDI (Netzwerk)</option>
         <option value="osc">OSC Timecode (UDP)</option>
         <option value="artnet">Art-Net Timecode (UDP 6454)</option>
-        <option value="server-ltc">Server LTC (Raspberry Pi)</option>
       </select>
     </div>
     <!-- Simulator (Transport) -->
@@ -913,12 +944,12 @@
     <div id="rtpmidi-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">Port</div>
-        <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535" onchange="startRtpMidi()"
+        <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535" onchange="onRtpMidiSettingChange()"
           style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
       </div>
       <div class="sp-row">
         <div class="sp-label">Session-Name</div>
-        <input type="text" id="rtpmidi-name" value="TC Cue System" onchange="startRtpMidi()"
+        <input type="text" id="rtpmidi-name" value="TC Cue System" onchange="onRtpMidiSettingChange()"
           style="width:160px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
       </div>
       <div id="rtpmidi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
@@ -952,7 +983,7 @@
     <div id="osc-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">UDP-Port</div>
-        <input type="number" id="osc-port" value="9000" min="1024" max="65535" onchange="startOsc()"
+        <input type="number" id="osc-port" value="9000" min="1024" max="65535" onchange="onOscPortChange()"
           style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
       </div>
       <div id="osc-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
@@ -977,15 +1008,31 @@
     </div>
   </div>
 
+  <!-- Team & Zugang -->
+  <div class="sp-section" id="team-card">
+    <h3>Team &amp; Zugang</h3>
+    <div id="access-block">
+      <p class="show-card-description">Pro Gewerk zwei Passwörter: das <strong>Positions-Passwort</strong> schaltet die Positions-Auswahl frei (sieht nur die eigene Position), das <strong>Meister-Passwort</strong> meldet direkt als Meister an (sieht alle Cues des Gewerks). Das Admin-Passwort schaltet alles frei.</p>
+      <div id="access-fields"></div>
+      <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Änderungen werden beim Verlassen des Feldes gespeichert.</div>
+      <div id="access-feedback" class="show-feedback"></div>
+    </div>
+    <div id="crew-positions-card">
+      <div class="sp-subhead">Crew-Positionen</div>
+      <p class="show-card-description">Positionen je Gewerk – stehen im Login und bei der Cue-/Listen-Zuweisung zur Auswahl.</p>
+      <div id="crew-positions-wrap"></div>
+    </div>
+  </div>
+
   <!-- Netzwerk -->
-  <div class="sp-section settings-wide">
+  <div class="sp-section" id="network-card">
     <h3>Netzwerk</h3>
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Server-URLs für Geräte im gleichen WLAN:</p>
     <div id="network-urls"><span style="color:var(--muted);font-size:12px;">Lade…</span></div>
   </div>
 
   <!-- Software-Update -->
-  <div class="sp-section settings-wide">
+  <div class="sp-section settings-wide" id="update-card">
     <h3>Software-Update <span id="update-badge"></span></h3>
     <div class="sp-row">
       <div class="sp-label">Version
@@ -1008,10 +1055,8 @@
     <div class="update-log" id="update-log"></div>
   </div>
 
-  <div class="settings-wide">
-    <button class="btn btn-small" onclick="resetAllSettings()" style="color:var(--red);border-color:var(--red);">Einstellungen zurücksetzen</button>
   </div>
-  </div>
+  </section>
 </div>
 
 <!-- ── MODAL: Cue bearbeiten ───────────────────────────────────────────── -->
@@ -1196,8 +1241,8 @@
 <!-- ── EDIT VIEW ───────────────────────────────────────────────────────── -->
 <div id="view-edit" class="view">
   <div class="page-heading">
-    <h1>Show bearbeiten</h1>
-    <p>Cues und Aufgabenlisten der geladenen Show direkt bearbeiten.</p>
+    <h1>Cues &amp; Aufgabenlisten</h1>
+    <p>Cues und Aufgabenlisten der geladenen Show bearbeiten. Änderungen werden sofort gespeichert.</p>
   </div>
   <div class="edit-layout">
 
@@ -1208,7 +1253,6 @@
       <div class="edit-overview-hint">Auf einen Eintrag tippen, um ihn zu bearbeiten oder zu löschen.</div>
     </div>
     <div class="edit-overview-counts">
-      <div class="edit-overview-count"><strong id="edit-count-positions">0</strong><span>Songs</span></div>
       <div class="edit-overview-count"><strong id="edit-count-cues">0</strong><span>Cues</span></div>
       <div class="edit-overview-count"><strong id="edit-count-checklists">0</strong><span>Listen</span></div>
     </div>
@@ -1273,21 +1317,6 @@
     </div>
   </div>
 
-  <div class="section edit-card" data-edit-section="crew-positions" id="crew-positions-card" style="display:none;">
-    <div class="section-header">
-      <button class="edit-section-toggle" type="button" onclick="toggleEditSection('crew-positions')">
-        <span class="edit-section-chevron">⌄</span>
-        <span class="edit-section-title">
-          <h2>Crew-Positionen</h2>
-          <span class="edit-card-description">Positionen je Gewerk – stehen danach im Login und bei der Cue-/Listen-Zuweisung zur Auswahl.</span>
-        </span>
-      </button>
-    </div>
-    <div class="edit-section-body">
-      <div id="crew-positions-wrap"></div>
-    </div>
-  </div>
-
   </div>
 </div>
 
@@ -1304,17 +1333,9 @@ let _expandedChecklistIds = new Set();
 let _collapsedChecklistIds = new Set();
 let _checklistTriggeredAtTc = new Map(); // checklist id -> Show-TC (Sekunden) beim Einblenden, für Countdown-Auto-Schluss
 let _autoClosedChecklistIds = new Set(); // verhindert wiederholte Auto-Schluss-Requests für dieselbe Checklist
-let _unsavedEdits = false; // Edit-Seite geändert, aber noch nicht via „Speichern" auf Platte geschrieben
-
-function markUnsavedEdits() {
-  _unsavedEdits = true;
-  updateSaveDirtyIndicator();
-}
-
-function updateSaveDirtyIndicator() {
-  const btn = document.getElementById('show-save-btn');
-  if (btn) btn.classList.toggle('dirty', _unsavedEdits);
-}
+// Programm-Konfiguration vom Server (ohne Passwörter): TC-Eingang, Crew-Positionen,
+// Zugangsschutz an/aus, aktive Show. Aktualisiert per WS-Event CONFIG_CHANGED.
+let appConfig = null;
 
 // ════════════════════════════════════════════════════════════════════════════
 // SETTINGS
@@ -1327,7 +1348,6 @@ const SETTING_DEFAULTS = {
   liveFontSize:     'normal',
   nextCuePreviews:  0,
   screenFlash:      false,
-  autoResetOnStop:  true,
   alarmEnabled:     true,
   alarmVolume:      80,
   checklistExpand:  'active-only',
@@ -1352,7 +1372,6 @@ function getCurrentSettingsFromUI() {
     liveFontSize:     document.getElementById('s-live-font').value,
     nextCuePreviews:  Number(document.getElementById('s-next-cue-previews').value),
     screenFlash:      document.getElementById('s-screen-flash').checked,
-    autoResetOnStop:  document.getElementById('s-auto-reset').checked,
     alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
     alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
     checklistExpand:  document.getElementById('s-checklist-expand').value,
@@ -1386,29 +1405,29 @@ function updateTcDisplayFormat(showFrames) {
 
 function openSettings() {
   const s = loadSettings();
-  // Populate UI
+  // Dieses Gerät
   document.getElementById('s-show-frames').checked = s.showFrames;
   document.getElementById('s-live-big-tc').checked = s.liveBigTc;
   document.getElementById('s-live-font').value     = s.liveFontSize;
   document.getElementById('s-next-cue-previews').value = String(s.nextCuePreviews);
   document.getElementById('s-screen-flash').checked = s.screenFlash;
-  document.getElementById('s-auto-reset').checked  = s.autoResetOnStop;
   document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
   document.getElementById('s-alarm-volume').value = s.alarmVolume;
   document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
   document.getElementById('s-checklist-expand').value = s.checklistExpand || 'active-only';
   document.getElementById('s-show-mode').checked = s.showMode !== false;
+  renderSettingsIdentity();
 
-  // Engine settings
-  const show = allShows.find(s => s.id === currentShowId);
-  if (show) {
-    document.getElementById('s-fps').value = String(show.fps || 25);
+  // Programm (nur wer es sehen darf – siehe applySettingsScope)
+  applySettingsScope();
+  const scope = settingsScope();
+  if (scope === 'full') {
+    restoreTcSourceUI(true);
+    loadAccessFields();
+    loadNetworkInfo();
+    if (!_updateInstalled) checkForUpdates();
   }
-
-  // TC source
-  restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
-  loadNetworkInfo();
-  if (!_updateInstalled) checkForUpdates();
+  if (scope !== 'none') renderCrewPositions();
 }
 
 function onSettingChange() {
@@ -1419,23 +1438,7 @@ function onAlarmVolumeInput() {
   document.getElementById('alarm-volume-value').textContent = `${document.getElementById('s-alarm-volume').value} %`;
 }
 
-async function onFpsChange(val) {
-  const fps = parseFloat(val);
-  await api('POST', '/api/engine/fps', { fps }).catch(() => {});
-  // Also save to show
-  const show = allShows.find(s => s.id === currentShowId);
-  if (show) await api('PUT', `/api/shows/${currentShowId}`, { ...show, fps }).catch(() => {});
-}
 
-async function saveShowSettings() {
-  const show = allShows.find(s => s.id === currentShowId);
-  if (!show) return;
-  const fallbackMode = document.getElementById('s-fallback').value;
-  const updated = { ...show, fallbackMode };
-  await api('PUT', `/api/shows/${currentShowId}`, updated).catch(() => {});
-  const idx = allShows.findIndex(s => s.id === currentShowId);
-  if (idx !== -1) allShows[idx] = updated;
-}
 
 async function loadNetworkInfo() {
   const urlsEl = document.getElementById('network-urls');
@@ -1477,7 +1480,7 @@ function copyToClipboard(text) {
 }
 
 function resetAllSettings() {
-  if (!confirm('Alle Einstellungen zurücksetzen?')) return;
+  if (!confirm('Anzeige und Ton dieses Geräts auf Standard zurücksetzen?')) return;
   localStorage.removeItem(SETTINGS_KEY);
   openSettings();
   applySettings(SETTING_DEFAULTS);
@@ -1684,6 +1687,9 @@ function connect() {
     wsRetryDelay = WS_RETRY_MIN;
     setWsStatus('open');
     if (document.getElementById('view-settings').classList.contains('active')) loadNetworkInfo();
+    // Während der Trennung kann sich die Konfiguration geändert haben (andere
+    // Show geladen, Server neu gestartet …)
+    if (appConfig) refreshConfig();
   };
   sock.onclose = () => {
     if (gen !== wsGeneration) return;
@@ -1769,8 +1775,28 @@ function refreshActiveSourceStatus() {
 // ════════════════════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════════════════════
+// Programm-Konfiguration hat sich geändert (anderes Gerät, Server-Neustart,
+// eigene Änderung): übernehmen und abhängige UI nachziehen.
+function onConfigChanged(cfg) {
+  if (!cfg) return;
+  const prev = appConfig;
+  appConfig = cfg;
+  if (!prev || prev.access?.gated !== cfg.access?.gated) resolveLoginGate();
+  if (JSON.stringify(prev?.gewerkPositions) !== JSON.stringify(cfg.gewerkPositions)) renderCrewPositions();
+  if (document.getElementById('view-settings').classList.contains('active') && JSON.stringify(prev?.tc) !== JSON.stringify(cfg.tc)) {
+    restoreTcSourceUI(false);
+  }
+  if (cfg.activeShowId && cfg.activeShowId !== currentShowId) switchToShow(cfg.activeShowId);
+}
+
+async function refreshConfig() {
+  const cfg = await api('GET', '/api/config').catch(() => null);
+  if (cfg) onConfigChanged(cfg);
+}
+
 function handleEvent(evt) {
-  const tc = evt.tc;
+  if (evt.type === 'CONFIG_CHANGED') { onConfigChanged(evt.config); return; }
+  const tc = evt.tc || '';
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
   if (evt.type === 'TC_UPDATE') {
     // Snapshot = der beim (Neu-)Verbinden nachgereichte letzte Stand. Er wird
@@ -2633,7 +2659,6 @@ async function simPause() {
 async function simStop() {
   const d = await api('POST', '/api/simulator/stop');
   document.getElementById('sim-state').textContent = 'State: ' + d.state;
-  if (loadSettings().autoResetOnStop) await api('POST', '/api/engine/reset').catch(() => {});
 }
 async function simSeek() {
   const tc = formatTimecodeValue(document.getElementById('seek-input').value) || '00:00:00:00';
@@ -2658,21 +2683,17 @@ async function loadAdmin() {
   document.getElementById('live-show-name').textContent = activeShow ? activeShow.name : '–';
 
   if (activeShow) {
-    document.getElementById('s-fallback').value = activeShow.fallbackMode || 'stop';
     renderEditOverview(activeShow);
     renderPositionTable(activeShow);
     renderCueTable(activeShow);
     renderChecklistAdmin(activeShow);
-    renderCrewPositions(activeShow);
     if (_playlistVisible) { _playlistSig = ''; renderPlaylist(); }
   } else {
     renderEditOverview(null);
-    renderCrewPositions(null);
     document.getElementById('position-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
     document.getElementById('cue-table-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
     document.getElementById('checklist-wrap').innerHTML = '<p class="empty-hint">Keine Show vorhanden.</p>';
   }
-  restoreTcSourceUI(allShows.find(s => s.id === currentShowId));
   previewSelectedShow();
 }
 
@@ -2681,7 +2702,6 @@ function renderEditOverview(show) {
   const cues = (show?.cues || []).filter(c => itemEditableByIdentity(c, id));
   const checklists = (show?.checklists || []).filter(c => itemEditableByIdentity(c, id));
   document.getElementById('edit-show-name').textContent = show?.name || 'Keine Show geladen';
-  document.getElementById('edit-count-positions').textContent = show?.positions?.length || 0;
   document.getElementById('edit-count-cues').textContent = cues.length;
   document.getElementById('edit-count-checklists').textContent = checklists.length;
 }
@@ -2695,12 +2715,12 @@ function crewPositionsEditableGewerke() {
   return [];
 }
 
-function renderCrewPositions(show) {
+function renderCrewPositions() {
   const card = document.getElementById('crew-positions-card');
   const wrap = document.getElementById('crew-positions-wrap');
   if (!card || !wrap) return;
   const gewerke = crewPositionsEditableGewerke();
-  if (!show || !gewerke.length) { card.style.display = 'none'; return; }
+  if (!gewerke.length) { card.style.display = 'none'; return; }
   card.style.display = '';
   wrap.innerHTML = gewerke.map(gid => {
     const g = GEWERKE.find(x => x.id === gid);
@@ -2724,17 +2744,17 @@ function renderCrewPositions(show) {
 // Ändert die Crew-Positionen eines Gewerks (Seed = aktuelle Liste, damit auch
 // das Entfernen von Standard-Positionen funktioniert), speichert die Show per
 // PUT und rendert die abhängige UI neu.
+// Ändert die Crew-Positionen eines Gewerks (Seed = aktuelle Liste, damit auch
+// das Entfernen von Standard-Positionen funktioniert) und speichert sie
+// programmweit. Andere Geräte übernehmen sie per CONFIG_CHANGED.
 async function mutateGewerkPositions(gewerkId, fn) {
-  const show = allShows.find(s => s.id === currentShowId);
-  if (!show) return;
-  const gp = { ...(show.gewerkPositions || {}) };
-  const current = Array.isArray(gp[gewerkId]) ? [...gp[gewerkId]] : [...positionsForGewerk(gewerkId)];
-  gp[gewerkId] = fn(current);
-  show.gewerkPositions = gp;
-  renderCrewPositions(show);
-  await api('PUT', `/api/shows/${show.id}`, { ...show, gewerkPositions: gp }).catch(() => {});
-  const idx = allShows.findIndex(s => s.id === show.id);
-  if (idx >= 0) allShows[idx] = show;
+  if (!appConfig) return;
+  const gp = { ...(appConfig.gewerkPositions || {}) };
+  gp[gewerkId] = fn([...positionsForGewerk(gewerkId)]);
+  appConfig = { ...appConfig, gewerkPositions: gp };
+  renderCrewPositions();
+  const cfg = await api('PUT', '/api/config', { gewerkPositions: gp }).catch(() => null);
+  if (cfg) appConfig = cfg;
 }
 
 function addCrewPosition(gewerkId) {
@@ -2755,7 +2775,7 @@ function previewSelectedShow() {
   const activeState = document.getElementById('show-active-state');
   document.getElementById('show-name-input').value = show?.name || '';
   document.getElementById('show-date-input').value = show?.date || '';
-  document.getElementById('s-fallback').value = show?.fallbackMode || 'stop';
+  document.getElementById('show-fps-input').value = String(show?.fps || 25);
   activeState.textContent = show
     ? show.id === currentShowId ? 'Diese Show ist geladen.' : 'Ausgewählt, aber noch nicht geladen.'
     : 'Keine Show vorhanden.';
@@ -2764,27 +2784,45 @@ function previewSelectedShow() {
   document.getElementById('show-summary-cues').textContent = show?.cues?.length || 0;
   document.getElementById('show-summary-checklists').textContent = show?.checklists?.length || 0;
   document.getElementById('show-save-feedback').textContent = '';
-  renderAccessFields(show);
+  document.getElementById('backup-feedback').textContent = '';
+  renderBackups();
 }
 
 // Zugriffs-/Passwortfelder der Show-View (Admin + je Gewerk: Positions- + Meister-Passwort)
-function renderAccessFields(show) {
+// Zugangs-/Passwortfelder (Admin + je Gewerk: Positions- + Meister-Passwort).
+// Passwörter kommen nur über /api/config/access, nicht mit der Show-Liste.
+async function loadAccessFields() {
+  const access = await api('GET', '/api/config/access').catch(() => null);
+  renderAccessFields(access || {});
+}
+
+function renderAccessFields(acc) {
   const wrap = document.getElementById('access-fields');
   if (!wrap) return;
-  const acc = show?.access || {};
   const gpw = acc.gewerkPasswords || {};
   const mpw = acc.meisterPasswords || {};
   const adminRow = `
     <div class="access-admin">
       <label><span class="gewerk-tag-dot" style="background:var(--accent)"></span>Admin</label>
-      <input id="access-admin" type="text" autocomplete="off" placeholder="Admin-Passwort (leer = kein Schutz)" value="${esc(acc.adminPassword || '')}" />
+      <input id="access-admin" type="text" autocomplete="off" placeholder="Admin-Passwort (leer = kein Schutz)" value="${esc(acc.adminPassword || '')}" onchange="saveAccess()" />
     </div>`;
   const tableHead = `<span></span><span class="access-col-head">Position</span><span class="access-col-head">Meister</span>`;
   const gewerkItems = GEWERKE.map(g => `
     <label><span class="gewerk-tag-dot" style="background:${g.color}"></span>${esc(g.label)}</label>
-    <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(gpw[g.id] || '')}" />
-    <input data-gewerk="${g.id}" class="access-meister-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(mpw[g.id] || '')}" />`).join('');
+    <input data-gewerk="${g.id}" class="access-gewerk-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(gpw[g.id] || '')}" onchange="saveAccess()" />
+    <input data-gewerk="${g.id}" class="access-meister-pw" type="text" autocomplete="off" placeholder="Passwort" value="${esc(mpw[g.id] || '')}" onchange="saveAccess()" />`).join('');
   wrap.innerHTML = adminRow + `<div class="access-gewerk-table">${tableHead}${gewerkItems}</div>`;
+}
+
+async function saveAccess() {
+  const fb = document.getElementById('access-feedback');
+  const saved = await api('PUT', '/api/config/access', collectAccessConfig()).catch(() => null);
+  fb.style.color = saved ? 'var(--green)' : 'var(--red)';
+  fb.textContent = saved ? 'Gespeichert.' : 'Speichern fehlgeschlagen.';
+  if (saved) {
+    const cfg = await api('GET', '/api/config').catch(() => null);
+    if (cfg) onConfigChanged(cfg);
+  }
 }
 
 function collectAccessConfig() {
@@ -2805,31 +2843,41 @@ function collectAccessConfig() {
 async function loadSelectedShow() {
   const id = document.getElementById('show-select').value;
   if (!id) return;
-  if (_unsavedEdits && id !== currentShowId &&
-      !confirm('Es gibt ungespeicherte Änderungen an der aktuellen Show, die noch nicht in die Show-Datei geschrieben sind. Andere Show laden?')) {
-    document.getElementById('show-select').value = currentShowId || '';
-    return;
-  }
-  currentShowId = id;
-  _triggeredChecklistIds = new Set();
   let s = allShows.find(x => x.id === id);
-  if (s) s = await resetChecklistsForShow(s);
-  document.getElementById('live-show-name').textContent = s ? s.name : '–';
-  if (s) {
-    document.getElementById('s-fallback').value = s.fallbackMode || 'stop';
-    renderEditOverview(s);
-    renderPositionTable(s);
-    renderCueTable(s);
-    renderChecklistAdmin(s);
-    restoreTcSourceUI(s);
-  }
+  if (s) await resetChecklistsForShow(s);
+  // Der Server merkt sich die aktive Show und meldet sie per CONFIG_CHANGED an
+  // alle Geräte – switchToShow() übernimmt sie hier und dort.
   await api('POST', `/api/shows/${id}/activate`).catch(() => {});
+  await switchToShow(id);
+}
+
+// Aktive Show auf diesem Gerät übernehmen (nach „Laden" oder CONFIG_CHANGED).
+async function switchToShow(id) {
+  if (!id) return;
+  allShows = await api('GET', '/api/shows').catch(() => allShows);
+  const s = allShows.find(x => x.id === id);
+  if (!s) return;
+  const changed = currentShowId !== id;
+  currentShowId = id;
+  if (changed) {
+    _triggeredChecklistIds = new Set();
+    _checklistTriggeredAtTc = new Map();
+    _autoClosedChecklistIds = new Set();
+  }
+  document.getElementById('live-show-name').textContent = s.name;
+  const loginShowName = document.getElementById('login-show-name');
+  if (loginShowName) loginShowName.textContent = s.name;
+  renderEditOverview(s);
+  renderPositionTable(s);
+  renderCueTable(s);
+  renderChecklistAdmin(s);
+  const sel = document.getElementById('show-select');
+  if (sel && [...sel.options].some(o => o.value === id) && document.getElementById('view-show').classList.contains('active') === false) sel.value = id;
   _liveCueRenderSignature = '';
-  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString);
+  renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
   renderLiveChecklists(_lastCurrentCue);
+  if (_playlistVisible) { _playlistSig = ''; renderPlaylist(); }
   previewSelectedShow();
-  _unsavedEdits = false;
-  updateSaveDirtyIndicator();
 }
 
 async function resetChecklistsForShow(show) {
@@ -2847,49 +2895,119 @@ async function resetChecklistsForShow(show) {
   return updated;
 }
 
-async function selectShow(id) {
-  document.getElementById('show-select').value = id;
-  await loadSelectedShow();
-}
 
-async function saveSelectedShow() {
+// Show-Daten (Name, Datum, Framerate) der ausgewählten Show sofort speichern.
+async function saveShowData() {
   const id = document.getElementById('show-select').value;
   const show = allShows.find(item => item.id === id);
   const feedback = document.getElementById('show-save-feedback');
   if (!show) return;
   const name = document.getElementById('show-name-input').value.trim();
   const date = document.getElementById('show-date-input').value;
+  const fps = Number(document.getElementById('show-fps-input').value) || 25;
   if (!name) {
     feedback.style.color = 'var(--red)';
     feedback.textContent = 'Bitte einen Namen eingeben.';
     return;
   }
-  // Zugriffsfelder nur übernehmen, wenn sie gerendert sind – sonst bestehende access behalten
-  const access = document.getElementById('access-admin') ? collectAccessConfig() : show.access;
-  const updated = await api('PUT', `/api/shows/${id}`, {
-    ...show,
-    name,
-    date,
-    fallbackMode: document.getElementById('s-fallback').value,
-    access,
-  });
-  if (currentShowId && id !== currentShowId) {
-    await api('POST', `/api/shows/${currentShowId}/activate`).catch(() => {});
+  const updated = await api('PUT', `/api/shows/${id}`, { name, date, fps }).catch(() => null);
+  if (!updated) {
+    feedback.style.color = 'var(--red)';
+    feedback.textContent = 'Speichern fehlgeschlagen.';
+    return;
   }
   const idx = allShows.findIndex(item => item.id === id);
   if (idx !== -1) allShows[idx] = updated;
-  if (id === currentShowId) document.getElementById('live-show-name').textContent = updated.name;
-  _unsavedEdits = false;
-  updateSaveDirtyIndicator();
-  feedback.style.color = 'var(--green)';
-  feedback.textContent = 'Show gespeichert.';
-  const sel = document.getElementById('show-select');
-  sel.innerHTML = allShows.map(item => `<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.name)} (${item.date})</option>`).join('');
   if (id === currentShowId) {
-    renderPositionTable(updated);
-    renderCueTable(updated);
-    renderChecklistAdmin(updated);
+    document.getElementById('live-show-name').textContent = updated.name;
+    renderEditOverview(updated);
   }
+  const sel = document.getElementById('show-select');
+  const opt = [...sel.options].find(o => o.value === id);
+  if (opt) opt.textContent = `${updated.name} (${updated.date})`;
+  feedback.style.color = 'var(--green)';
+  feedback.textContent = 'Gespeichert.';
+}
+
+async function deleteSelectedShow() {
+  const id = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === id);
+  if (!show) return;
+  const active = id === currentShowId ? '\n\nDas ist die geladene Show – danach wird die nächste Show geladen.' : '';
+  if (!confirm(`Show „${show.name}" löschen?\n\nVorher wird automatisch eine Sicherung angelegt; unter „Sicherungen → Gelöschte Shows" lässt sie sich wiederherstellen.${active}`)) return;
+  await api('DELETE', `/api/shows/${id}`).catch(() => {});
+  const cfg = await api('GET', '/api/config').catch(() => null);
+  if (cfg) appConfig = cfg;
+  await loadAdmin();
+  if (appConfig?.activeShowId && appConfig.activeShowId !== currentShowId) await switchToShow(appConfig.activeShowId);
+}
+
+// ── Sicherungen ─────────────────────────────────────────────────────────────
+let _backupsShowAll = false;
+
+function formatBackupDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function backupRowHtml(b, withName) {
+  const kind = b.kind === 'manual' ? '<span class="backup-kind manual">manuell</span>' : '<span class="backup-kind">auto</span>';
+  const title = withName ? esc(b.showName) : esc(b.label || (b.kind === 'manual' ? 'Sicherung' : 'Automatische Sicherung'));
+  const sub = `${formatBackupDate(b.createdAt)} · ${b.counts.cues} Cues · ${b.counts.positions} Songs · ${b.counts.checklists} Listen`;
+  return `<div class="backup-row">
+    <div class="backup-main"><div class="backup-title">${kind}${title}</div><div class="backup-meta">${withName && b.label ? esc(b.label) + ' · ' : ''}${sub}</div></div>
+    <button class="btn btn-small" onclick="restoreShowBackup('${esc(b.showId)}','${esc(b.id)}')">Wiederherstellen</button>
+  </div>`;
+}
+
+async function renderBackups() {
+  const list = document.getElementById('backup-list');
+  const deletedWrap = document.getElementById('deleted-shows');
+  if (!list) return;
+  const id = document.getElementById('show-select').value;
+  const all = await api('GET', '/api/backups').catch(() => []);
+  const mine = all.filter(b => b.showId === id);
+  const limit = _backupsShowAll ? mine.length : 5;
+  list.innerHTML = mine.length
+    ? mine.slice(0, limit).map(b => backupRowHtml(b, false)).join('') +
+      (mine.length > 5 ? `<button class="btn btn-small backup-more" onclick="_backupsShowAll=!_backupsShowAll;renderBackups()">${_backupsShowAll ? 'Weniger anzeigen' : `Alle ${mine.length} anzeigen`}</button>` : '')
+    : '<p class="empty-hint" style="padding:8px 0;">Noch keine Sicherungen dieser Show.</p>';
+  // Gelöschte Shows: je Show die neueste Sicherung anbieten
+  const existing = new Set(allShows.map(s => s.id));
+  const deleted = new Map();
+  for (const b of all) if (!existing.has(b.showId) && !deleted.has(b.showId)) deleted.set(b.showId, b);
+  deletedWrap.innerHTML = deleted.size
+    ? `<div class="sp-subhead">Gelöschte Shows</div><div class="backup-list">${[...deleted.values()].map(b => backupRowHtml(b, true)).join('')}</div>`
+    : '';
+}
+
+async function createShowBackup() {
+  const id = document.getElementById('show-select').value;
+  const fb = document.getElementById('backup-feedback');
+  if (!id) return;
+  const input = document.getElementById('backup-label');
+  const res = await api('POST', `/api/backups/${id}`, { label: input.value.trim() }).catch(() => null);
+  fb.style.color = res ? 'var(--green)' : 'var(--red)';
+  fb.textContent = res ? 'Sicherung erstellt.' : 'Sicherung fehlgeschlagen.';
+  if (res) input.value = '';
+  renderBackups();
+}
+
+async function restoreShowBackup(showId, backupId) {
+  const exists = allShows.some(s => s.id === showId);
+  const msg = exists
+    ? 'Diesen Stand wiederherstellen?\n\nDer aktuelle Stand der Show wird vorher automatisch gesichert – du kannst also zurück.'
+    : 'Diese gelöschte Show wiederherstellen?';
+  if (!confirm(msg)) return;
+  const fb = document.getElementById('backup-feedback');
+  const restored = await api('POST', `/api/backups/${showId}/${backupId}/restore`).catch(() => null);
+  if (!restored) { fb.style.color = 'var(--red)'; fb.textContent = 'Wiederherstellen fehlgeschlagen.'; return; }
+  await loadAdmin();
+  document.getElementById('show-select').value = showId;
+  previewSelectedShow();
+  if (showId === currentShowId) await switchToShow(showId);
+  fb.style.color = 'var(--green)';
+  fb.textContent = `Wiederhergestellt: „${restored.name}".`;
 }
 
 async function openNewShowDialog() {
@@ -2897,11 +3015,11 @@ async function openNewShowDialog() {
   if (!name) return;
   const date = prompt('Datum (JJJJ-MM-TT):', new Date().toISOString().slice(0,10));
   if (!date) return;
-  const created = await api('POST', '/api/shows', { name, date, cues: [], positions: [], tcSource: 'simulator', fallbackMode: 'stop' });
-  currentShowId = created.id;
+  // Neue Show wird serverseitig sofort die aktive Show (CONFIG_CHANGED)
+  const created = await api('POST', '/api/shows', { name, date, fps: 25, cues: [], positions: [] });
   await loadAdmin();
   document.getElementById('show-select').value = created.id;
-  await loadSelectedShow();
+  await switchToShow(created.id);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2965,7 +3083,6 @@ async function savePosition() {
   else await api('POST', `/api/shows/${currentShowId}/positions`, body);
   closePositionModal();
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 async function deletePosition(positionId) {
@@ -2973,7 +3090,6 @@ async function deletePosition(positionId) {
   await api('DELETE', `/api/shows/${currentShowId}/positions/${positionId}`);
   closePositionModal();
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3139,7 +3255,6 @@ async function saveCue() {
   }
   closeModal();
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 async function deleteCue(cueId) {
@@ -3147,7 +3262,6 @@ async function deleteCue(cueId) {
   await api('DELETE', `/api/shows/${currentShowId}/cues/${cueId}`);
   closeModal();
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3356,7 +3470,6 @@ async function saveChecklist() {
   else await api('POST', `/api/shows/${currentShowId}/checklists`, body);
   closeChecklistModal();
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 async function toggleChecklistItem(checklistId, itemId, checked) {
@@ -3370,7 +3483,6 @@ async function toggleChecklistItem(checklistId, itemId, checked) {
   const updated = { ...checklist, items: checklist.items.map(item => ({ ...item })) };
   renderLiveChecklists(_lastCurrentCue);
   await api('PUT', `/api/shows/${currentShowId}/checklists/${checklistId}`, updated);
-  await api('POST', '/api/shows/persist').catch(() => {}); // Live-Abhaken sofort auf Platte
   await reloadCurrentShow();
 }
 
@@ -3384,7 +3496,6 @@ async function completeChecklist(checklistId) {
     ...checklist,
     items: checklist.items,
   });
-  await api('POST', '/api/shows/persist').catch(() => {}); // Live-Abhaken sofort auf Platte
   await reloadCurrentShow();
 }
 
@@ -3395,7 +3506,6 @@ async function deleteChecklist(checklistId) {
   _checklistTriggeredAtTc.delete(checklistId);
   _autoClosedChecklistIds.delete(checklistId);
   await reloadCurrentShow();
-  markUnsavedEdits();
 }
 
 async function reloadCurrentShow() {
@@ -3454,7 +3564,6 @@ async function importCSV() {
   fb.style.color = fail ? 'var(--accent)' : 'var(--green)';
   fb.textContent = `Import abgeschlossen: ${ok} Cues importiert${fail ? `, ${fail} Fehler` : ''}.`;
   await reloadCurrentShow();
-  if (ok) markUnsavedEdits();
 }
 
 // Simple CSV line parser (handles quoted fields)
@@ -3564,10 +3673,6 @@ async function testAlarm() {
 // ════════════════════════════════════════════════════════════════════════════
 // IMPORT / EXPORT
 // ════════════════════════════════════════════════════════════════════════════
-async function exportCurrentShow() {
-  if (!currentShowId) { alert('Zuerst eine Show auswählen.'); return; }
-  await exportShow(currentShowId);
-}
 
 async function exportSelectedShow() {
   const id = document.getElementById('show-select').value;
@@ -3600,9 +3705,11 @@ async function importShow(input) {
     const result = await api('POST', '/api/io/show', bundle);
     input.value = '';
     await loadAdmin();
-    await selectShow(result.show.id);
+    // Import legt eine neue Show an, aktiviert sie aber nicht (würde Live für alle wechseln)
+    document.getElementById('show-select').value = result.show.id;
+    previewSelectedShow();
     fb.style.color = 'var(--green)';
-    fb.textContent = `Geladen: "${result.show.name}" (${result.show.cues.length} Cues).`;
+    fb.textContent = `Importiert: "${result.show.name}" (${result.show.cues.length} Cues) – mit „Laden" aktivieren.`;
   } catch (e) {
     fb.style.color = 'var(--red)';
     fb.textContent = 'Fehler: ' + e.message;
@@ -3621,7 +3728,13 @@ let ltcTickInterval = null;
 let lastDecodedTc = null;
 let lastTcTime = 0;
 
-function onTcSourceChange(val) {
+// UI-Werte der Quelle ↔ gespeicherte TCSource (config.tc.source)
+const TC_UI_TO_SOURCE = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'usb-midi': 'usb-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'artnet': 'artnet', 'simulator': 'simulator' };
+const TC_SOURCE_TO_UI = Object.fromEntries(Object.entries(TC_UI_TO_SOURCE).map(([ui, src]) => [src, ui]));
+const SERVER_TC_SOURCES = ['usb-midi', 'rtpmidi', 'osc', 'artnet'];
+let _sourcePollInterval = null;
+
+function showTcSourcePanels(val) {
   document.getElementById('audio-device-group').style.display  = val === 'browser-ltc' ? '' : 'none';
   document.getElementById('ltc-monitor').style.display         = val === 'browser-ltc' ? '' : 'none';
   document.getElementById('midi-device-group').style.display   = val === 'browser-mtc' ? '' : 'none';
@@ -3631,21 +3744,36 @@ function onTcSourceChange(val) {
   document.getElementById('osc-group').style.display           = val === 'osc'         ? '' : 'none';
   document.getElementById('artnet-group').style.display        = val === 'artnet'      ? '' : 'none';
   document.getElementById('simulator-group').style.display     = val === 'simulator'   ? '' : 'none';
-  // Buttonlos: jede Quelle aktiviert sich bei Auswahl selbst, beim Verlassen stoppt sie.
-  // Browser-Quellen: bei Auswahl Geräte anfordern → Start erfolgt bei Gerätewahl (User-Geste).
+  // Status der serverseitigen Quelle regelmäßig nachladen
+  clearInterval(_sourcePollInterval); _sourcePollInterval = null;
+  if (SERVER_TC_SOURCES.includes(val)) {
+    refreshActiveSourceStatus();
+    _sourcePollInterval = setInterval(() => {
+      if (document.getElementById('view-settings').classList.contains('active')) refreshActiveSourceStatus();
+    }, 3000);
+  }
+}
+
+// Programm-Einstellung des TC-Eingangs speichern. Der Server startet/stoppt
+// seine Empfänger (USB-MIDI, rtpMIDI, OSC, Art-Net) selbst passend dazu.
+async function saveTcConfig(patch) {
+  const cfg = await api('PUT', '/api/config', { tc: patch }).catch(() => null);
+  if (cfg) appConfig = cfg;
+  setTimeout(refreshActiveSourceStatus, 400);
+  return cfg;
+}
+
+// Nutzer wählt eine andere Quelle (nur dann – Tab-Öffnen ändert nichts mehr)
+function onTcSourceChange(val) {
+  showTcSourcePanels(val);
+  // Browser-Quellen laufen in DIESEM Browser: bei Auswahl Geräte anfordern,
+  // Start erfolgt bei Gerätewahl (User-Geste). Sonst stoppen.
   if (val !== 'browser-ltc') stopBrowserLTC();
   if (val === 'browser-ltc') requestAudioDevices();
   if (val !== 'browser-mtc') stopBrowserMTC();
   if (val === 'browser-mtc') requestMidiDevices();
-  if (val !== 'usb-midi') stopUsbMidi();
   if (val === 'usb-midi') selectUsbMidiSource();
-  if (val !== 'rtpmidi') stopRtpMidi();
-  if (val === 'rtpmidi') startRtpMidi();
-  if (val !== 'osc') stopOsc();
-  if (val === 'osc') startOsc();
-  if (val !== 'artnet') stopArtnet();
-  if (val === 'artnet') startArtnet();
-  saveShowTcSettings(val);
+  else saveTcConfig({ source: TC_UI_TO_SOURCE[val] || 'simulator' });
 }
 
 async function requestAudioDevices() {
@@ -3659,33 +3787,25 @@ async function requestAudioDevices() {
     sel.innerHTML = inputs.map(d =>
       `<option value="${esc(d.deviceId)}">${esc(d.label || d.deviceId.slice(0, 20))}</option>`
     ).join('');
-    // Restore saved device
-    const show = allShows.find(s => s.id === currentShowId);
-    if (show?.audioDevice) sel.value = show.audioDevice;
+    // Gespeichertes Gerät wiederherstellen
+    if (appConfig?.tc?.audioDevice) sel.value = appConfig.tc.audioDevice;
   } catch (e) {
     document.getElementById('tc-source-status').textContent = 'Kein Microfonzugriff';
   }
 }
 
 // Gerät/Kanal gewählt = User-Geste → LTC-Dekodierung direkt (neu) starten (buttonlos).
-function onAudioDeviceChange() { saveShowTcSettings('browser-ltc'); startBrowserLTC(); }
-function onAudioChannelChange() { saveShowTcSettings('browser-ltc'); startBrowserLTC(); }
+function onAudioDeviceChange() { saveBrowserLtcConfig(); startBrowserLTC(); }
+function onAudioChannelChange() { saveBrowserLtcConfig(); startBrowserLTC(); }
 
-async function saveShowTcSettings(source) {
-  if (!currentShowId) return;
-  const show = allShows.find(s => s.id === currentShowId);
-  if (!show) return;
-  const deviceId = document.getElementById('audio-device-select')?.value || undefined;
-  const channel  = document.getElementById('audio-channel-select')?.value || 'left';
-  const midiPort = document.getElementById('usb-midi-port')?.value || undefined;
-  // Map UI source names to TCSource type
-  const tcSourceMap = { 'browser-ltc': 'ltc', 'browser-mtc': 'mtc', 'usb-midi': 'usb-mtc', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'artnet': 'artnet', 'simulator': 'simulator', 'server-ltc': 'ltc' };
-  const tcSource = tcSourceMap[source] || source;
-  const updated = await api('PUT', `/api/shows/${currentShowId}`, {
-    ...show, tcSource, audioDevice: deviceId, audioChannel: channel, midiPort,
-  }).catch(() => null);
-  if (updated) { const i = allShows.findIndex(s => s.id === currentShowId); if (i !== -1) allShows[i] = updated; }
+function saveBrowserLtcConfig() {
+  saveTcConfig({
+    source: 'ltc',
+    audioDevice: document.getElementById('audio-device-select')?.value || '',
+    audioChannel: document.getElementById('audio-channel-select')?.value || 'left',
+  });
 }
+
 
 async function startBrowserLTC() {
   stopBrowserLTC();
@@ -3800,13 +3920,23 @@ function drawLevelMeter(analyser) {
 }
 
 // Restore TC source settings when a show is loaded
-function restoreTcSourceUI(show) {
-  if (!show) return;
-  const tcSourceMap = { 'ltc': 'browser-ltc', 'mtc': 'browser-mtc', 'usb-mtc': 'usb-midi', 'rtpmidi': 'rtpmidi', 'osc': 'osc', 'artnet': 'artnet', 'simulator': 'simulator' };
-  const src = tcSourceMap[show.tcSource] || 'simulator';
+// TC-Eingang aus der Programm-Konfiguration in die UI übernehmen – OHNE Neben-
+// wirkungen auf dem Server (früher startete jedes Tab-Öffnen die Quelle neu und
+// schrieb die Show). listDevices: Geräte-Listen der gewählten Quelle laden.
+function restoreTcSourceUI(listDevices) {
+  const tc = appConfig?.tc;
+  if (!tc) return;
+  const src = TC_SOURCE_TO_UI[tc.source] || 'simulator';
   document.getElementById('tc-source-select').value = src;
-  onTcSourceChange(src);
-  if (show.audioChannel) document.getElementById('audio-channel-select').value = show.audioChannel;
+  document.getElementById('audio-channel-select').value = tc.audioChannel || 'left';
+  document.getElementById('osc-port').value = tc.oscPort || 9000;
+  document.getElementById('rtpmidi-port').value = tc.rtpmidiPort || 5004;
+  document.getElementById('rtpmidi-name').value = tc.rtpmidiName || 'TC Cue System';
+  showTcSourcePanels(src);
+  if (!listDevices) return;
+  if (src === 'browser-ltc' && !ltcStream) requestAudioDevices();
+  if (src === 'browser-mtc' && !midiActiveInput) requestMidiDevices();
+  if (src === 'usb-midi') loadUsbMidiPorts();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -3961,7 +4091,6 @@ class BrowserMTCDecoder {
 // ════════════════════════════════════════════════════════════════════════════
 // rtpMIDI SERVER-SIDE CONTROL
 // ════════════════════════════════════════════════════════════════════════════
-let rtpMidiPollInterval = null;
 
 async function loadRtpMidiStatus() {
   const data = await api('GET', '/api/midi/status').catch(() => null);
@@ -3976,25 +4105,16 @@ async function loadRtpMidiStatus() {
   }
 }
 
-async function startRtpMidi() {
+function onRtpMidiSettingChange() {
   const port = parseInt(document.getElementById('rtpmidi-port').value) || 5004;
-  const name = document.getElementById('rtpmidi-name').value || 'TC Cue System';
-  await api('POST', '/api/midi/rtpmidi/start', { port, name }).catch(() => {});
-  loadRtpMidiStatus();
-  if (!rtpMidiPollInterval) rtpMidiPollInterval = setInterval(loadRtpMidiStatus, 3000);
+  const name = document.getElementById('rtpmidi-name').value.trim() || 'TC Cue System';
+  saveTcConfig({ source: 'rtpmidi', rtpmidiPort: port, rtpmidiName: name });
 }
 
-async function stopRtpMidi() {
-  if (rtpMidiPollInterval) { clearInterval(rtpMidiPollInterval); rtpMidiPollInterval = null; }
-  await api('POST', '/api/midi/rtpmidi/stop').catch(() => {});
-  loadRtpMidiStatus();
-  updateTcSourceStatus();
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // USB-MIDI SERVER-SIDE CONTROL (browserunabhängiges MTC)
 // ════════════════════════════════════════════════════════════════════════════
-let usbMidiPollInterval = null;
 
 async function loadUsbMidiPorts() {
   const data = await api('GET', '/api/midi/usb/ports').catch(() => null);
@@ -4005,8 +4125,7 @@ async function loadUsbMidiPorts() {
     ? ports.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')
     : '<option value="">– Keine Geräte –</option>';
   // Gespeichertes Port bevorzugen, sonst vorherige Auswahl beibehalten
-  const show = allShows.find(s => s.id === currentShowId);
-  const want = show?.midiPort || prev;
+  const want = appConfig?.tc?.midiPort || prev;
   if (want && ports.some(p => p.name === want)) sel.value = want;
 }
 
@@ -4024,47 +4143,23 @@ async function loadUsbMidiStatus() {
 
 // Quelle „USB MIDI" gewählt → Ports laden und gemerktes/erstes Gerät automatisch
 // aktivieren (kein manueller Start nötig).
+// Quelle „USB MIDI" gewählt → Ports laden und gemerktes/erstes Gerät speichern;
+// der Server öffnet es (und beim Boot automatisch wieder).
 async function selectUsbMidiSource() {
   await loadUsbMidiPorts();
   const portName = document.getElementById('usb-midi-port').value;
-  // Schon auf diesem Port aktiv? → nicht neu starten (kein TC-Aussetzer)
-  const status = await api('GET', '/api/midi/status').catch(() => null);
-  if (status?.usbMidi?.running && status.usbMidi.portName === portName) {
-    loadUsbMidiStatus();
-    if (!usbMidiPollInterval) usbMidiPollInterval = setInterval(loadUsbMidiStatus, 3000);
-    return;
-  }
-  if (portName) await activateUsbMidi(portName);
-  else loadUsbMidiStatus();
+  await saveTcConfig({ source: 'usb-mtc', midiPort: portName || '' });
+  if (!portName) document.getElementById('usb-midi-status').innerHTML = '<span style="color:var(--red)">Kein Gerät gefunden</span>';
 }
 
 // Gerätewechsel im Dropdown → sofort aktivieren
 function onUsbMidiPortChange() {
   const portName = document.getElementById('usb-midi-port').value;
-  if (portName) activateUsbMidi(portName);
+  if (portName) saveTcConfig({ source: 'usb-mtc', midiPort: portName });
 }
 
 // Öffnet das Port serverseitig und merkt es sich (Auto-Start beim Boot).
-async function activateUsbMidi(portName) {
-  const el = document.getElementById('usb-midi-status');
-  if (!portName) { el.innerHTML = '<span style="color:var(--red)">Kein Gerät gewählt</span>'; return; }
-  await api('POST', '/api/midi/usb/stop').catch(() => {}); // evtl. anderes Gerät zuerst schließen
-  const res = await api('POST', '/api/midi/usb/start', { portName }).catch(() => null);
-  if (res && res.ok) {
-    saveShowTcSettings('usb-midi'); // Port + Quelle persistieren → Auto-Start beim Boot
-    loadUsbMidiStatus();
-    if (!usbMidiPollInterval) usbMidiPollInterval = setInterval(loadUsbMidiStatus, 3000);
-  } else {
-    el.innerHTML = '<span style="color:var(--red)">Start fehlgeschlagen (Gerät belegt oder nicht gefunden)</span>';
-  }
-}
 
-async function stopUsbMidi() {
-  if (usbMidiPollInterval) { clearInterval(usbMidiPollInterval); usbMidiPollInterval = null; }
-  await api('POST', '/api/midi/usb/stop').catch(() => {});
-  loadUsbMidiStatus();
-  updateTcSourceStatus();
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // OSC TIMECODE SERVER-SIDE CONTROL
@@ -4081,22 +4176,15 @@ async function loadOscStatus() {
   }
 }
 
-async function startOsc() {
+function onOscPortChange() {
   const port = parseInt(document.getElementById('osc-port').value) || 9000;
-  await api('POST', '/api/midi/osc/start', { port }).catch(() => {});
-  loadOscStatus();
+  saveTcConfig({ source: 'osc', oscPort: port });
 }
 
-async function stopOsc() {
-  await api('POST', '/api/midi/osc/stop').catch(() => {});
-  loadOscStatus();
-  updateTcSourceStatus();
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // ART-NET TIMECODE SERVER-SIDE CONTROL
 // ════════════════════════════════════════════════════════════════════════════
-let artnetPollInterval = null;
 
 async function loadArtnetStatus() {
   const data = await api('GET', '/api/midi/status').catch(() => null);
@@ -4108,18 +4196,7 @@ async function loadArtnetStatus() {
     : `<span style="color:var(--muted)">○ Gestoppt</span>`;
 }
 
-async function startArtnet() {
-  await api('POST', '/api/midi/artnet/start', { port: 6454 }).catch(() => {});
-  loadArtnetStatus();
-  if (!artnetPollInterval) artnetPollInterval = setInterval(loadArtnetStatus, 3000);
-}
 
-async function stopArtnet() {
-  if (artnetPollInterval) { clearInterval(artnetPollInterval); artnetPollInterval = null; }
-  await api('POST', '/api/midi/artnet/stop').catch(() => {});
-  loadArtnetStatus();
-  updateTcSourceStatus();
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // LTC DECODER (Bi-Phase Mark Code, 25fps)
@@ -4218,12 +4295,11 @@ const GEWERKE = [
   { id: 'video',  label: 'Video',  glyph: '▦', color: '#ec4899', positions: ['Projektion'] },
 ];
 
-// Crew-Positionen eines Gewerks: aus der geladenen Show (show.gewerkPositions),
-// sonst die in GEWERKE hinterlegten Standardwerte. Eine in der Show gespeicherte
-// Liste ist maßgeblich (erlaubt Hinzufügen UND Entfernen von Positionen).
+// Crew-Positionen eines Gewerks: aus der Programm-Konfiguration (programmweit),
+// sonst die in GEWERKE hinterlegten Standardwerte. Eine gespeicherte Liste ist
+// maßgeblich (erlaubt Hinzufügen UND Entfernen von Positionen).
 function positionsForGewerk(gewerkId) {
-  const show = allShows.find(s => s.id === currentShowId);
-  const custom = show && show.gewerkPositions && show.gewerkPositions[gewerkId];
+  const custom = appConfig?.gewerkPositions?.[gewerkId];
   if (Array.isArray(custom)) return custom;
   const g = GEWERKE.find(x => x.id === gewerkId);
   return g ? g.positions : [];
@@ -4237,12 +4313,8 @@ let _identity = null;          // aktive Identität: { level, gewerk?, position?
 // ── Identität & Sichtbarkeit ─────────────────────────────────────────────
 function getLoginIdentity() { return _identity; }
 
-function getAccessConfig() {
-  const show = allShows.find(s => s.id === currentShowId) || allShows[0];
-  return show?.access || {};
-}
 function isAccessGated() {
-  return !!(getAccessConfig().adminPassword || '').trim();
+  return !!appConfig?.access?.gated;
 }
 
 // Ist ein Cue/eine Liste für die gegebene Identität SICHTBAR? (Live-Filter)
@@ -4291,16 +4363,18 @@ function loginShowStep(step) {
 }
 
 // Passwort prüfen → Admin / Meister / Position freischalten
-function loginCheckPassword() {
+// Passwort prüfen → Admin / Meister / Position freischalten. Die Prüfung macht
+// der Server; die Passwörter selbst kennt der Client nicht mehr.
+async function loginCheckPassword() {
   const input = document.getElementById('login-password');
   const pw = input.value;
-  const acc = getAccessConfig();
-  if (pw && pw === (acc.adminPassword || '')) { loginEnterAdmin(); return; }
-  // Meister-Passwörter vor Positions-Passwörtern prüfen
-  const mMatch = Object.entries(acc.meisterPasswords || {}).find(([, p]) => p && p === pw);
-  if (mMatch) { input.value = ''; loginUnlockGewerk(mMatch[0], 'meister'); return; }
-  const gMatch = Object.entries(acc.gewerkPasswords || {}).find(([, p]) => p && p === pw);
-  if (gMatch) { input.value = ''; loginUnlockGewerk(gMatch[0], 'position'); return; }
+  const res = pw ? await api('POST', '/api/config/login', { password: pw }).catch(() => null) : null;
+  if (res && res.level === 'admin') { loginEnterAdmin(); return; }
+  if (res && (res.level === 'meister' || res.level === 'position')) {
+    input.value = '';
+    loginUnlockGewerk(res.gewerk, res.level);
+    return;
+  }
   // Falsch → Fehlermeldung + Shake
   document.getElementById('login-pw-error').textContent = 'Passwort nicht erkannt.';
   const step = document.getElementById('login-step-password');
@@ -4429,18 +4503,56 @@ function applyIdentity(identity, persist) {
     _liveCueRenderSignature = ''; // Rollenwechsel → Live-Liste zwingend neu filtern/rendern
     renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
     renderLiveChecklists(_lastCurrentCue);
-    renderCrewPositions(allShows.find(s => s.id === currentShowId)); // Rolle bestimmt Sichtbarkeit/Umfang der Crew-Positionen-Card
     if (_playlistVisible) { _playlistSig = ''; renderPlaylist(); } // Gewerk-Farbe kann sich geändert haben
+  }
+  renderSettingsIdentity();
+  if (document.getElementById('view-settings').classList.contains('active')) openSettings();
+}
+
+function identityLabel(identity) {
+  if (!identity) return 'Nicht angemeldet';
+  if (identity.level === 'admin') return 'Admin';
+  const g = GEWERKE.find(x => x.id === identity.gewerk);
+  return `${g ? g.label : identity.gewerk} · ${identity.level === 'meister' ? 'Meister' : identity.position}`;
+}
+
+function renderSettingsIdentity() {
+  const el = document.getElementById('settings-identity');
+  if (el) el.textContent = identityLabel(_identity);
+}
+
+// Was darf die aktuelle Identität unter Einstellungen → Programm sehen?
+// 'full' = Admin bzw. kein Zugangsschutz, 'crew' = Meister (nur Crew-Positionen
+// des eigenen Gewerks), 'none' = Position.
+function settingsScope() {
+  const id = getLoginIdentity();
+  if (!isAccessGated() || (id && id.level === 'admin')) return 'full';
+  if (id && id.level === 'meister') return 'crew';
+  return 'none';
+}
+
+function applySettingsScope() {
+  const scope = settingsScope();
+  const program = document.getElementById('settings-program');
+  if (program) program.style.display = scope === 'none' ? 'none' : '';
+  const intro = document.getElementById('settings-intro');
+  if (intro) intro.textContent = scope === 'none'
+    ? 'Anzeige und Ton stellst du hier nur für dieses Gerät ein.'
+    : 'Oben stellst du nur dieses Gerät ein. Darunter liegen die Programm-Einstellungen, die für alle Geräte gelten.';
+  for (const id of ['tc-input-card', 'network-card', 'update-card', 'access-block']) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = scope === 'full' ? '' : 'none';
   }
 }
 
-// Nicht-Admins sehen nur den Live-Tab (sobald Zugriffsschutz aktiv ist)
+// Tab-Sichtbarkeit je Rolle (sobald Zugangsschutz aktiv ist)
 function applyTabGating() {
   const isAdmin = _identity && _identity.level === 'admin';
   const open = !isAccessGated() || isAdmin;
-  // Nicht-Admins (Position/Meister) dürfen Live + Edit (Edit ist gescopt);
-  // Show + Einstellungen bleiben dem Admin vorbehalten.
-  const hidden = open ? [] : ['show', 'settings'];
+  // Nicht-Admins (Position/Meister) dürfen Live, Cues (gescopt) und Einstellungen
+  // (dort nur „Dieses Gerät", Meister zusätzlich die eigenen Crew-Positionen).
+  // Der Show-Tab bleibt dem Admin vorbehalten.
+  const hidden = open ? [] : ['show'];
   document.querySelectorAll('nav button[data-view]').forEach(btn => {
     const view = btn.getAttribute('data-view');
     btn.style.display = hidden.includes(view) ? 'none' : '';
@@ -4462,8 +4574,8 @@ function loginInit() {
     saved = { level: 'position', gewerk: saved.gewerk, position: saved.position };
   }
   if (saved && saved.level) applyIdentity(saved, false);
-  // Step-Entscheidung erfolgt in resolveLoginGate() nach dem Laden der Shows
-  // (braucht die access-Config aus allShows).
+  // Step-Entscheidung erfolgt in resolveLoginGate() nach dem Laden der
+  // Programm-Konfiguration (Zugangsschutz an/aus).
 }
 
 // Nach dem Laden der Shows: Tab-Gating + ersten Login-Schritt final festlegen.
@@ -4492,19 +4604,25 @@ setInterval(() => {
 loginInit();
 
 (async () => {
-  const shows = await api('GET', '/api/shows').catch(() => []);
+  const [cfg, shows] = await Promise.all([
+    api('GET', '/api/config').catch(() => null),
+    api('GET', '/api/shows').catch(() => []),
+  ]);
+  appConfig = cfg;
   allShows = shows;
   if (shows.length) {
-    currentShowId = shows[0].id;
-    const s = shows[0];
+    // Aktive Show vom Server (überlebt Neustarts), sonst die erste
+    const s = shows.find(x => x.id === cfg?.activeShowId) || shows[0];
+    currentShowId = s.id;
     document.getElementById('live-show-name').textContent = s.name;
     const loginShowName = document.getElementById('login-show-name');
     if (loginShowName) loginShowName.textContent = s.name;
     renderLiveChecklists(null);
     renderLiveCues(_lastCurrentCue, _lastNextCue, _lastTcString || '00:00:00:00');
   }
-  // Login-Gate erst jetzt entscheiden (braucht die geladene access-Config der Show)
+  // Login-Gate erst jetzt entscheiden (braucht den Zugangsschutz aus der Konfiguration)
   resolveLoginGate();
+  renderSettingsIdentity();
   // Songliste-Sichtbarkeit aus localStorage wiederherstellen
   let plVisible = false;
   try { plVisible = localStorage.getItem(PLAYLIST_KEY) === '1'; } catch (_) {}

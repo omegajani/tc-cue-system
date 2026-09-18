@@ -13,7 +13,7 @@ export interface Cue {
   positions?: string[];  // Crew-Positionen im Gewerk (NICHT die Timeline-ShowPosition); leer = ganzes Gewerk
 }
 
-// Zugriffskonfiguration der Show (weiche, clientseitige Filterung).
+// Zugriffskonfiguration (programmweit in config.json; weiche, clientseitige Filterung).
 export interface ShowAccess {
   adminPassword?: string;                     // Master-Passwort; leer = kein Gate
   gewerkPasswords?: Record<string, string>;   // Positions-Passwort pro Gewerk (sieht nur eigene Position)
@@ -66,17 +66,48 @@ export interface Show {
   cues: Cue[];
   positions: ShowPosition[];
   checklists?: Checklist[];
-  tcSource: TCSource;
-  fallbackMode: FallbackMode;
-  fps?: 24 | 25 | 29.97 | 30;
+  fps?: 24 | 25 | 29.97 | 30;  // Framerate des Show-Timecodes; wird beim Aktivieren angewendet
+  savedAt?: string;  // ISO-Zeitstempel des letzten Speicherns – „neuestes gewinnt" beim Repo-Sync
+  // Veraltet – früher pro Show, heute programmweit in config.json (AppConfig).
+  // Nur noch für die einmalige Migration bzw. alte Import-Dateien gelesen.
+  tcSource?: TCSource;
+  fallbackMode?: FallbackMode;
   audioDevice?: string;
   audioChannel?: "left" | "right" | "mix";
-  midiPort?: string; // gewähltes USB-MIDI-Eingangsport (Name) für Auto-Start
+  midiPort?: string;
   access?: ShowAccess;
-  // Crew-Positionen je Gewerk (z. B. ton: ["FOH","Monitor"]). Überschreibt die
-  // UI-Defaults; fehlt ein Gewerk hier, gelten die im Client hinterlegten Standards.
   gewerkPositions?: Record<string, string[]>;
-  savedAt?: string;  // ISO-Zeitstempel des letzten Speicherns – „neuestes gewinnt" beim Repo-Sync
+}
+
+/** Felder, die früher an der Show hingen und jetzt programmweit gelten. */
+export const LEGACY_SHOW_FIELDS = ["tcSource", "fallbackMode", "audioDevice", "audioChannel", "midiPort", "access", "gewerkPositions"] as const;
+
+// ── Programm-Konfiguration (config.json im Datenordner, nicht im Git) ────────
+export interface TcConfig {
+  source: TCSource;
+  audioDevice?: string;                    // Browser-deviceId des Rechners, der LTC dekodiert
+  audioChannel: "left" | "right" | "mix";
+  midiPort?: string;                       // USB-MIDI-Eingang (Name) – Auto-Start beim Boot
+  oscPort: number;
+  rtpmidiPort: number;
+  rtpmidiName: string;
+}
+
+export interface AppConfig {
+  activeShowId?: string;
+  tc: TcConfig;
+  access: ShowAccess;
+  // Crew-Positionen je Gewerk (z. B. ton: ["FOH","Monitor"]). Fehlt ein Gewerk,
+  // gelten die im Client hinterlegten Standards.
+  gewerkPositions: Record<string, string[]>;
+}
+
+/** Was jeder Client sehen darf: Konfiguration ohne Passwörter. */
+export interface PublicConfig extends Omit<AppConfig, "access"> {
+  access: {
+    gated: boolean;                                              // Admin-Passwort gesetzt → Login nötig
+    gewerke: Record<string, { position: boolean; meister: boolean }>; // welche Gewerk-Passwörter gesetzt sind
+  };
 }
 
 // WebSocket event payloads
@@ -101,7 +132,12 @@ export interface ShowResetEvent {
   type: "SHOW_RESET";
 }
 
-export type WSEvent = TCUpdateEvent | CueFireEvent | ShowResetEvent;
+export interface ConfigChangedEvent {
+  type: "CONFIG_CHANGED";
+  config: PublicConfig;
+}
+
+export type WSEvent = TCUpdateEvent | CueFireEvent | ShowResetEvent | ConfigChangedEvent;
 
 // TC as frame count for arithmetic
 export interface TCFrames {

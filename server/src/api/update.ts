@@ -2,6 +2,8 @@ import { Router } from "express";
 import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { getShows } from "../engine/store.js";
+import { createBackup } from "../engine/backups.js";
 
 const execFileAsync = promisify(execFile);
 const router = Router();
@@ -96,6 +98,12 @@ router.post("/install", (req, res) => {
         const diff = await git(["diff", "HEAD", "origin/main", "--name-only"]);
         pkgChanged = diff.split("\n").some(f => f.trim() === "server/package.json");
       } catch { /* non-fatal */ }
+
+      // Vor dem Update jede Show sichern (Show-Tab → Sicherungen)
+      for (const show of getShows()) {
+        try { createBackup(show, "auto", "Vor Software-Update"); } catch { /* non-fatal */ }
+      }
+      send("→ Shows gesichert");
 
       send("→ git pull origin main");
       try {

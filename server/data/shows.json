@@ -3,9 +3,6 @@
     "id": "show-demo-001",
     "name": "Blinded by Delight",
     "date": "2026-05-01",
-    "tcSource": "simulator",
-    "fallbackMode": "stop",
-    "audioChannel": "left",
     "positions": [
       {
         "id": "position-001",
@@ -372,26 +369,6 @@
         ]
       }
     ],
-    "access": {
-      "adminPassword": "admin",
-      "gewerkPasswords": {
-        "licht": "licht",
-        "ton": "ton"
-      },
-      "meisterPasswords": {
-        "licht": "licht-meister",
-        "ton": "ton-meister"
-      }
-    },
-    "midiPort": "",
-    "audioDevice": "111C074C696CA76513B2E070468EC2F4B44034E7",
-    "savedAt": "2026-06-21T12:27:59.919Z",
-    "gewerkPositions": {
-      "ton": [
-        "Monitor",
-        "FOH",
-        "Radioraum"
-      ]
-    }
+    "savedAt": "2026-09-18T19:04:42.277Z"
   }
 ]

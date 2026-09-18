@@ -136,10 +136,13 @@
     #playlist-toggle { position:fixed; top:62px; right:16px; z-index:20; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:99px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:rgba(255,255,255,.8); font-family:var(--ql-font-ui,inherit); font-size:11.5px; cursor:pointer; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all .15s; }
     #playlist-toggle:hover { background:rgba(255,255,255,.12); color:#fff; border-color:rgba(255,255,255,.28); }
     #playlist-toggle.on { border-color:rgba(245,158,11,.45); color:var(--accent-soft,#fbbf24); }
-    #live-playlist { position:fixed; top:52px; right:0; bottom:0; width:300px; z-index:10; overflow:hidden; pointer-events:none;
+    #live-playlist { position:fixed; top:52px; right:0; bottom:0; width:300px; z-index:10; overflow:hidden;
+      touch-action:none; user-select:none; -webkit-user-select:none; cursor:grab;
       -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 24%,#000 76%,transparent 100%);
       mask-image:linear-gradient(180deg,transparent 0,#000 24%,#000 76%,transparent 100%); }
     #live-playlist.hidden { display:none; }
+    #live-playlist.pl-dragging { cursor:grabbing; }
+    #live-playlist.pl-dragging #playlist-track { transition:none; }
     #playlist-track { position:absolute; top:0; right:0; left:0; display:flex; flex-direction:column; align-items:flex-end; gap:2px; padding:0 26px; transition:transform .45s cubic-bezier(.22,.61,.36,1); }
     .pl-row { text-align:right; padding:7px 0; line-height:1.18; color:#fff; max-width:100%; transition:opacity .3s, color .3s; }
     .pl-row .pl-name { font-size:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
@@ -148,6 +151,8 @@
     .pl-row.upcoming { opacity:.55; }
     .pl-row.current { opacity:1; padding:12px 0; }
     .pl-row.current .pl-name { font-size:25px; font-weight:600; line-height:1.12; white-space:normal; color:var(--pl-accent,#fff); }
+    /* Songs, in denen die eigene Rolle Cues hat */
+    .pl-row.has-cues .pl-name { color:var(--pl-accent,#fff); }
     .pl-row.current .pl-sub { display:block; font-size:11.5px; font-weight:400; color:rgba(255,255,255,.55); margin-top:3px; }
     /* Live-Karte bei sichtbarer Liste rechts ausparen, damit sie nicht darunter rutscht */
     #view-live.playlist-on { padding-right:300px; }
@@ -1900,7 +1905,16 @@ function renderPlaylist() {
   let curIdx = positions.findIndex(p => now >= tcStringToSeconds(p.startTc) && now < tcStringToSeconds(p.endTc));
   if (curIdx === -1) for (let i = 0; i < positions.length; i++) if (now >= tcStringToSeconds(positions[i].startTc)) curIdx = i;
   const remainingFor = i => Math.max(0, Math.ceil(tcStringToSeconds(positions[i].endTc) - now));
-  const sig = positions.length + '|' + curIdx;
+  // Songs, in denen die eigene Rolle Cues hat (gleicher Filter wie die Live-Cue-Liste)
+  const identity = getLoginIdentity();
+  const show = allShows.find(s => s.id === currentShowId);
+  const cueSecs = ((show && show.cues) || []).filter(c => cueVisibleToIdentity(c, identity)).map(c => tcStringToSeconds(c.tc));
+  const hasCues = positions.map(p => {
+    const a = tcStringToSeconds(p.startTc), b = tcStringToSeconds(p.endTc);
+    return cueSecs.some(t => t >= a && t < b);
+  });
+  const sig = positions.length + '|' + curIdx + '|' + hasCues.map(Number).join('') + '|' +
+    (identity ? [identity.level, identity.gewerk, identity.position].join('/') : '');
   if (sig !== _playlistSig) {
     _playlistSig = sig;
     track.style.setProperty('--pl-accent', playlistAccentColor());
@@ -1908,7 +1922,7 @@ function renderPlaylist() {
       const state = i < curIdx ? 'done' : i === curIdx ? 'current' : 'upcoming';
       const sub = state === 'current' && curIdx >= 0 ? `<span class="pl-sub">läuft · noch ${formatRemainingTime(remainingFor(i))}</span>` : '';
       const check = state === 'done' ? '<span class="pl-check">✓</span>' : '';
-      return `<div class="pl-row ${state}"><span class="pl-name">${esc(p.name)}${check}</span>${sub}</div>`;
+      return `<div class="pl-row ${state}${hasCues[i] ? ' has-cues' : ''}"><span class="pl-name">${esc(p.name)}${check}</span>${sub}</div>`;
     }).join('');
     recenterPlaylist();
   } else if (curIdx >= 0) {
@@ -1929,9 +1943,66 @@ function recenterPlaylist() {
   if (!panel.clientHeight) return;
   const cur = track.querySelector('.pl-row.current') || track.querySelector('.pl-row');
   if (!cur) return;
-  const offset = panel.clientHeight / 2 - (cur.offsetTop + cur.offsetHeight / 2);
-  track.style.transform = `translateY(${offset}px)`;
+  const mid = panel.clientHeight / 2;
+  const base = mid - (cur.offsetTop + cur.offsetHeight / 2);
+  // Manueller Scroll-Versatz, begrenzt: erste/letzte Zeile höchstens bis zur Mitte.
+  const first = track.firstElementChild, last = track.lastElementChild;
+  const maxT = mid - (first.offsetTop + first.offsetHeight / 2);
+  const minT = mid - (last.offsetTop + last.offsetHeight / 2);
+  const t = Math.min(maxT, Math.max(minT, base + _plManualOffset));
+  _plManualOffset = t - base;
+  track.style.transform = `translateY(${t}px)`;
 }
+
+// Songliste scrollbar (Mausrad/Trackpad, Ziehen per Maus/Touch). Nach kurzer Zeit
+// ohne Eingabe gleitet sie von selbst zurück auf den aktuellen Song.
+const PLAYLIST_RETURN_MS = 5000;
+let _plManualOffset = 0;
+let _plReturnTimer = null;
+
+function playlistScrollBy(dy) {
+  _plManualOffset += dy;
+  recenterPlaylist();
+  clearTimeout(_plReturnTimer);
+  _plReturnTimer = setTimeout(resetPlaylistScroll, PLAYLIST_RETURN_MS);
+}
+
+function resetPlaylistScroll() {
+  clearTimeout(_plReturnTimer);
+  _plReturnTimer = null;
+  _plManualOffset = 0;
+  if (_playlistVisible) recenterPlaylist();
+}
+
+(function initPlaylistScroll() {
+  const panel = document.getElementById('live-playlist');
+  if (!panel) return;
+  panel.addEventListener('wheel', e => {
+    e.preventDefault();
+    const dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * panel.clientHeight : e.deltaY;
+    playlistScrollBy(-dy);
+  }, { passive: false });
+  let dragY = null;
+  panel.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    dragY = e.clientY;
+    panel.classList.add('pl-dragging');
+    try { panel.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  panel.addEventListener('pointermove', e => {
+    if (dragY === null) return;
+    const dy = e.clientY - dragY;
+    dragY = e.clientY;
+    if (dy) playlistScrollBy(dy);
+  });
+  const endDrag = () => {
+    if (dragY === null) return;
+    dragY = null;
+    panel.classList.remove('pl-dragging');
+  };
+  panel.addEventListener('pointerup', endDrag);
+  panel.addEventListener('pointercancel', endDrag);
+})();
 
 // Neu zentrieren, sobald sich die Geometrie ändert: Rückkehr in die Live-Ansicht
 // (Panel 0 → volle Höhe), nachgeladene Schrift, Zeilenumbruch, Fenstergröße.
@@ -1960,6 +2031,7 @@ function applyPlaylistVisibility(visible) {
   document.getElementById('playlist-toggle').classList.toggle('on', visible);
   document.getElementById('playlist-toggle-label').textContent = visible ? 'Songs ausblenden' : 'Songs';
   document.getElementById('view-live').classList.toggle('playlist-on', visible);
+  resetPlaylistScroll();
   if (visible) { _playlistSig = ''; renderPlaylist(); }
 }
 

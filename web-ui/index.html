@@ -94,7 +94,9 @@
     #tc-display { display:inline-block; width:13ch; flex:0 0 13ch; font-size:17px; font-weight:bold; letter-spacing:2px; color:#ffffff; text-align:right; white-space:nowrap; }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
-    nav { display: flex; border-bottom: 1px solid var(--border); }
+    /* über dem Songlisten-Panel (z-index 10), das oben in die Tab-Zeile ragt –
+       sonst fängt dessen Scroll-/Zieh-Fläche die Klicks auf die Tab-Zeile ab */
+    nav { display: flex; border-bottom: 1px solid var(--border); position: relative; z-index: 15; }
     nav button { background: none; border: none; color: var(--muted); padding: 11px 22px; cursor: pointer; font-family: inherit; font-size: 13px; border-bottom: 2px solid transparent; transition: all .15s; }
     nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
     nav button:hover:not(.active) { color: var(--text); }
@@ -134,7 +136,8 @@
 
     /* Songliste/Playlist – rahmenlos, rechts, volle Höhe, Teleprompter-Optik */
     /* Songs-Schalter: kleines ♫ in der Tab-Zeile (nur PC, nur Live-Tab) */
-    #playlist-toggle { background:none; border:none; padding:4px 6px; margin-right:4px; font-size:14px; line-height:1; color:var(--muted); cursor:pointer; font-family:inherit; transition:color .15s; }
+    #playlist-toggle { display:inline-flex; align-items:center; gap:5px; background:none; border:none; padding:4px 6px; margin-right:6px; font-size:11.5px; line-height:1; color:var(--muted); cursor:pointer; font-family:inherit; transition:color .15s; white-space:nowrap; }
+    #playlist-toggle .pl-icon { font-size:14px; }
     #playlist-toggle:hover { color:var(--text); }
     #playlist-toggle.on { color:var(--pl-accent,var(--accent)); }
     body[data-view]:not([data-view="live"]) #playlist-toggle { display:none; }
@@ -640,7 +643,7 @@
   <button data-view="show" onclick="showView('show',this)">Show</button>
   <button data-view="settings" onclick="showView('settings',this)">Einstellungen</button>
   <div id="nav-right">
-    <button id="playlist-toggle" onclick="togglePlaylist()" title="Songliste ein/aus" aria-label="Songliste ein/aus" aria-pressed="false">♫</button>
+    <button id="playlist-toggle" onclick="togglePlaylist()" title="Songliste ein-/ausblenden" aria-pressed="false"><span class="pl-icon" aria-hidden="true">♫</span>Songliste</button>
     <div id="hdr-gewerk">
       <span id="hdr-gewerk-dot"></span>
       <span id="hdr-gewerk-label"></span>

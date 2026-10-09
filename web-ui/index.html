@@ -25,6 +25,8 @@
       --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
       --border: #2a2a2a; --text: #e5e5e5; --muted: #666;
       --accent: #f59e0b; --green: #10b981; --red: #ef4444; --blue: #3b82f6;
+      /* Einheitliche Höhe für Knöpfe, Felder und Auswahlmenüs */
+      --control-h: 34px; --control-h-sm: 28px;
       /* QL Design System tokens */
       --ql-bg: #0f0f0f; --ql-surface: #1a1a1a; --ql-surface-2: #222;
       --ql-border: #2a2a2a; --ql-text: #e5e5e5; --ql-text-strong: #fff;
@@ -259,8 +261,8 @@
     .form-row { margin-bottom: 13px; }
     .form-row label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
     .form-row input, .form-row select, .form-row textarea {
-      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 7px 10px; border-radius: 5px; font-family: inherit; font-size: 13px;
+      width: 100%; min-height: var(--control-h); background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 5px 10px; border-radius: 7px; font-family: inherit; font-size: 13px;
     }
     .form-row textarea { resize: vertical; min-height: 60px; }
     .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--accent); }
@@ -271,7 +273,11 @@
     .page-heading { max-width: 1180px; margin: 2px auto 24px; }
     .page-heading h1 { font-size: 25px; letter-spacing: -.5px; margin-bottom: 5px; }
     .page-heading p { color: var(--muted); font-size: 12px; line-height: 1.5; }
-    .edit-layout, .settings-grid, .show-layout { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
+    .edit-layout, .show-layout { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
+    /* Einstellungen: Karten fließen spaltenweise und füllen die Höhe aus –
+       starres Raster hinterließ unter der kürzeren Spalte große Lücken. */
+    .settings-grid { max-width:1180px; margin:0 auto; column-count:2; column-gap:16px; }
+    .settings-grid > * { break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 16px; }
     .edit-layout { gap:18px; }
     .edit-overview { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; padding:18px 20px; border:1px solid rgba(245,158,11,.18); border-radius:16px; background:linear-gradient(135deg,rgba(245,158,11,.07),var(--surface)); }
     .edit-overview-kicker { margin-bottom:4px; color:var(--accent); font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
@@ -281,7 +287,6 @@
     .edit-overview-count { min-width:68px; padding:9px 10px; border:1px solid rgba(255,255,255,.06); border-radius:10px; background:rgba(255,255,255,.025); text-align:center; }
     .edit-overview-count strong { display:block; font-size:17px; }
     .edit-overview-count span { display:block; margin-top:2px; color:var(--muted); font-size:8px; letter-spacing:.5px; text-transform:uppercase; }
-    .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .show-layout { grid-template-columns:minmax(280px,.72fr) minmax(420px,1.28fr); align-items:start; }
     .show-main { display:grid; gap:16px; }
     .edit-card, .sp-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin: 0; min-width:0; }
@@ -302,8 +307,8 @@
     .show-card h2 { margin-bottom:4px; color:var(--text); font-size:15px; font-weight:650; letter-spacing:-.15px; }
     .show-card-description { margin-bottom:17px; color:var(--muted); font-size:11px; line-height:1.5; }
     .show-library { position:sticky; top:20px; }
-    .show-card .admin-select { width:100%; min-height:40px; margin-bottom:12px; }
-    .show-card .form-row input, .show-card .form-row select { min-height:42px; border-radius:8px; }
+    .show-card .admin-select { width:100%; margin-bottom:12px; }
+    .show-card .form-row input, .show-card .form-row select { min-height:var(--control-h); border-radius:7px; }
     .show-fields { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(160px,.65fr); gap:12px; }
     .show-fields .show-field-wide { grid-column:1 / -1; }
     .show-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
@@ -321,16 +326,16 @@
     .show-summary-value { display:block; margin-bottom:3px; color:var(--text); font-size:18px; font-weight:680; }
     .show-summary-label { display:block; color:var(--muted); font-size:8px; letter-spacing:.6px; text-transform:uppercase; }
     .show-feedback { min-height:15px; margin-top:10px; font-size:10px; color:var(--green); }
-    .settings-wide { grid-column: 1 / -1; }
+    .settings-wide { break-inside:avoid; }
     .section { margin-bottom: 28px; }
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .section-header h2 { font-size: 13px; font-weight: normal; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0; flex-shrink: 0; }
     .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    select.admin-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 5px; font-family: inherit; font-size: 12px; min-width: 160px; }
+    select.admin-select { min-height:var(--control-h); background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 7px; font-family: inherit; font-size: 12px; min-width: 160px; }
 
     /* Simulator */
     .sim-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .sim-controls input[type=text] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 5px; font-family: inherit; width: 120px; font-size: 13px; }
+    .sim-controls input[type=text] { min-height:var(--control-h); background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 7px; font-family: inherit; width: 120px; font-size: 13px; }
     #sim-state { font-size: 11px; color: var(--muted); }
 
     /* Cue table */
@@ -364,12 +369,14 @@
     .badge-urgent { background: rgba(239,68,68,.2); color: #fca5a5; }
 
     /* ── BUTTONS ────────────────────────────────────────────────────── */
-    .btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px; transition: background .12s; white-space: nowrap; }
+    /* Einheitliche Höhe aller Bedienelemente (--control-h); auf dem Handy größer,
+       damit sie sich mit dem Finger treffen lassen. */
+    .btn { display:inline-flex; align-items:center; justify-content:center; min-height:var(--control-h); background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 4px 14px; border-radius: 7px; cursor: pointer; font-family: inherit; font-size: 12px; transition: background .12s; white-space: nowrap; }
     .btn:hover { background: var(--border); }
     .btn-primary { border-color: var(--green); color: var(--green); }
     .btn-danger { border-color: var(--red); color: var(--red); }
     .btn-accent { border-color: var(--accent); color: var(--accent); }
-    .btn-small { padding: 3px 9px; font-size: 11px; }
+    .btn-small { min-height:var(--control-h-sm); padding: 2px 10px; font-size: 11px; }
     .btn-icon { padding: 3px 7px; font-size: 13px; }
 
     /* ── MONITOR ────────────────────────────────────────────────────── */
@@ -381,17 +388,17 @@
 
     /* ── SETTINGS ───────────────────────────────────────────────────── */
     .sp-section h3 { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 14px; }
-    .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; }
+    .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:14px; flex-wrap:wrap; }
     .sp-row:last-child { margin-bottom:0; }
-    .sp-label { font-size:12px; color:var(--text); flex:1; }
+    .sp-label { font-size:12px; color:var(--text); flex:1 1 200px; min-width:0; }
     .sp-hint { font-size:10px; color:var(--muted); display:block; margin-top:2px; }
     .update-badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; letter-spacing:.4px; background:rgba(251,191,36,.18); color:#fbbf24; border:1px solid rgba(251,191,36,.35); margin-left:8px; vertical-align:middle; }
     .update-badge.ok { background:rgba(52,211,153,.12); color:#34d399; border-color:rgba(52,211,153,.3); }
     .update-log { margin-top:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:monospace; font-size:11px; color:var(--muted); max-height:160px; overflow-y:auto; white-space:pre-wrap; display:none; }
     .update-log.visible { display:block; }
     .sp-row input[type=range] { width:110px; accent-color:#34c759; }
-    .sp-row select { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:4px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
-    .sp-row input[type=text], .sp-row textarea { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:4px; font-family:inherit; font-size:12px; }
+    .sp-row select { flex:0 1 auto; min-width:150px; max-width:220px; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 9px; border-radius:7px; font-family:inherit; font-size:12px; }
+    .sp-row input[type=text], .sp-row input[type=number], .sp-row textarea { min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 9px; border-radius:7px; font-family:inherit; font-size:12px; }
     .sp-row textarea { width:100%; resize:vertical; min-height:48px; }
     /* Toggle switch – iOS style */
     .toggle { position:relative; width:51px; height:31px; flex-shrink:0; }
@@ -405,18 +412,40 @@
     .url-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .url-item:last-child { margin-bottom:0; }
     .url-item code { flex:1; color:var(--accent); font-size:12px; }
+    /* Mittlere Breiten (Tablet, schmales Fenster): zwei Spalten werden zu eng
+       → eine Spalte, bevor es gequetscht aussieht. */
+    @media (max-width: 1000px) {
+      .settings-grid { column-count:1; }
+      .show-layout { grid-template-columns:1fr; }
+      .form-2col { grid-template-columns:1fr; }
+    }
+    /* Handy: Tabellen (Cues, Songs) als gestapelte Karten – sonst muss man sie
+       seitlich schieben, um Titel und Nachricht zu lesen. */
+    @media (max-width: 640px) {
+      .cue-table-wrap { overflow-x:visible; border:0; }
+      .cue-table-wrap table, .cue-table-wrap tbody, .cue-table-wrap tr, .cue-table-wrap td { display:block; width:auto; }
+      .cue-table-wrap thead { display:none; }
+      .cue-table-wrap tr { margin-bottom:8px; padding:11px 13px; border:1px solid var(--border); border-radius:11px; background:rgba(255,255,255,.022); }
+      .cue-table-wrap tr:last-child { margin-bottom:0; }
+      .cue-table-wrap td { border:0; padding:0; }
+      .cue-table-wrap td:first-child { display:none; }
+      .cue-table-wrap .cell-tc { display:inline-block; margin-right:12px; color:var(--accent); font-size:12px; }
+      .cue-table-wrap .cell-title { font-size:14px; margin:3px 0; }
+      .cue-table-wrap .cell-message { font-size:12px; line-height:1.45; }
+      .cue-table-wrap td[data-label]:before { content:attr(data-label) " "; color:var(--muted); font-size:9px; letter-spacing:.6px; text-transform:uppercase; margin-right:4px; }
+      .cue-table-wrap td.actions { margin-top:9px; }
+    }
     @media (max-width: 760px) {
       .view { padding: 16px 12px; }
+      /* Finger statt Maus: größere Trefferflächen */
+      :root { --control-h: 40px; --control-h-sm: 34px; }
       /* iOS zoomt bei Fokus auf Felder mit <16px hinein – verhindern, damit Modals sichtbar bleiben */
       .form-row input, .form-row select, .form-row textarea, #backup-label { font-size: 16px; }
-      .settings-grid { grid-template-columns: 1fr; }
-      .show-layout { grid-template-columns:1fr; }
       .show-library { position:static; }
       .show-fields { grid-template-columns:1fr; }
       .show-fields .show-field-wide { grid-column:auto; }
       .edit-overview { grid-template-columns:1fr; }
       .edit-overview-counts { display:grid; grid-template-columns:repeat(2,1fr); }
-      .settings-wide { grid-column: auto; }
       #view-live { padding-top:0; }
       #live-picker-shell { height:calc(100vh - 92px); min-height:460px; }
       #live-position { border-radius:19px; }
@@ -534,16 +563,16 @@
     .cue-pos-chip input { width:14px; height:14px; accent-color:var(--accent); margin:0; }
     .cue-pos-chip.checked { border-color:var(--accent); background:rgba(245,158,11,.1); color:var(--accent-soft); }
     /* Crew-Positionen-Verwaltung (Edit-Tab) */
-    .crew-pos-gewerk { padding:14px 0; border-bottom:1px solid var(--border); }
-    .crew-pos-gewerk:first-child { padding-top:0; }
-    .crew-pos-gewerk:last-child { border-bottom:0; padding-bottom:0; }
+    .crew-pos-gewerk { padding:12px 13px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); }
     .crew-pos-head { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); margin-bottom:11px; }
     .crew-pos-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:11px; }
     .crew-pos-chip { display:inline-flex; align-items:center; gap:7px; padding:6px 6px 6px 12px; border:1px solid var(--border); border-radius:99px; background:var(--bg); color:var(--text); font-size:12px; }
     .crew-pos-remove { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; border:none; background:rgba(255,255,255,.06); color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0; transition:all .12s; }
     .crew-pos-remove:hover { background:rgba(248,113,113,.2); color:#f87171; }
-    .crew-pos-add { display:flex; gap:8px; }
-    .crew-pos-add input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 11px; border-radius:8px; font-family:inherit; font-size:13px; }
+    /* Feld + Knopf nebeneinander; wird es eng, rutscht der Knopf in die nächste Zeile */
+    .crew-pos-add { display:flex; gap:8px; flex-wrap:wrap; }
+    .crew-pos-addbtn { flex:0 0 auto; width:var(--control-h); padding:0; font-size:17px; }
+    .crew-pos-add input { flex:1 1 110px; min-width:110px; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 11px; border-radius:7px; font-family:inherit; font-size:13px; }
     .crew-pos-add input:focus { outline:none; border-color:var(--accent); }
     /* Gewerk-Tag unter dem Cue-Titel */
     .cell-gewerk-inline { margin-top:3px; }
@@ -557,9 +586,9 @@
     .access-gewerk-table { display:grid; grid-template-columns:max-content 1fr 1fr; gap:6px 8px; align-items:center; }
     .access-col-head { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
     .access-gewerk-table label { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text); white-space:nowrap; padding-right:4px; }
-    .access-gewerk-table input { min-width:0; width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; box-sizing:border-box; }
+    .access-gewerk-table input { min-width:0; width:100%; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:7px; font-family:inherit; font-size:13px; box-sizing:border-box; }
     .access-gewerk-table input:focus { outline:none; border-color:var(--accent); }
-    .access-admin input { min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
+    .access-admin input { min-width:0; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
     .access-admin input:focus { outline:none; border-color:var(--accent); }
     /* Einstellungen: Gruppen „Dieses Gerät" / „Programm" */
     .settings-group { max-width:1180px; margin:0 auto 26px; }
@@ -571,8 +600,9 @@
     .sp-subhead { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:18px 0 10px; }
     .identity-line { font-size:13px; color:var(--text); display:flex; align-items:center; gap:8px; }
     /* Sicherungen */
-    #backup-label { min-width:0; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-family:inherit; font-size:13px; }
+    #backup-label { min-width:0; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
     #backup-label:focus { outline:none; border-color:var(--accent); }
+    #crew-positions-wrap { display:grid; grid-template-columns:repeat(auto-fit,minmax(205px,1fr)); gap:12px; }
     .backup-list { display:grid; gap:6px; margin-top:12px; }
     .backup-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); font-size:12px; }
     .backup-row .backup-main { flex:1; min-width:0; }
@@ -847,7 +877,7 @@
       <div class="sp-label">Alarmton auswählen
         <span class="sp-hint">Gilt nur für dieses Gerät. Hochgeladene Töne stehen allen zur Auswahl.</span>
       </div>
-      <select id="s-alarm-sound" onchange="onAlarmSoundChange()" style="max-width:180px;"></select>
+      <select id="s-alarm-sound" onchange="onAlarmSoundChange()"></select>
     </div>
     <div class="toolbar">
       <button class="btn btn-primary btn-small" onclick="testAlarm()">Alarm testen</button>
@@ -912,13 +942,13 @@
     <div id="audio-device-group" style="display:none;">
       <div class="sp-row" style="margin-top:8px;">
         <div class="sp-label">Audiointerface</div>
-        <select id="audio-device-select" onchange="onAudioDeviceChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:180px;">
+        <select id="audio-device-select" onchange="onAudioDeviceChange()">
           <option value="">– Zugriff erlauben –</option>
         </select>
       </div>
       <div class="sp-row">
         <div class="sp-label">Kanal</div>
-        <select id="audio-channel-select" onchange="onAudioChannelChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;">
+        <select id="audio-channel-select" onchange="onAudioChannelChange()">
           <option value="left">Links (L)</option>
           <option value="right">Rechts (R)</option>
           <option value="mix">Mix (L+R)</option>
@@ -938,7 +968,7 @@
     <div id="midi-device-group" style="display:none;margin-top:8px;">
       <div class="sp-row">
         <div class="sp-label">MIDI-Gerät</div>
-        <select id="midi-device-select" onchange="startBrowserMTC()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+        <select id="midi-device-select" onchange="startBrowserMTC()">
           <option value="">– Zugriff erlauben –</option>
         </select>
       </div>
@@ -958,12 +988,12 @@
       <div class="sp-row">
         <div class="sp-label">Port</div>
         <input type="number" id="rtpmidi-port" value="5004" min="1024" max="65535" onchange="onRtpMidiSettingChange()"
-          style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+          style="width:110px;" />
       </div>
       <div class="sp-row">
         <div class="sp-label">Session-Name</div>
         <input type="text" id="rtpmidi-name" value="TC Cue System" onchange="onRtpMidiSettingChange()"
-          style="width:160px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+          style="width:190px;" />
       </div>
       <div id="rtpmidi-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
         Status: –
@@ -978,7 +1008,7 @@
       <div class="sp-row">
         <div class="sp-label">MIDI-Eingang</div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="usb-midi-port" onchange="onUsbMidiPortChange()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;max-width:200px;">
+          <select id="usb-midi-port" onchange="onUsbMidiPortChange()">
             <option value="">– Keine Geräte –</option>
           </select>
           <button class="btn btn-small" onclick="loadUsbMidiPorts()" title="Geräteliste aktualisieren">↻</button>
@@ -997,7 +1027,7 @@
       <div class="sp-row">
         <div class="sp-label">UDP-Port</div>
         <input type="number" id="osc-port" value="9000" min="1024" max="65535" onchange="onOscPortChange()"
-          style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;font-size:12px;" />
+          style="width:110px;" />
       </div>
       <div id="osc-status" style="margin-top:8px;font-size:11px;color:var(--muted);">
         Status: –
@@ -1021,20 +1051,20 @@
     </div>
   </div>
 
-  <!-- Team & Zugang -->
-  <div class="sp-section" id="team-card">
-    <h3>Team &amp; Zugang</h3>
-    <div id="access-block">
-      <p class="show-card-description">Pro Gewerk zwei Passwörter: das <strong>Positions-Passwort</strong> schaltet die Positions-Auswahl frei (sieht nur die eigene Position), das <strong>Meister-Passwort</strong> meldet direkt als Meister an (sieht alle Cues des Gewerks). Das Admin-Passwort schaltet alles frei.</p>
-      <div id="access-fields"></div>
-      <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Änderungen werden beim Verlassen des Feldes gespeichert.</div>
-      <div id="access-feedback" class="show-feedback"></div>
-    </div>
-    <div id="crew-positions-card">
-      <div class="sp-subhead">Crew-Positionen</div>
-      <p class="show-card-description">Positionen je Gewerk – stehen im Login und bei der Cue-/Listen-Zuweisung zur Auswahl.</p>
-      <div id="crew-positions-wrap"></div>
-    </div>
+  <!-- Crew-Positionen -->
+  <div class="sp-section" id="crew-positions-card">
+    <h3>Crew-Positionen</h3>
+    <p class="show-card-description">Positionen je Gewerk – stehen im Login und bei der Cue-/Listen-Zuweisung zur Auswahl.</p>
+    <div id="crew-positions-wrap"></div>
+  </div>
+
+  <!-- Zugang / Passwörter -->
+  <div class="sp-section" id="access-block">
+    <h3>Zugang &amp; Passwörter</h3>
+    <p class="show-card-description">Pro Gewerk zwei Passwörter: das <strong>Positions-Passwort</strong> schaltet die Positions-Auswahl frei (sieht nur die eigene Position), das <strong>Meister-Passwort</strong> meldet direkt als Meister an (sieht alle Cues des Gewerks). Das Admin-Passwort schaltet alles frei.</p>
+    <div id="access-fields"></div>
+    <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Änderungen werden beim Verlassen des Feldes gespeichert.</div>
+    <div id="access-feedback" class="show-feedback"></div>
   </div>
 
   <!-- Netzwerk -->
@@ -2753,7 +2783,7 @@ function renderCrewPositions() {
         <div class="crew-pos-chips">${chips}</div>
         <div class="crew-pos-add">
           <input id="crew-pos-input-${gid}" type="text" placeholder="Neue Position…" onkeydown="if(event.key==='Enter'){event.preventDefault();addCrewPosition('${gid}');}" />
-          <button type="button" class="btn btn-primary" onclick="addCrewPosition('${gid}')">+ Hinzufügen</button>
+          <button type="button" class="btn btn-primary crew-pos-addbtn" onclick="addCrewPosition('${gid}')" title="Position hinzufügen" aria-label="Position hinzufügen">+</button>
         </div>
       </div>`;
   }).join('');
@@ -3054,8 +3084,8 @@ function renderPositionTable(show) {
     <tr onclick="openPositionModal('${position.id}')">
       <td>${i + 1}</td>
       <td class="cell-title">${esc(position.name)}</td>
-      <td class="cell-tc">${esc(position.startTc)}</td>
-      <td class="cell-tc">${esc(position.endTc)}</td>
+      <td class="cell-tc" data-label="Start">${esc(position.startTc)}</td>
+      <td class="cell-tc" data-label="Ende">${esc(position.endTc)}</td>
     </tr>`).join('');
   wrap.innerHTML = `
     <table>

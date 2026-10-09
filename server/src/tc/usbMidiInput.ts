@@ -95,6 +95,9 @@ export class UsbMidiInput extends EventEmitter {
     input.ignoreTypes(false, true, true);
     input.on("message", (_delta: number, bytes: number[]) => {
       this.decoder.processMidiMessage(bytes);
+      // Rohdaten weiterreichen: Noten/Programmwechsel nutzt der Steuer-Eingang
+      // für den automatischen Showwechsel.
+      this.emit("raw", bytes);
     });
     input.openPort(idx);
 

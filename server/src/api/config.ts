@@ -2,6 +2,7 @@ import { Router } from "express";
 import { checkLogin, getConfig, getPublicConfig, setAccess, updateConfig } from "../engine/config.js";
 import { broadcastConfig } from "../engine/activeShow.js";
 import { applyTcConfig } from "../tc/tcSources.js";
+import { restartControl } from "../control/index.js";
 
 // Programm-Einstellungen (gelten für die ganze Anlage, nicht für eine Show).
 // Hinweis: Die API hat (noch) keine Authentifizierung – der Rollen-Login ist eine
@@ -17,9 +18,10 @@ router.get("/", (_req, res) => {
 // PUT /api/config — Teiländerung { tc?, gewerkPositions? }. Die aktive Show wird
 // über POST /api/shows/:id/activate gewechselt, nicht hier.
 router.put("/", (req, res) => {
-  const { tc, gewerkPositions } = (req.body ?? {}) as { tc?: object; gewerkPositions?: Record<string, string[]> };
-  const { tcChanged } = updateConfig({ tc, gewerkPositions });
+  const { tc, gewerkPositions, control } = (req.body ?? {}) as { tc?: object; gewerkPositions?: Record<string, string[]>; control?: object };
+  const { tcChanged, controlChanged } = updateConfig({ tc, gewerkPositions, control });
   if (tcChanged) applyTcConfig(getConfig().tc);
+  if (controlChanged) restartControl();
   broadcastConfig();
   res.json(getPublicConfig());
 });

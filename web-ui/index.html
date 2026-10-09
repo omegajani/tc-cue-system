@@ -602,6 +602,18 @@
     /* Sicherungen */
     #backup-label { min-width:0; min-height:var(--control-h); background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:7px; font-family:inherit; font-size:13px; }
     #backup-label:focus { outline:none; border-color:var(--accent); }
+    .field-hint { color:var(--muted); font-weight:400; font-size:10px; margin-left:6px; }
+    #control-log { display:grid; gap:4px; min-width:0; }
+    .ctl-row { display:flex; align-items:center; gap:8px; min-width:0; padding:6px 9px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,.02); font-size:11.5px; }
+    .ctl-row .ctl-label { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ctl-row .ctl-time { flex:0 0 auto; }
+    .ctl-badge { flex:0 0 auto; }
+    .ctl-row .ctl-time { color:var(--muted); font-size:10px; }
+    .ctl-badge { font-size:9.5px; padding:1px 7px; border-radius:99px; border:1px solid var(--border); color:var(--muted); white-space:nowrap; }
+    .ctl-badge.ok { border-color:rgba(16,185,129,.45); color:var(--green); }
+    .ctl-badge.warn { border-color:rgba(245,158,11,.45); color:var(--accent); }
+    #show-switch-toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(12px); z-index:1200; display:none; align-items:center; gap:9px; padding:11px 18px; border:1px solid rgba(245,158,11,.4); border-radius:12px; background:rgba(26,26,26,.96); color:var(--text); font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,.5); opacity:0; transition:opacity .25s, transform .25s; }
+    #show-switch-toast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
     #crew-positions-wrap { display:grid; grid-template-columns:repeat(auto-fit,minmax(205px,1fr)); gap:12px; }
     .backup-list { display:grid; gap:6px; margin-top:12px; }
     .backup-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); font-size:12px; }
@@ -684,6 +696,7 @@
 
 <!-- Audio-Scharfschaltung: Browser blockieren Ton bis zur ersten Nutzer-Geste.
      Solange nicht entsperrt, weist dieses Banner darauf hin. -->
+<div id="show-switch-toast"><span aria-hidden="true">🎭</span><span id="show-switch-toast-text"></span></div>
 <button id="audio-arm" hidden onclick="unlockAlarmAudio(true)">🔔 Alarm-Ton aktivieren – zum Scharfschalten tippen</button>
 
 <!-- ── SHOW VIEW ──────────────────────────────────────────────────────── -->
@@ -742,6 +755,32 @@
               <option value="30">30 fps</option>
             </select>
           </div>
+        </div>
+
+        <div class="sp-subhead">Automatisch laden durch</div>
+        <p class="show-card-description">Der Tonstack kann diese Show selbst laden – per OSC-Befehl, MIDI-Note oder Programmwechsel. Gewechselt wird nur, wenn gerade kein Timecode läuft.</p>
+        <div class="show-fields">
+          <div class="form-row show-field-wide">
+            <label>OSC-Name <span class="field-hint">für <code>/qlyst/show/load</code>; leer = Showname</span></label>
+            <input id="show-trigger-osc" type="text" placeholder="z. B. SPOOKY" onchange="saveShowTrigger()" />
+          </div>
+          <div class="form-row">
+            <label>MIDI-Note</label>
+            <input id="show-trigger-note" type="number" min="0" max="127" placeholder="0–127" onchange="saveShowTrigger()" />
+          </div>
+          <div class="form-row">
+            <label>Programmwechsel</label>
+            <input id="show-trigger-program" type="number" min="0" max="127" placeholder="0–127" onchange="saveShowTrigger()" />
+          </div>
+          <div class="form-row">
+            <label>MIDI-Kanal <span class="field-hint">leer = jeder</span></label>
+            <input id="show-trigger-channel" type="number" min="1" max="16" placeholder="1–16" onchange="saveShowTrigger()" />
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:10px;">
+          <button class="btn btn-small" id="trigger-learn-btn" onclick="learnShowTrigger()">Auslöser lernen</button>
+          <button class="btn btn-small" onclick="testShowTrigger()">Auslöser testen</button>
+          <span id="trigger-feedback" style="font-size:10px;color:var(--muted);"></span>
         </div>
         <div id="show-save-feedback" class="show-feedback"></div>
       </div>
@@ -1065,6 +1104,33 @@
     <div id="access-fields"></div>
     <div class="access-note">Leeres Admin-Passwort = kein Zugriffsschutz: jeder wählt Gewerk/Position frei und sieht alle Tabs. Änderungen werden beim Verlassen des Feldes gespeichert.</div>
     <div id="access-feedback" class="show-feedback"></div>
+  </div>
+
+  <!-- Fernsteuerung -->
+  <div class="sp-section" id="control-card">
+    <h3>Fernsteuerung <span id="control-status" style="font-size:10px;margin-left:6px;color:var(--muted);"></span></h3>
+    <p class="show-card-description">Nimmt Befehle vom Tonstack an, um die Show automatisch zu wechseln. Läuft unabhängig von der Timecode-Quelle.</p>
+    <div class="sp-row">
+      <div class="sp-label">Fernsteuerung aktiv
+        <span class="sp-hint">OSC- und MIDI-Befehle annehmen</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="c-control-enabled" onchange="saveControlConfig()" /><span class="toggle-slider"></span></label>
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">OSC-Port
+        <span class="sp-hint">eigener Port, nicht der des OSC-Timecodes</span>
+      </div>
+      <input type="number" id="c-control-osc-port" min="1024" max="65535" style="width:110px;" onchange="saveControlConfig()" />
+    </div>
+    <div class="sp-row">
+      <div class="sp-label">MIDI-Eingang
+        <span class="sp-hint">nur nötig, wenn MIDI nicht ohnehin die Timecode-Quelle ist</span>
+      </div>
+      <select id="c-control-midi-port" onchange="saveControlConfig()"><option value="">– keiner –</option></select>
+    </div>
+    <div class="sp-subhead">Zuletzt empfangen</div>
+    <div id="control-log"><p class="empty-hint" style="padding:6px 0;">Noch keine Befehle empfangen.</p></div>
+    <div class="access-note">Jedes Gerät im Netz kann diese Befehle senden – die Schnittstelle hat keine Anmeldung. Ein Showwechsel wird abgelehnt, solange Timecode läuft.</div>
   </div>
 
   <!-- Netzwerk -->
@@ -1471,6 +1537,7 @@ function openSettings() {
   if (scope === 'full') {
     restoreTcSourceUI(true);
     loadAccessFields();
+    loadControlStatus();
     loadNetworkInfo();
     if (!_updateInstalled) checkForUpdates();
   }
@@ -1822,6 +1889,73 @@ function refreshActiveSourceStatus() {
 // ════════════════════════════════════════════════════════════════════════════
 // EVENT HANDLING
 // ════════════════════════════════════════════════════════════════════════════
+// ── Fernsteuerung (Einstellungen → Programm) ────────────────────────────────
+function controlResultText(result) {
+  return {
+    'switched': 'Show geladen',
+    'ignored-same': 'schon geladen',
+    'ignored-tc-running': 'abgelehnt – TC läuft',
+    'ignored-debounce': 'abgelehnt – zu schnell',
+    'no-match': 'kein Treffer',
+  }[result] || result;
+}
+
+function renderControlLog(log) {
+  const wrap = document.getElementById('control-log');
+  if (!wrap) return;
+  if (!log || !log.length) {
+    wrap.innerHTML = '<p class="empty-hint" style="padding:6px 0;">Noch keine Befehle empfangen.</p>';
+    return;
+  }
+  wrap.innerHTML = log.slice(0, 8).map(e => {
+    const cls = e.result === 'switched' ? 'ok' : e.result === 'no-match' ? '' : 'warn';
+    const zeit = new Date(e.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `<div class="ctl-row"><span class="ctl-time">${zeit}</span><span class="ctl-label">${esc(e.label)}</span><span class="ctl-badge ${cls}">${esc(controlResultText(e.result))}</span></div>`;
+  }).join('');
+}
+
+async function loadControlStatus() {
+  const data = await api('GET', '/api/control/status').catch(() => null);
+  if (!data) return;
+  const status = document.getElementById('control-status');
+  if (status) {
+    const teile = [];
+    if (data.osc.running) teile.push(`OSC ${data.osc.port}`);
+    if (data.midi.running) teile.push(`MIDI ${data.midi.portName}`);
+    status.textContent = data.enabled ? (teile.length ? '● ' + teile.join(' · ') : '○ kein Eingang') : '○ aus';
+    status.style.color = data.enabled && teile.length ? 'var(--green)' : 'var(--muted)';
+  }
+  document.getElementById('c-control-enabled').checked = !!data.enabled;
+  document.getElementById('c-control-osc-port').value = data.osc.port;
+  const sel = document.getElementById('c-control-midi-port');
+  const ports = data.midi.ports || [];
+  sel.innerHTML = '<option value="">– keiner –</option>' + ports.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  sel.value = data.midi.configuredPort || '';
+  renderControlLog(data.log);
+}
+
+async function saveControlConfig() {
+  const control = {
+    enabled: document.getElementById('c-control-enabled').checked,
+    oscPort: Number(document.getElementById('c-control-osc-port').value) || 9001,
+    midiPort: document.getElementById('c-control-midi-port').value || '',
+  };
+  const cfg = await api('PUT', '/api/config', { control }).catch(() => null);
+  if (cfg) appConfig = cfg;
+  setTimeout(loadControlStatus, 400);
+}
+
+// Hinweis, wenn die Show automatisch gewechselt wurde
+let _switchToastTimer = null;
+function showSwitchToast(text) {
+  const el = document.getElementById('show-switch-toast');
+  if (!el) return;
+  document.getElementById('show-switch-toast-text').textContent = text;
+  el.classList.add('show');
+  clearTimeout(_switchToastTimer);
+  _switchToastTimer = setTimeout(() => el.classList.remove('show'), 6000);
+}
+
 // Programm-Konfiguration hat sich geändert (anderes Gerät, Server-Neustart,
 // eigene Änderung): übernehmen und abhängige UI nachziehen.
 function onConfigChanged(cfg) {
@@ -1843,7 +1977,16 @@ async function refreshConfig() {
 }
 
 function handleEvent(evt) {
-  if (evt.type === 'CONFIG_CHANGED') { onConfigChanged(evt.config); return; }
+  if (evt.type === 'CONFIG_CHANGED') {
+    if (evt.reason === 'trigger' && evt.showName) showSwitchToast(`Show gewechselt: ${evt.showName}`);
+    onConfigChanged(evt.config);
+    return;
+  }
+  if (evt.type === 'CONTROL_INPUT') {
+    if (_learningTrigger) applyLearnedTrigger(evt.input);
+    if (document.getElementById('view-settings').classList.contains('active')) loadControlStatus();
+    return;
+  }
   const tc = evt.tc || '';
   const displayTc = window._showFrames === false ? tc.slice(0, 8) : tc;
   if (evt.type === 'TC_UPDATE') {
@@ -2831,6 +2974,13 @@ function previewSelectedShow() {
   document.getElementById('show-summary-positions').textContent = show?.positions?.length || 0;
   document.getElementById('show-summary-cues').textContent = show?.cues?.length || 0;
   document.getElementById('show-summary-checklists').textContent = show?.checklists?.length || 0;
+  const trig = show?.trigger || {};
+  document.getElementById('show-trigger-osc').value = trig.osc || '';
+  document.getElementById('show-trigger-note').value = trig.midiNote ?? '';
+  document.getElementById('show-trigger-program').value = trig.midiProgram ?? '';
+  document.getElementById('show-trigger-channel').value = trig.midiChannel ?? '';
+  document.getElementById('trigger-feedback').textContent = '';
+  stopTriggerLearning();
   document.getElementById('show-save-feedback').textContent = '';
   document.getElementById('backup-feedback').textContent = '';
   renderBackups();
@@ -2975,6 +3125,89 @@ async function saveShowData() {
   if (opt) opt.textContent = `${updated.name} (${updated.date})`;
   feedback.style.color = 'var(--green)';
   feedback.textContent = 'Gespeichert.';
+}
+
+// ── Auslöser für den automatischen Showwechsel ──────────────────────────────
+function triggerFromFields() {
+  const num = id => { const v = document.getElementById(id).value.trim(); return v === '' ? undefined : Number(v); };
+  const osc = document.getElementById('show-trigger-osc').value.trim();
+  return {
+    osc: osc || undefined,
+    midiNote: num('show-trigger-note'),
+    midiProgram: num('show-trigger-program'),
+    midiChannel: num('show-trigger-channel'),
+  };
+}
+
+async function saveShowTrigger() {
+  const id = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === id);
+  const fb = document.getElementById('trigger-feedback');
+  if (!show) return;
+  const updated = await api('PUT', `/api/shows/${id}`, { trigger: triggerFromFields() }).catch(() => null);
+  fb.style.color = updated ? 'var(--green)' : 'var(--red)';
+  fb.textContent = updated ? 'Gespeichert.' : 'Speichern fehlgeschlagen.';
+  if (updated) {
+    const idx = allShows.findIndex(item => item.id === id);
+    if (idx !== -1) allShows[idx] = updated;
+  }
+}
+
+// „Lernen": der nächste eintreffende Befehl wird übernommen (CONTROL_INPUT per WS).
+let _learningTrigger = false;
+
+function learnShowTrigger() {
+  if (_learningTrigger) { stopTriggerLearning(); return; }
+  _learningTrigger = true;
+  document.getElementById('trigger-learn-btn').textContent = 'Warte auf Befehl… (abbrechen)';
+  document.getElementById('trigger-learn-btn').classList.add('btn-primary');
+  const fb = document.getElementById('trigger-feedback');
+  fb.style.color = 'var(--muted)';
+  fb.textContent = 'Jetzt am Pult auslösen.';
+}
+
+function stopTriggerLearning() {
+  _learningTrigger = false;
+  const btn = document.getElementById('trigger-learn-btn');
+  if (!btn) return;
+  btn.textContent = 'Auslöser lernen';
+  btn.classList.remove('btn-primary');
+}
+
+function applyLearnedTrigger(input) {
+  if (input.midiNote !== undefined) {
+    document.getElementById('show-trigger-note').value = input.midiNote;
+    if (input.midiChannel !== undefined) document.getElementById('show-trigger-channel').value = input.midiChannel;
+  } else if (input.midiProgram !== undefined) {
+    document.getElementById('show-trigger-program').value = input.midiProgram;
+    if (input.midiChannel !== undefined) document.getElementById('show-trigger-channel').value = input.midiChannel;
+  } else if (input.osc) {
+    document.getElementById('show-trigger-osc').value = input.osc;
+  } else return;
+  stopTriggerLearning();
+  const fb = document.getElementById('trigger-feedback');
+  fb.style.color = 'var(--green)';
+  fb.textContent = `Übernommen: ${input.label}`;
+  saveShowTrigger();
+}
+
+// Testet den Auslöser über denselben Weg, den auch OSC/MIDI nehmen.
+async function testShowTrigger() {
+  const id = document.getElementById('show-select').value;
+  const show = allShows.find(item => item.id === id);
+  const fb = document.getElementById('trigger-feedback');
+  if (!show) return;
+  const name = document.getElementById('show-trigger-osc').value.trim() || show.name;
+  const res = await api('POST', '/api/control/trigger', { show: name }).catch(() => null);
+  const texte = {
+    'switched': 'Show wurde geladen.',
+    'ignored-same': 'Diese Show ist bereits geladen.',
+    'ignored-tc-running': 'Abgelehnt: es läuft gerade Timecode.',
+    'ignored-debounce': 'Abgelehnt: zu kurz nach dem letzten Wechsel.',
+    'no-match': 'Kein Treffer – Name stimmt mit keiner Show überein.',
+  };
+  fb.style.color = res?.result === 'switched' ? 'var(--green)' : 'var(--accent)';
+  fb.textContent = res ? (texte[res.result] || res.result) : 'Test fehlgeschlagen.';
 }
 
 async function deleteSelectedShow() {
@@ -4673,7 +4906,7 @@ function applySettingsScope() {
   if (intro) intro.textContent = scope === 'none'
     ? 'Anzeige und Ton stellst du hier nur für dieses Gerät ein.'
     : 'Oben stellst du nur dieses Gerät ein. Darunter liegen die Programm-Einstellungen, die für alle Geräte gelten.';
-  for (const id of ['tc-input-card', 'network-card', 'update-card', 'access-block']) {
+  for (const id of ['tc-input-card', 'network-card', 'update-card', 'access-block', 'control-card']) {
     const el = document.getElementById(id);
     if (el) el.style.display = scope === 'full' ? '' : 'none';
   }

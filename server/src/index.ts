@@ -21,6 +21,10 @@ import { getConfig } from "./engine/config.js";
 import { loadInitialShow } from "./engine/activeShow.js";
 import { applyTcConfig } from "./tc/tcSources.js";
 import { getShows, upsertShow, flushShows } from "./engine/store.js";
+import { markTc } from "./engine/tcState.js";
+import { startControl, stopControl } from "./control/index.js";
+import controlRouter from "./api/control.js";
+import { resetChecklists } from "./control/controlHub.js";
 import { rtpMidiInput } from "./tc/rtpMidiInput.js";
 import { oscTcInput } from "./tc/oscTcInput.js";
 import { usbMidiInput } from "./tc/usbMidiInput.js";
@@ -49,6 +53,7 @@ app.use("/api/update", updateRouter);
 app.use("/api/config", configRouter);
 app.use("/api/backups", backupsRouter);
 app.use("/api/sounds", soundsRouter);
+app.use("/api/control", controlRouter);
 
 // Shared TC ingestion helper — deduplicates and feeds cueEngine + broadcasts.
 // Zentrale, robuste Eintrittsstelle für ALLE Quellen: ungültige TC-Strings (z. B.
@@ -75,6 +80,7 @@ function ingestTc(tc: string, _source: string) {
   }
   lastBrowserTc = tc;
   lastBrowserFrames = nowFrames;
+  markTc();
   cueEngine.processTc(tc);
   broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 }
@@ -150,6 +156,7 @@ simulator.on("tc", (tc: string) => {
   const nowFrames = parseTc(tc).totalFrames;
   if (lastSimulatorFrames >= 0 && nowFrames < lastSimulatorFrames) cueEngine.reset();
   lastSimulatorFrames = nowFrames;
+  markTc();
   cueEngine.processTc(tc);
   broadcast({ type: "TC_UPDATE", tc, previousCue: cueEngine.getPreviousCue(), currentCue: cueEngine.getCurrentCue(), nextCue: cueEngine.getNextCue(), currentPosition: cueEngine.getCurrentPosition() });
 });
@@ -166,16 +173,7 @@ cueEngine.on("cueFire", (event) => {
   if (event.cue.resetShow) {
     const show = cueEngine.getShow();
     if (show) {
-      const reset = {
-        ...show,
-        checklists: (show.checklists ?? []).map(cl => ({
-          ...cl,
-          items: cl.items.map(item => ({ ...item, checked: false })),
-        })),
-      };
-      upsertShow(reset);
-      flushShows();
-      cueEngine.updateShowData(reset);
+      cueEngine.updateShowData(resetChecklists(show));
       console.log(`[Engine] SHOW RESET triggered by cue "${event.cue.title}"`);
     }
     broadcast({ type: "SHOW_RESET" });
@@ -192,6 +190,9 @@ function boot() {
   // Serverseitige TC-Empfänger headless starten (USB-MIDI mit Retry, Netzwerkquellen
   // mit gespeicherten Ports). Browser-Quellen startet der jeweilige Browser.
   applyTcConfig(getConfig().tc);
+  // Steuer-Eingang für den automatischen Showwechsel – läuft unabhängig von der
+  // TC-Quelle, damit ein Auslöser auch bei Art-Net-Timecode ankommt.
+  startControl();
 }
 
 server.listen(PORT, () => {
@@ -230,6 +231,7 @@ function shutdown(signal: string) {
   try { oscTcInput.stop(); } catch { /* ignore */ }
   try { usbMidiInput.stop(); } catch { /* ignore */ }
   try { artnetTcInput.stop(); } catch { /* ignore */ }
+  try { stopControl(); } catch { /* ignore */ }
   closeWS();
   if (bonjour) { try { bonjour.unpublishAll(() => bonjour.destroy()); } catch { /* ignore */ } }
   server.close(() => process.exit(0));

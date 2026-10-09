@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { AppConfig, LEGACY_SHOW_FIELDS, PublicConfig, ShowAccess, TCSource, TcConfig } from "../types.js";
+import { AppConfig, ControlConfig, LEGACY_SHOW_FIELDS, PublicConfig, ShowAccess, TCSource, TcConfig } from "../types.js";
 import { DATA_DIR, getShows, saveShows, writeFileAtomic } from "./store.js";
 
 // Programm-Konfiguration: alles, was für die ganze Anlage gilt (TC-Eingang,
@@ -16,6 +16,11 @@ const DEFAULT_TC: TcConfig = {
   oscPort: 9000,
   rtpmidiPort: 5004,
   rtpmidiName: "TC Cue System",
+};
+
+const DEFAULT_CONTROL: ControlConfig = {
+  enabled: true,
+  oscPort: 9001,
 };
 
 let config: AppConfig | null = null;
@@ -71,6 +76,17 @@ function normalizeTc(raw: unknown, base: TcConfig = DEFAULT_TC): TcConfig {
   return tc;
 }
 
+function normalizeControl(raw: unknown, base: ControlConfig = DEFAULT_CONTROL): ControlConfig {
+  const c = (raw ?? {}) as Partial<ControlConfig>;
+  const control: ControlConfig = {
+    enabled: typeof c.enabled === "boolean" ? c.enabled : base.enabled,
+    oscPort: port(c.oscPort, base.oscPort),
+  };
+  const midiPort = c.midiPort !== undefined ? c.midiPort : base.midiPort;
+  if (midiPort) control.midiPort = midiPort;
+  return control;
+}
+
 function writeConfig(): void {
   writeFileAtomic(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
@@ -93,6 +109,7 @@ function migrateFromShows(): AppConfig {
     } : {}),
     access: normalizeAccess(first?.access),
     gewerkPositions: normalizeGewerkPositions(first?.gewerkPositions),
+    control: { ...DEFAULT_CONTROL },
   };
   if (shows.some((s) => LEGACY_SHOW_FIELDS.some((f) => f in s))) {
     saveShows(shows.map((s) => stripLegacyShowFields(s)));
@@ -118,13 +135,14 @@ export function getConfig(): AppConfig {
         tc: normalizeTc(raw.tc),
         access: normalizeAccess(raw.access),
         gewerkPositions: normalizeGewerkPositions(raw.gewerkPositions),
+        control: normalizeControl(raw.control),
       };
       return config;
     } catch {
       const backup = `${CONFIG_FILE}.corrupt-${Date.now()}`;
       try { fs.copyFileSync(CONFIG_FILE, backup); } catch { /* ignore */ }
       console.error(`[Config] config.json ist beschädigt – Sicherung unter ${backup}, starte mit Standardwerten`);
-      config = { tc: { ...DEFAULT_TC }, access: normalizeAccess({}), gewerkPositions: {} };
+      config = { tc: { ...DEFAULT_TC }, access: normalizeAccess({}), gewerkPositions: {}, control: { ...DEFAULT_CONTROL } };
       writeConfig();
       return config;
     }
@@ -138,19 +156,25 @@ export interface ConfigPatch {
   activeShowId?: string;
   tc?: Partial<TcConfig>;
   gewerkPositions?: Record<string, string[]>;
+  control?: Partial<ControlConfig>;
 }
 
 /** Teiländerung übernehmen und sofort speichern. Liefert die geänderten Bereiche. */
-export function updateConfig(patch: ConfigPatch): { tcChanged: boolean } {
+export function updateConfig(patch: ConfigPatch): { tcChanged: boolean; controlChanged: boolean } {
   const cur = getConfig();
   const prevTc = JSON.stringify(cur.tc);
+  const prevControl = JSON.stringify(cur.control);
   const next: AppConfig = { ...cur };
   if (patch.activeShowId !== undefined) next.activeShowId = patch.activeShowId || undefined;
   if (patch.tc) next.tc = normalizeTc({ ...cur.tc, ...patch.tc }, cur.tc);
   if (patch.gewerkPositions) next.gewerkPositions = normalizeGewerkPositions(patch.gewerkPositions);
+  if (patch.control) next.control = normalizeControl({ ...cur.control, ...patch.control }, cur.control);
   config = next;
   writeConfig();
-  return { tcChanged: JSON.stringify(next.tc) !== prevTc };
+  return {
+    tcChanged: JSON.stringify(next.tc) !== prevTc,
+    controlChanged: JSON.stringify(next.control) !== prevControl,
+  };
 }
 
 export function setAccess(raw: unknown): void {

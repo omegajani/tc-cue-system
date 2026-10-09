@@ -45,12 +45,44 @@ mit den gespeicherten Ports, kein Browser nötig.
 Der Status im TC-Input zeigt das **echte Signal** an (Gestoppt / Empfangsbereit /
 Signal aktiv), nicht nur einen gebundenen Listener.
 
+## Automatischer Showwechsel
+
+Laufen mehrere Produktionen im Wechsel, kann der Tonstack die passende Show selbst
+laden. Jede Show bekommt dafür im Show-Tab unter **„Automatisch laden durch"** einen
+Auslöser; **„Auslöser lernen"** übernimmt den nächsten eingehenden Befehl, man muss
+also keine Notennummer raten.
+
+| Weg | Beispiel |
+| --- | --- |
+| **OSC** (UDP, Standard-Port 9001) | `/qlyst/show/load "SPOOKY"` · `/qlyst/show/SPOOKY` · `/qlyst/show/index 2` |
+| **MIDI-Note** | Note On, z. B. Note 60 für Show A, 61 für Show B |
+| **Programmwechsel** | Program Change 1 / 2 (DiGiCo-Macro, Zuspieler, Medienserver) |
+| **HTTP** | `curl -X POST -H 'Content-Type: application/json' -d '{"show":"SPOOKY"}' http://<server>:3000/api/control/trigger` |
+
+Der Steuer-Eingang läuft **unabhängig von der Timecode-Quelle** – ein Auslöser kommt
+also auch an, wenn der Timecode per Art-Net hereinkommt. Einstellungen dazu:
+**Einstellungen → Programm → Fernsteuerung** (Port, MIDI-Eingang, Status und die
+zuletzt empfangenen Befehle zum Mitlesen beim Einrichten).
+
+Drei Schutzmechanismen:
+
+1. **Kein Wechsel, solange Timecode läuft** – ein Fehlsignal während der Vorstellung
+   wird abgelehnt und im Protokoll vermerkt.
+2. **Kein Wechsel**, wenn die Show bereits geladen ist.
+3. **Entprellung**: kurz aufeinanderfolgende Befehle lösen nur einen Wechsel aus.
+
+Beim automatischen Wechsel werden die Haken aller Aufgabenlisten zurückgesetzt, und
+alle Geräte wechseln mit und zeigen kurz „Show gewechselt: …".
+
+Hinweis: Die Schnittstelle hat keine Anmeldung – jedes Gerät im Netz kann solche
+Befehle senden.
+
 ## Einstellungen: was gilt wo?
 
 | Ebene | Gespeichert | Wer ändert | Inhalt |
 | --- | --- | --- | --- |
-| **Programm** | Server, `config.json` im Datenordner (nicht im Git) | Admin (Meister: eigene Crew-Positionen) | Timecode-Eingang inkl. Ports, Passwörter, Crew-Positionen, aktive Show |
-| **Show** | Server, `shows.json` (im Git) | Admin; Cues/Listen auch Meister/Positionen (gefiltert) | Name, Datum, Framerate, Songs, Cues, Aufgabenlisten |
+| **Programm** | Server, `config.json` im Datenordner (nicht im Git) | Admin (Meister: eigene Crew-Positionen) | Timecode-Eingang inkl. Ports, Fernsteuerung, Passwörter, Crew-Positionen, aktive Show |
+| **Show** | Server, `shows.json` (im Git) | Admin; Cues/Listen auch Meister/Positionen (gefiltert) | Name, Datum, Framerate, Auslöser für den automatischen Wechsel, Songs, Cues, Aufgabenlisten |
 | **Dieses Gerät** | Browser (`localStorage`) | jede Person für sich | Anzeige, Schriftgröße, Cue-Vorschau, Show-Modus, Flash, Alarmton, Songliste, Anmeldung |
 
 Tabs: **Live · Cues · Show · Einstellungen**. Der Show-Tab ist bei aktivem

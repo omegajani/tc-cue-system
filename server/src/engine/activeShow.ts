@@ -8,8 +8,8 @@ import { broadcast } from "../wsbroker.js";
 // Aktive Show = die Show, auf die die Cue-Engine hört. Sie wird in config.json
 // gemerkt, damit sie einen Server-Neustart überlebt, und allen Clients gemeldet.
 
-export function broadcastConfig(): void {
-  broadcast({ type: "CONFIG_CHANGED", config: getPublicConfig() });
+export function broadcastConfig(reason: "manual" | "trigger" = "manual", showName?: string): void {
+  broadcast({ type: "CONFIG_CHANGED", config: getPublicConfig(), reason, showName });
 }
 
 export function isActiveShow(id: string): boolean {
@@ -22,11 +22,12 @@ export function applyShowFps(show: Show): void {
   if (getFPS() !== fps) setFPS(fps);
 }
 
-export function activateShow(show: Show): void {
+/** reason: "trigger" = automatisch per OSC/MIDI, damit die Geräte es anzeigen können. */
+export function activateShow(show: Show, reason: "manual" | "trigger" = "manual"): void {
   cueEngine.loadShow(show);
   applyShowFps(show);
   if (getConfig().activeShowId !== show.id) updateConfig({ activeShowId: show.id });
-  broadcastConfig();
+  broadcastConfig(reason, show.name);
 }
 
 /** Beim Boot: gemerkte aktive Show laden, sonst die erste. */

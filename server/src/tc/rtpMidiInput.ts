@@ -42,7 +42,10 @@ export class RtpMidiInput extends EventEmitter {
     });
 
     this.session.on("message", (_delta: number, bytes: Uint8Array) => {
-      this.decoder.processMidiMessage(Array.from(bytes));
+      const data = Array.from(bytes);
+      this.decoder.processMidiMessage(data);
+      // Rohdaten weiterreichen (Noten/Programmwechsel → automatischer Showwechsel)
+      this.emit("raw", data);
     });
 
     this.session.on("connection", (peer: any) => {

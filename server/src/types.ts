@@ -59,6 +59,14 @@ export interface Checklist {
   positions?: string[];  // Crew-Positionen im Gewerk; leer = ganzes Gewerk
 }
 
+/** Auslöser, mit dem der Tonstack diese Show automatisch laden kann. */
+export interface ShowTrigger {
+  osc?: string;          // Name in /qlyst/show/load "<name>"; leer = Showname
+  midiNote?: number;     // Note On 0–127
+  midiProgram?: number;  // Program Change 0–127 (Anzeige im Pult oft +1)
+  midiChannel?: number;  // 1–16; fehlt = jeder Kanal
+}
+
 export interface Show {
   id: string;
   name: string;
@@ -67,6 +75,7 @@ export interface Show {
   positions: ShowPosition[];
   checklists?: Checklist[];
   fps?: 24 | 25 | 29.97 | 30;  // Framerate des Show-Timecodes; wird beim Aktivieren angewendet
+  trigger?: ShowTrigger;       // automatischer Showwechsel (OSC/MIDI vom Tonstack)
   savedAt?: string;  // ISO-Zeitstempel des letzten Speicherns – „neuestes gewinnt" beim Repo-Sync
   // Veraltet – früher pro Show, heute programmweit in config.json (AppConfig).
   // Nur noch für die einmalige Migration bzw. alte Import-Dateien gelesen.
@@ -93,9 +102,17 @@ export interface TcConfig {
   rtpmidiName: string;
 }
 
+/** Fernsteuerung: immer laufender Steuer-Eingang, unabhängig von der TC-Quelle. */
+export interface ControlConfig {
+  enabled: boolean;
+  oscPort: number;       // eigener Port, da der TC-OSC-Port nicht doppelt belegt werden kann
+  midiPort?: string;     // MIDI-Eingang für Steuerbefehle; leer = nur mithören, wenn MIDI ohnehin TC-Quelle ist
+}
+
 export interface AppConfig {
   activeShowId?: string;
   tc: TcConfig;
+  control: ControlConfig;
   access: ShowAccess;
   // Crew-Positionen je Gewerk (z. B. ton: ["FOH","Monitor"]). Fehlt ein Gewerk,
   // gelten die im Client hinterlegten Standards.
@@ -135,9 +152,30 @@ export interface ShowResetEvent {
 export interface ConfigChangedEvent {
   type: "CONFIG_CHANGED";
   config: PublicConfig;
+  /** Warum sich etwas geändert hat – "trigger" = automatischer Showwechsel. */
+  reason?: "manual" | "trigger";
+  showName?: string;     // bei einem Showwechsel: Name der neuen Show (für den Hinweis)
 }
 
-export type WSEvent = TCUpdateEvent | CueFireEvent | ShowResetEvent | ConfigChangedEvent;
+/** Eingegangener Steuerbefehl – für „Auslöser lernen" und den Monitor. */
+export interface ControlInputEvent {
+  type: "CONTROL_INPUT";
+  input: ControlInput;
+}
+
+export interface ControlInput {
+  at: string;                       // ISO-Zeitstempel
+  source: "osc" | "midi" | "http";
+  label: string;                    // menschenlesbar, z. B. 'OSC /qlyst/show/load "SPOOKY"'
+  osc?: string;                     // Showname aus der OSC-Nachricht
+  midiNote?: number;
+  midiProgram?: number;
+  midiChannel?: number;
+  result: "switched" | "ignored-same" | "ignored-tc-running" | "ignored-debounce" | "no-match";
+  showName?: string;                // getroffene Show, falls vorhanden
+}
+
+export type WSEvent = TCUpdateEvent | CueFireEvent | ShowResetEvent | ConfigChangedEvent | ControlInputEvent;
 
 // TC as frame count for arithmetic
 export interface TCFrames {

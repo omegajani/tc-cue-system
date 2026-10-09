@@ -16,6 +16,7 @@ import midiRouter from "./api/midi.js";
 import updateRouter from "./api/update.js";
 import configRouter from "./api/config.js";
 import backupsRouter from "./api/backups.js";
+import soundsRouter from "./api/sounds.js";
 import { getConfig } from "./engine/config.js";
 import { loadInitialShow } from "./engine/activeShow.js";
 import { applyTcConfig } from "./tc/tcSources.js";
@@ -47,6 +48,7 @@ app.use("/api/midi", midiRouter);
 app.use("/api/update", updateRouter);
 app.use("/api/config", configRouter);
 app.use("/api/backups", backupsRouter);
+app.use("/api/sounds", soundsRouter);
 
 // Shared TC ingestion helper — deduplicates and feeds cueEngine + broadcasts.
 // Zentrale, robuste Eintrittsstelle für ALLE Quellen: ungültige TC-Strings (z. B.

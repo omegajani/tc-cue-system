@@ -843,8 +843,18 @@
       </div>
       <input type="range" id="s-alarm-volume" min="0" max="100" step="5" oninput="onAlarmVolumeInput()" onchange="onSettingChange()" />
     </div>
+    <div class="sp-row">
+      <div class="sp-label">Alarmton auswählen
+        <span class="sp-hint">Gilt nur für dieses Gerät. Hochgeladene Töne stehen allen zur Auswahl.</span>
+      </div>
+      <select id="s-alarm-sound" onchange="onAlarmSoundChange()" style="max-width:180px;"></select>
+    </div>
     <div class="toolbar">
       <button class="btn btn-primary btn-small" onclick="testAlarm()">Alarm testen</button>
+      <label class="btn btn-small" style="cursor:pointer;" title="Eigenen Alarmton hochladen (MP3, WAV, OGG, M4A – max. 8 MB)">
+        Ton hochladen ↑ <input type="file" id="alarm-sound-file" accept="audio/*,.mp3,.wav,.ogg,.m4a" onchange="uploadAlarmSound(this)" style="display:none;" />
+      </label>
+      <button class="btn btn-small btn-danger" id="alarm-sound-delete" onclick="deleteAlarmSound()" style="display:none;">Ton löschen</button>
       <span id="alarm-test-feedback" style="font-size:10px;color:var(--muted);"></span>
     </div>
   </div>
@@ -1353,6 +1363,7 @@ const SETTING_DEFAULTS = {
   screenFlash:      false,
   alarmEnabled:     true,
   alarmVolume:      80,
+  alarmSound:       'builtin:alert',
   checklistExpand:  'active-only',
   showMode:         true,
 };
@@ -1377,6 +1388,7 @@ function getCurrentSettingsFromUI() {
     screenFlash:      document.getElementById('s-screen-flash').checked,
     alarmEnabled:     document.getElementById('s-alarm-enabled').checked,
     alarmVolume:      Number(document.getElementById('s-alarm-volume').value),
+    alarmSound:       document.getElementById('s-alarm-sound').value || 'builtin:alert',
     checklistExpand:  document.getElementById('s-checklist-expand').value,
     showMode:         document.getElementById('s-show-mode').checked,
   };
@@ -1417,9 +1429,11 @@ function openSettings() {
   document.getElementById('s-alarm-enabled').checked = s.alarmEnabled;
   document.getElementById('s-alarm-volume').value = s.alarmVolume;
   document.getElementById('alarm-volume-value').textContent = `${s.alarmVolume} %`;
+  renderAlarmSounds(s.alarmSound);
   document.getElementById('s-checklist-expand').value = s.checklistExpand || 'active-only';
   document.getElementById('s-show-mode').checked = s.showMode !== false;
   renderSettingsIdentity();
+  loadAlarmSounds();
 
   // Programm (nur wer es sehen darf – siehe applySettingsScope)
   applySettingsScope();
@@ -1786,8 +1800,9 @@ function onConfigChanged(cfg) {
   appConfig = cfg;
   if (!prev || prev.access?.gated !== cfg.access?.gated) resolveLoginGate();
   if (JSON.stringify(prev?.gewerkPositions) !== JSON.stringify(cfg.gewerkPositions)) renderCrewPositions();
-  if (document.getElementById('view-settings').classList.contains('active') && JSON.stringify(prev?.tc) !== JSON.stringify(cfg.tc)) {
-    restoreTcSourceUI(false);
+  if (document.getElementById('view-settings').classList.contains('active')) {
+    if (JSON.stringify(prev?.tc) !== JSON.stringify(cfg.tc)) restoreTcSourceUI(false);
+    loadAlarmSounds();   // ein anderes Gerät kann einen Alarmton hoch- oder weggeladen haben
   }
   if (cfg.activeShowId && cfg.activeShowId !== currentShowId) switchToShow(cfg.activeShowId);
 }
@@ -3594,8 +3609,94 @@ function triggerScreenFlash(force = false) {
   flash.classList.add('fire');
 }
 
+// Alarmtöne: mitgeliefert (im Ordner web-ui) + hochgeladene (auf dem Server,
+// programmweit). Welcher gespielt wird, entscheidet jedes Gerät für sich
+// (Einstellung „alarmSound", localStorage).
+const BUILTIN_SOUNDS = [
+  { id: 'builtin:alert',     name: 'Alarm (Standard)', url: 'alert.mp3' },
+  { id: 'builtin:ber-chime', name: 'BER Chime',        url: 'sounds/ber-chime.mp3' },
+];
+let _uploadedSounds = [];
+
+function alarmSoundUrl(id) {
+  const builtin = BUILTIN_SOUNDS.find(s => s.id === id);
+  if (builtin) return builtin.url;
+  if (_uploadedSounds.some(s => s.id === id)) return `/api/sounds/${id}/file`;
+  return BUILTIN_SOUNDS[0].url;   // gelöschter oder unbekannter Ton → Standard
+}
+
+async function loadAlarmSounds() {
+  _uploadedSounds = await api('GET', '/api/sounds').catch(() => []);
+  renderAlarmSounds(loadSettings().alarmSound);
+}
+
+function renderAlarmSounds(selected) {
+  const sel = document.getElementById('s-alarm-sound');
+  if (!sel) return;
+  const all = [...BUILTIN_SOUNDS, ..._uploadedSounds.map(s => ({ id: s.id, name: s.name }))];
+  const value = all.some(s => s.id === selected) ? selected : BUILTIN_SOUNDS[0].id;
+  sel.innerHTML = all.map(s => `<option value="${esc(s.id)}"${s.id === value ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  const del = document.getElementById('alarm-sound-delete');
+  if (del) del.style.display = _uploadedSounds.some(s => s.id === value) ? '' : 'none';
+}
+
+// Tonwechsel: speichern, Audio-Element neu aufbauen und einmal vorspielen
+function onAlarmSoundChange() {
+  saveSettings();
+  _alarmAudio = null;
+  renderAlarmSounds(document.getElementById('s-alarm-sound').value);
+  testAlarm();
+}
+
+async function uploadAlarmSound(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const feedback = document.getElementById('alarm-test-feedback');
+  feedback.style.color = 'var(--muted)';
+  feedback.textContent = 'Lade hoch…';
+  try {
+    const res = await fetch('/api/sounds', {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-Filename': encodeURIComponent(file.name) },
+      body: file,
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Fehler ${res.status}`);
+    const sound = await res.json();
+    await loadAlarmSounds();
+    document.getElementById('s-alarm-sound').value = sound.id;
+    onAlarmSoundChange();
+  } catch (e) {
+    feedback.style.color = 'var(--red)';
+    feedback.textContent = 'Hochladen fehlgeschlagen: ' + e.message;
+  } finally {
+    input.value = '';
+  }
+}
+
+async function deleteAlarmSound() {
+  const id = document.getElementById('s-alarm-sound').value;
+  const sound = _uploadedSounds.find(s => s.id === id);
+  if (!sound) return;
+  if (!confirm(`Alarmton „${sound.name}" für alle Geräte löschen?`)) return;
+  await api('DELETE', `/api/sounds/${id}`).catch(() => {});
+  document.getElementById('s-alarm-sound').value = BUILTIN_SOUNDS[0].id;
+  await loadAlarmSounds();
+  onAlarmSoundChange();
+}
+
 let _alarmAudio = null;
+let _alarmAudioSrc = '';      // Quelle des aktuellen Audio-Elements
 let _audioUnlocked = false;   // wurde die Browser-Autoplay-Sperre schon aufgehoben?
+
+// Audio-Element für den gewählten Ton (wird bei Tonwechsel neu angelegt)
+function alarmAudio() {
+  const url = alarmSoundUrl(loadSettings().alarmSound);
+  if (!_alarmAudio || _alarmAudioSrc !== url) {
+    _alarmAudio = new Audio(url);
+    _alarmAudioSrc = url;
+  }
+  return _alarmAudio;
+}
 
 async function playAlarm(force = false) {
   const settings = loadSettings();
@@ -3603,10 +3704,10 @@ async function playAlarm(force = false) {
   const volume = Math.max(0, Math.min(1, settings.alarmVolume / 100));
   if (volume === 0 && !force) return false;
   try {
-    if (!_alarmAudio) _alarmAudio = new Audio('alert.mp3');
-    _alarmAudio.volume = (force && volume === 0) ? 0.8 : volume;
-    _alarmAudio.currentTime = 0;
-    await _alarmAudio.play();
+    const audio = alarmAudio();
+    audio.volume = (force && volume === 0) ? 0.8 : volume;
+    audio.currentTime = 0;
+    await audio.play();
     _audioUnlocked = true;
     updateAudioArmBanner();
     return true;
@@ -3624,14 +3725,14 @@ async function playAlarm(force = false) {
 // kurze hörbare Bestätigung.
 async function unlockAlarmAudio(fromButton) {
   try {
-    if (!_alarmAudio) _alarmAudio = new Audio('alert.mp3');
-    const prevVol = _alarmAudio.volume;
-    _alarmAudio.volume = 0;
-    _alarmAudio.currentTime = 0;
-    await _alarmAudio.play();
-    _alarmAudio.pause();
-    _alarmAudio.currentTime = 0;
-    _alarmAudio.volume = prevVol;
+    const audio = alarmAudio();
+    const prevVol = audio.volume;
+    audio.volume = 0;
+    audio.currentTime = 0;
+    await audio.play();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = prevVol;
     _audioUnlocked = true;
     _removeAudioGestureListeners();
     updateAudioArmBanner();

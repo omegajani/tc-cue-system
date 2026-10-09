@@ -51,7 +51,7 @@ function readJson<T>(name: string): T[] {
 
 /** Schreibt eine Datei atomar (temp-Datei + rename): ein Crash mitten im
  *  Schreiben kann so die bestehende Datei nicht korrumpieren. */
-export function writeFileAtomic(target: string, content: string): void {
+export function writeFileAtomic(target: string, content: string | Buffer): void {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const tmp = `${target}.tmp-${process.pid}`;
   fs.writeFileSync(tmp, content, "utf-8");
